@@ -1,6 +1,6 @@
 # Codi
 
-A terminal-based spaced repetition tool for practicing ML/AI code from memory. Write implementations, compare against reference solutions with a side-by-side diff, get AI hints when stuck, and let the SM-2 algorithm schedule your reviews.
+A terminal-based spaced repetition tool for practicing any code from memory. Write implementations, compare against reference solutions with a side-by-side diff, get AI hints when stuck, and let the SM-2 algorithm schedule your reviews.
 
 ![Menu screen](screenshots/menu.png)
 
