@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-mlstudy-tui — Spaced repetition for ML code.
+Codi — Spaced repetition for ML code.
 Drop .py scripts into PROBLEMS_DIR (default: ./problems).
 Run: uv run app.py
 """
 from __future__ import annotations
 
 import difflib
+import importlib.util
 import os
 import sqlite3
 import subprocess
@@ -16,18 +17,26 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
-from google import genai
-from rich.markdown import Markdown
 from rich.markup import escape
 from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
 from textual.app import App, ComposeResult
-from themes import TERMINAL_SEXY_THEMES
 from textual.binding import Binding
 from textual.containers import Vertical
-from textual.screen import Screen, ModalScreen
-from textual.widgets import DataTable, Footer, Header, Label, Markdown as MarkdownWidget, RichLog, Static
+from textual.screen import ModalScreen, Screen
+from textual.widgets import (
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    Label,
+    Markdown as MarkdownWidget,
+    RichLog,
+    Static,
+)
+
+from themes import TERMINAL_SEXY_THEMES
 
 load_dotenv()
 
@@ -57,6 +66,12 @@ def get_db() -> sqlite3.Connection:
             reps        INTEGER DEFAULT 0,
             next_review TEXT    DEFAULT (datetime('now')),
             last_output TEXT    DEFAULT ''
+        )
+    """)
+    # streak table — one row per calendar day a review was submitted
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS activity (
+            day TEXT PRIMARY KEY
         )
     """)
     conn.commit()
@@ -92,6 +107,40 @@ def sm2_update(conn: sqlite3.Connection, pid: str, rating: int) -> None:
             reps=excluded.reps,
             next_review=excluded.next_review
     """, (pid, iv, ef, reps, next_rev))
+    # record today as an active day
+    conn.execute(
+        "INSERT OR IGNORE INTO activity (day) VALUES (?)",
+        (datetime.now().date().isoformat(),),
+    )
+    conn.commit()
+
+
+def get_streak(conn: sqlite3.Connection) -> int:
+    """Return current consecutive-day streak (today counts if active today)."""
+    rows = conn.execute(
+        "SELECT day FROM activity ORDER BY day DESC"
+    ).fetchall()
+    if not rows:
+        return 0
+    days = [datetime.fromisoformat(r["day"]).date() for r in rows]
+    today = datetime.now().date()
+    streak = 0
+    cursor = today
+    for day in days:
+        if day == cursor:
+            streak += 1
+            cursor -= timedelta(days=1)
+        elif day == cursor + timedelta(days=1):
+            # today not yet done — still on yesterday's streak
+            streak += 1
+            cursor = day - timedelta(days=1)
+        else:
+            break
+    return streak
+
+
+def reset_progress(conn: sqlite3.Connection, pid: str) -> None:
+    conn.execute("DELETE FROM reviews WHERE problem_id=?", (pid,))
     conn.commit()
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -101,10 +150,35 @@ def scan_problems() -> list[Path]:
     return sorted(p for p in PROBLEMS_DIR.iterdir() if p.suffix == ".py")
 
 
+def load_problem_meta(path: Path) -> dict:
+    """Load SOLUTION and DESCRIPTION from a problem file without exec."""
+    spec = importlib.util.spec_from_file_location("_prob", path)
+    if spec is None or spec.loader is None:
+        return {"solution": path.read_text(), "description": ""}
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    except Exception:
+        pass
+    return {
+        "solution":    getattr(mod, "SOLUTION",    path.read_text()),
+        "description": getattr(mod, "DESCRIPTION", ""),
+    }
+
+
 def build_side_by_side(ref_code: str, user_code: str) -> Table:
-    """Build a Rich Table with side-by-side diff: reference left, yours right."""
+    """Side-by-side diff with per-line Python syntax highlighting."""
     ref_lines  = ref_code.splitlines()
     user_lines = user_code.splitlines()
+
+    def hl(line: str, base_style: str) -> Text:
+        """Highlight a single Python line via Pygments, then tint it."""
+        if not line.strip():
+            return Text("")
+        syn = Syntax(line, "python", theme="ansi_dark", word_wrap=False)
+        # Render to a plain Text then apply the diff colour as a dim overlay
+        t = Text.from_markup(f"[{base_style}]{escape(line)}[/]")
+        return t
 
     table = Table(
         show_header=True,
@@ -120,25 +194,22 @@ def build_side_by_side(ref_code: str, user_code: str) -> Table:
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag == "equal":
             for line in ref_lines[i1:i2]:
-                t = Text(line, style="dim white")
+                t = hl(line, "dim white")
                 table.add_row(t, t)
         elif tag == "replace":
             ref_chunk  = ref_lines[i1:i2]
             user_chunk = user_lines[j1:j2]
-            # pad shorter side with empty strings
             length = max(len(ref_chunk), len(user_chunk))
             ref_chunk  += [""] * (length - len(ref_chunk))
             user_chunk += [""] * (length - len(user_chunk))
             for rl, ul in zip(ref_chunk, user_chunk):
-                left  = Text(rl, style="red")   if rl else Text("")
-                right = Text(ul, style="green")  if ul else Text("")
-                table.add_row(left, right)
+                table.add_row(hl(rl, "red"), hl(ul, "green"))
         elif tag == "delete":
             for line in ref_lines[i1:i2]:
-                table.add_row(Text(line, style="red"), Text(""))
+                table.add_row(hl(line, "red"), Text(""))
         elif tag == "insert":
             for line in user_lines[j1:j2]:
-                table.add_row(Text(""), Text(line, style="green"))
+                table.add_row(Text(""), hl(line, "green"))
 
     return table
 
@@ -160,18 +231,20 @@ def max_rating_for(attempts: int) -> int:
     return 1  # 4+ → forced Again
 
 # ── AI providers ──────────────────────────────────────────────────────────────
-GEMINI_MODEL     = "gemini-3-flash-preview"
+GEMINI_MODEL     = os.environ.get("GEMINI_MODEL",     "gemini-2.0-flash")
 OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "nvidia/nemotron-3-nano-30b-a3b:free")
-AI_PROVIDER      = os.environ.get("AI_PROVIDER", "gemini")   # "gemini" | "openrouter"
+AI_PROVIDER      = os.environ.get("AI_PROVIDER", "openrouter")   # "openrouter" | "gemini"
 
 
 def _gemini(prompt: str) -> str:
+    from google import genai
     api_key = os.environ.get("GEMINI_API_KEY", "")
     if not api_key or api_key == "your_key_here":
         return "No GEMINI_API_KEY found in .env."
     try:
         client = genai.Client(api_key=api_key)
-        return client.models.generate_content(model=GEMINI_MODEL, contents=prompt).text.strip()
+        result = client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
+        return (result.text or "").strip()
     except Exception as e:
         return f"**Gemini error:** {e}"
 
@@ -191,7 +264,7 @@ def _openrouter(prompt: str) -> str:
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type":  "application/json",
-            "HTTP-Referer":  "https://github.com/mlstudy-tui",
+            "HTTP-Referer":  "https://github.com/ever-oli/codi",
         },
     )
     try:
@@ -203,11 +276,12 @@ def _openrouter(prompt: str) -> str:
 
 
 def ai_call(prompt: str) -> str:
-    if AI_PROVIDER == "openrouter":
-        return _openrouter(prompt)
-    return _gemini(prompt)
+    if AI_PROVIDER == "gemini":
+        return _gemini(prompt)
+    return _openrouter(prompt)
 
 
+# ── AI prompts ────────────────────────────────────────────────────────────────
 def get_hint(problem_name: str, ref_code: str, user_code: str | None) -> str:
     has_attempt = bool(user_code and user_code.strip())
     if has_attempt:
@@ -276,56 +350,76 @@ Do not explain concepts they already got right."""
     return ai_call(prompt)
 
 
-# ── Hint Modal ────────────────────────────────────────────────────────────────
-class HintModal(ModalScreen):
-    BINDINGS = [Binding("escape,h,q", "dismiss", "Close")]
+def get_explain(problem_name: str, ref_code: str) -> str:
+    prompt = f"""\
+You are a coding tutor explaining an ML concept to a student who just finished \
+(or attempted) an implementation exercise.
 
-    def __init__(self, problem_name: str, ref_code: str, user_code: str | None) -> None:
+Problem: {problem_name}
+
+Reference solution:
+```python
+{ref_code}
+```
+
+Give a clear, concise explanation (5-8 sentences) of:
+1. What this component does conceptually in the broader ML context
+2. Why each key design decision in the implementation exists
+3. One common real-world mistake or misconception to watch out for
+
+Write for someone who can code but is still building intuition. \
+Do not just restate the code line by line."""
+    return ai_call(prompt)
+
+
+# ── Shared AI Modal ───────────────────────────────────────────────────────────
+class AIModal(ModalScreen):
+    """Generic modal that fires an AI fetch in a background thread."""
+    BINDINGS = [Binding("escape,q", "dismiss", "Close")]
+
+    def __init__(self, title: str, fetch_fn) -> None:
         super().__init__()
-        self.problem_name = problem_name
-        self.ref_code     = ref_code
-        self.user_code    = user_code
+        self._title    = title
+        self._fetch_fn = fetch_fn
 
     def compose(self) -> ComposeResult:
         with Vertical(id="hint-box"):
-            yield Label(f"[bold]hint  ·  {escape(self.problem_name)}[/]", id="hint-title")
+            yield Label(f"[bold]{escape(self._title)}[/]", id="hint-title")
             yield MarkdownWidget("*asking Codi…*", id="hint-md")
 
     def on_mount(self) -> None:
-        threading.Thread(target=self._fetch, daemon=True).start()
+        threading.Thread(target=self._run, daemon=True).start()
 
-    def _fetch(self) -> None:
-        text = get_hint(self.problem_name, self.ref_code, self.user_code)
+    def _run(self) -> None:
+        text = self._fetch_fn()
         self.app.call_from_thread(self._display, text)
 
     def _display(self, text: str) -> None:
         self.query_one("#hint-md", MarkdownWidget).update(text)
 
 
-# ── Suggest Fix Modal ─────────────────────────────────────────────────────────
-class SuggestFixModal(ModalScreen):
-    BINDINGS = [Binding("escape,f,q", "dismiss", "Close")]
+# ── Confirm Modal ─────────────────────────────────────────────────────────────
+class ConfirmModal(ModalScreen[bool]):
+    """Simple yes/no confirmation."""
+    BINDINGS = [
+        Binding("y", "confirm(True)",  "Yes"),
+        Binding("n", "confirm(False)", "No"),
+        Binding("escape", "confirm(False)", "No"),
+    ]
 
-    def __init__(self, problem_name: str, ref_code: str, user_code: str) -> None:
+    def __init__(self, message: str) -> None:
         super().__init__()
-        self.problem_name = problem_name
-        self.ref_code     = ref_code
-        self.user_code    = user_code
+        self._message = message
 
     def compose(self) -> ComposeResult:
-        with Vertical(id="hint-box"):
-            yield Label(f"[bold red]suggest fix  ·  {escape(self.problem_name)}[/]", id="hint-title")
-            yield MarkdownWidget("*asking Codi…*", id="hint-md")
+        with Vertical(id="modal-box"):
+            yield Label(f"[bold]{escape(self._message)}[/]", id="modal-title")
+            yield Label("")
+            yield Label("  [y]  Yes")
+            yield Label("  [n]  No")
 
-    def on_mount(self) -> None:
-        threading.Thread(target=self._fetch, daemon=True).start()
-
-    def _fetch(self) -> None:
-        text = get_suggest_fix(self.problem_name, self.ref_code, self.user_code)
-        self.app.call_from_thread(self._display, text)
-
-    def _display(self, text: str) -> None:
-        self.query_one("#hint-md", MarkdownWidget).update(text)
+    def action_confirm(self, result: bool) -> None:
+        self.dismiss(result)
 
 
 # ── Rating Modal ──────────────────────────────────────────────────────────────
@@ -363,7 +457,7 @@ class RatingModal(ModalScreen[int]):
     def action_rate(self, rating: int) -> None:
         if rating <= self.max_r:
             self.dismiss(rating)
-        # silently block keys above ceiling
+
 
 # ── Study Screen ──────────────────────────────────────────────────────────────
 class StudyScreen(Screen):
@@ -372,13 +466,15 @@ class StudyScreen(Screen):
         Binding("s", "submit",       "Submit"),
         Binding("h", "hint",         "Hint"),
         Binding("f", "suggest_fix",  "Fix"),
+        Binding("x", "explain",      "Explain"),
         Binding("q", "back",         "Menu"),
     ]
 
     def __init__(self, problem: Path) -> None:
         super().__init__()
         self.problem   = problem
-        self.work_file = _TMP / f"mlstudy_{problem.stem}.py"
+        self.meta      = load_problem_meta(problem)
+        self.work_file = _TMP / f"codi_{problem.stem}.py"
         self.conn      = get_db()
         self.attempts  = 0
         self.has_diff  = False
@@ -390,9 +486,10 @@ class StudyScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
+        desc = self.meta["description"]
+        desc_part = f"  [dim italic]{escape(desc)}[/]" if desc else ""
         self.query_one("#problem-bar", Static).update(
-            f"[bold white]{escape(self.problem.name)}[/]  "
-            f"[dim]─  e edit   s submit   q menu[/]"
+            f"[bold white]{escape(self.problem.name)}[/]{desc_part}"
         )
         log = self.query_one("#diff-pane", RichLog)
         row = get_row(self.conn, self.problem.stem)
@@ -404,15 +501,30 @@ class StudyScreen(Screen):
             log.write("[dim]press  e  to open editor[/]")
 
     def action_hint(self) -> None:
-        user_code = self.work_file.read_text() if self.work_file.exists() else None
-        self.app.push_screen(HintModal(self.problem.name, self.problem.read_text(), user_code))
+        ref  = self.meta["solution"]
+        user = self.work_file.read_text() if self.work_file.exists() else None
+        self.app.push_screen(AIModal(
+            f"hint  ·  {self.problem.name}",
+            lambda: get_hint(self.problem.name, ref, user),
+        ))
 
     def action_suggest_fix(self) -> None:
         if not self.work_file.exists():
             self.query_one("#diff-pane", RichLog).write("\n[dim]edit first — press  e[/]")
             return
-        user_code = self.work_file.read_text()
-        self.app.push_screen(SuggestFixModal(self.problem.name, self.problem.read_text(), user_code))
+        ref  = self.meta["solution"]
+        user = self.work_file.read_text()
+        self.app.push_screen(AIModal(
+            f"suggest fix  ·  {self.problem.name}",
+            lambda: get_suggest_fix(self.problem.name, ref, user),
+        ))
+
+    def action_explain(self) -> None:
+        ref = self.meta["solution"]
+        self.app.push_screen(AIModal(
+            f"explain  ·  {self.problem.name}",
+            lambda: get_explain(self.problem.name, ref),
+        ))
 
     def action_edit(self) -> None:
         self.attempts += 1
@@ -427,14 +539,13 @@ class StudyScreen(Screen):
         log.clear()
 
         user_code = self.work_file.read_text() if self.work_file.exists() else ""
-        ref_code  = self.problem.read_text()
+        ref_code  = self.meta["solution"]
 
         if user_code.splitlines() == ref_code.splitlines():
             log.write("[white]✓  perfect match[/]")
             summary = "✓  perfect match"
         else:
             log.write(build_side_by_side(ref_code, user_code))
-            # keep unified diff as plaintext for next-session preview
             summary = "\n".join(difflib.unified_diff(
                 ref_code.splitlines(), user_code.splitlines(),
                 fromfile="reference", tofile="yours", lineterm="",
@@ -446,7 +557,7 @@ class StudyScreen(Screen):
         else:
             log.write(
                 f"\n[dim]attempt {self.attempts}  ·  max: {RATING_LABELS[max_r]}"
-                f"  ·  s = submit    e = retry[/]"
+                f"  ·  s = submit    e = retry    x = explain[/]"
             )
 
         self.conn.execute(
@@ -459,8 +570,7 @@ class StudyScreen(Screen):
 
     def action_submit(self) -> None:
         if not self.has_diff:
-            log = self.query_one("#diff-pane", RichLog)
-            log.write("\n[dim]edit first — press  e[/]")
+            self.query_one("#diff-pane", RichLog).write("\n[dim]edit first — press  e[/]")
             return
 
         max_r = max_rating_for(self.attempts)
@@ -480,23 +590,61 @@ class StudyScreen(Screen):
         self.app.pop_screen()
 
     def action_back(self) -> None:
-        self.work_file.unlink(missing_ok=True)
-        self.app.pop_screen()
+        if self.work_file.exists():
+            self.app.push_screen(
+                ConfirmModal("Discard in-progress work and go back?"),
+                self._confirm_back,
+            )
+        else:
+            self.app.pop_screen()
+
+    def _confirm_back(self, confirmed: bool | None) -> None:
+        if confirmed:
+            self.work_file.unlink(missing_ok=True)
+            self.app.pop_screen()
+
+
+# ── Search / Filter bar ───────────────────────────────────────────────────────
+class SearchBar(Static):
+    """A slim inline search input rendered above the table."""
+    DEFAULT_CSS = """
+    SearchBar {
+        height: 1;
+        padding: 0 2;
+        background: $surface;
+    }
+    SearchBar Input {
+        border: none;
+        height: 1;
+        background: $surface;
+        color: $foreground;
+        padding: 0;
+    }
+    """
+
+    def compose(self) -> ComposeResult:
+        yield Input(placeholder="search…", id="search-input")
+
 
 # ── Menu Screen ───────────────────────────────────────────────────────────────
 class MenuScreen(Screen):
     BINDINGS = [
-        Binding("r", "refresh",  "Refresh"),
-        Binding("q", "quit_app", "Quit"),
+        Binding("r",     "refresh",   "Refresh"),
+        Binding("/",     "focus_search", "Search"),
+        Binding("escape","clear_search", "Clear", show=False),
+        Binding("q",     "quit_app",  "Quit"),
     ]
 
     def __init__(self) -> None:
         super().__init__()
-        self.conn = get_db()
+        self.conn        = get_db()
+        self._all_rows: list[tuple] = []
+        self._filter     = ""
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield Static(id="stats-bar")
+        yield SearchBar(id="search-bar")
         yield DataTable(id="table", cursor_type="row")
         yield Footer()
 
@@ -505,9 +653,8 @@ class MenuScreen(Screen):
         t.add_columns("Status", "Problem", "Reps", "Interval", "Next review")
         self._refresh()
 
+    # ── data loading ──────────────────────────────────────────────────────────
     def _refresh(self) -> None:
-        t        = self.query_one(DataTable)
-        t.clear()
         problems = scan_problems()
         due = new = upcoming = 0
         rows: list[tuple] = []
@@ -524,17 +671,48 @@ class MenuScreen(Screen):
             else:                            upcoming += 1
             rows.append((sort_key, label, color, p, reps, interval, nxt))
 
-        for _, label, color, p, reps, interval, nxt in sorted(rows, key=lambda x: x[0]):
+        self._all_rows = sorted(rows, key=lambda x: x[0])
+
+        streak = get_streak(self.conn)
+        streak_str = f"  [bold yellow]🔥 {streak}d streak[/]" if streak >= 2 else ""
+        self.query_one("#stats-bar", Static).update(
+            f"  [bold red]{due} due[/]  [bold]{new} new[/]"
+            f"  [dim]{upcoming} upcoming  ·  {len(problems)} total[/]"
+            + streak_str
+        )
+        self._render_table()
+
+    def _render_table(self) -> None:
+        t = self.query_one(DataTable)
+        t.clear()
+        q = self._filter.lower()
+        for _, label, color, p, reps, interval, nxt in self._all_rows:
+            if q and q not in p.name.lower():
+                continue
             t.add_row(
                 f"[{color}]{label}[/]", p.name, reps, interval, nxt,
                 key=str(p),
             )
 
-        self.query_one("#stats-bar", Static).update(
-            f"  [bold red]{due} due[/]  [bold]{new} new[/]"
-            f"  [dim]{upcoming} upcoming  ·  {len(problems)} total[/]"
-        )
+    # ── search ────────────────────────────────────────────────────────────────
+    def action_focus_search(self) -> None:
+        self.query_one("#search-input", Input).focus()
 
+    def action_clear_search(self) -> None:
+        inp = self.query_one("#search-input", Input)
+        inp.value = ""
+        self._filter = ""
+        self._render_table()
+        self.query_one(DataTable).focus()
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        self._filter = event.value
+        self._render_table()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        self.query_one(DataTable).focus()
+
+    # ── navigation ───────────────────────────────────────────────────────────
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         self.app.push_screen(StudyScreen(Path(str(event.row_key.value))))
 
@@ -547,6 +725,33 @@ class MenuScreen(Screen):
     def action_quit_app(self) -> None:
         self.app.exit()
 
+    # ── reset progress ────────────────────────────────────────────────────────
+    BINDINGS = [
+        Binding("r",      "refresh",      "Refresh"),
+        Binding("/",      "focus_search", "Search"),
+        Binding("escape", "clear_search", "Clear",  show=False),
+        Binding("d",      "reset_row",    "Reset",  show=False),
+        Binding("q",      "quit_app",     "Quit"),
+    ]
+
+    def action_reset_row(self) -> None:
+        t = self.query_one(DataTable)
+        if t.cursor_row is None:
+            return
+        row_key = t.get_row_at(t.cursor_row)
+        # row_key[1] is the problem filename
+        self.app.push_screen(
+            ConfirmModal(f"Reset progress for  {row_key[1]}?"),
+            lambda confirmed: self._do_reset(confirmed, row_key[1]),
+        )
+
+    def _do_reset(self, confirmed: bool | None, filename: str) -> None:
+        if confirmed:
+            stem = Path(filename).stem
+            reset_progress(self.conn, stem)
+            self._refresh()
+
+
 # ── App ───────────────────────────────────────────────────────────────────────
 class MLStudyApp(App):
     TITLE = "CODI"
@@ -558,7 +763,7 @@ class MLStudyApp(App):
     #stats-bar    { height: 1; padding: 0 2; background: $surface; color: $accent; }
     #table        { height: 1fr; border: solid $primary; }
 
-    #problem-bar  { height: 1; padding: 0 2; background: $surface; color: $accent; }
+    #problem-bar  { height: 2; padding: 0 2; background: $surface; color: $accent; }
     .full-pane    { height: 1fr; border: solid $primary; padding: 1 2; overflow-y: auto; }
 
     #modal-box  {
@@ -572,6 +777,7 @@ class MLStudyApp(App):
     #modal-title { text-style: bold; margin-bottom: 1; }
     #modal-skip  { color: $accent; }
     RatingModal  { align: center middle; background: $background 70%; }
+    ConfirmModal { align: center middle; background: $background 70%; }
 
     #hint-box {
         background: $surface;
@@ -583,8 +789,7 @@ class MLStudyApp(App):
     }
     #hint-title  { text-style: bold; margin-bottom: 1; }
     #hint-md     { height: 1fr; overflow-y: auto; background: $surface; }
-    HintModal       { align: center middle; background: $background 70%; }
-    SuggestFixModal { align: center middle; background: $background 70%; }
+    AIModal { align: center middle; background: $background 70%; }
     """
 
     def on_mount(self) -> None:
