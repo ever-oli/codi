@@ -23,6 +23,7 @@ from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
 from textual.app import App, ComposeResult
+from themes import TERMINAL_SEXY_THEMES
 from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import Screen, ModalScreen
@@ -107,7 +108,7 @@ def build_side_by_side(ref_code: str, user_code: str) -> Table:
 
     table = Table(
         show_header=True,
-        header_style="bold #8b5e3c",
+        header_style="bold dim",
         box=None,
         padding=(0, 1),
         expand=True,
@@ -147,9 +148,9 @@ def status_label(row: sqlite3.Row | None) -> tuple[str, str]:
         return "New", "white"
     nxt = datetime.fromisoformat(row["next_review"])
     if datetime.now() >= nxt:
-        return "Due", "#9e0b0f"
+        return "Due", "bold red"
     diff = nxt - datetime.now()
-    return (f"In {diff.days}d", "#8b5e3c") if diff.days >= 1 else ("Due soon", "#9e0b0f")
+    return (f"In {diff.days}d", "dim") if diff.days >= 1 else ("Due soon", "bold red")
 
 
 def max_rating_for(attempts: int) -> int:
@@ -287,7 +288,7 @@ class HintModal(ModalScreen):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="hint-box"):
-            yield Label(f"[bold #8b5e3c]hint  ·  {escape(self.problem_name)}[/]", id="hint-title")
+            yield Label(f"[bold]hint  ·  {escape(self.problem_name)}[/]", id="hint-title")
             yield MarkdownWidget("*asking Codi…*", id="hint-md")
 
     def on_mount(self) -> None:
@@ -313,7 +314,7 @@ class SuggestFixModal(ModalScreen):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="hint-box"):
-            yield Label(f"[bold #9e0b0f]suggest fix  ·  {escape(self.problem_name)}[/]", id="hint-title")
+            yield Label(f"[bold red]suggest fix  ·  {escape(self.problem_name)}[/]", id="hint-title")
             yield MarkdownWidget("*asking Codi…*", id="hint-md")
 
     def on_mount(self) -> None:
@@ -346,7 +347,7 @@ class RatingModal(ModalScreen[int]):
         with Vertical(id="modal-box"):
             yield Label(
                 f"[white]attempt {self.attempts}[/]  —  "
-                f"max: [#8b5e3c]{RATING_LABELS[self.max_r]}[/]",
+                f"max: [dim]{RATING_LABELS[self.max_r]}[/]",
                 id="modal-title",
             )
             yield Label("")
@@ -355,7 +356,7 @@ class RatingModal(ModalScreen[int]):
                 if i <= self.max_r:
                     yield Label(line)
                 else:
-                    yield Label(f"[#3a3a3a]{line}  ✕[/]")
+                    yield Label(f"[dim]{line}  ✕[/]")
             yield Label("")
             yield Label("  [Esc] skip without updating", id="modal-skip")
 
@@ -391,16 +392,16 @@ class StudyScreen(Screen):
     def on_mount(self) -> None:
         self.query_one("#problem-bar", Static).update(
             f"[bold white]{escape(self.problem.name)}[/]  "
-            f"[#8b5e3c]─  e edit   s submit   q menu[/]"
+            f"[dim]─  e edit   s submit   q menu[/]"
         )
         log = self.query_one("#diff-pane", RichLog)
         row = get_row(self.conn, self.problem.stem)
         if row and row["last_output"] and row["last_output"] != "✓  perfect match":
-            log.write("[#8b5e3c]── last session ──[/]")
+            log.write("[dim]── last session ──[/]")
             log.write(Syntax(row["last_output"], "diff", theme="ansi_dark", word_wrap=False))
-            log.write("[#8b5e3c]press  e  to start new attempt[/]")
+            log.write("[dim]press  e  to start new attempt[/]")
         else:
-            log.write("[#8b5e3c]press  e  to open editor[/]")
+            log.write("[dim]press  e  to open editor[/]")
 
     def action_hint(self) -> None:
         user_code = self.work_file.read_text() if self.work_file.exists() else None
@@ -408,7 +409,7 @@ class StudyScreen(Screen):
 
     def action_suggest_fix(self) -> None:
         if not self.work_file.exists():
-            self.query_one("#diff-pane", RichLog).write("\n[#8b5e3c]edit first — press  e[/]")
+            self.query_one("#diff-pane", RichLog).write("\n[dim]edit first — press  e[/]")
             return
         user_code = self.work_file.read_text()
         self.app.push_screen(SuggestFixModal(self.problem.name, self.problem.read_text(), user_code))
@@ -441,10 +442,10 @@ class StudyScreen(Screen):
 
         max_r = max_rating_for(self.attempts)
         if self.attempts >= 4:
-            log.write(f"\n[#9e0b0f]attempt {self.attempts} — press  s  to record (forced: Again)[/]")
+            log.write(f"\n[bold red]attempt {self.attempts} — press  s  to record (forced: Again)[/]")
         else:
             log.write(
-                f"\n[#8b5e3c]attempt {self.attempts}  ·  max: {RATING_LABELS[max_r]}"
+                f"\n[dim]attempt {self.attempts}  ·  max: {RATING_LABELS[max_r]}"
                 f"  ·  s = submit    e = retry[/]"
             )
 
@@ -459,13 +460,13 @@ class StudyScreen(Screen):
     def action_submit(self) -> None:
         if not self.has_diff:
             log = self.query_one("#diff-pane", RichLog)
-            log.write("\n[#8b5e3c]edit first — press  e[/]")
+            log.write("\n[dim]edit first — press  e[/]")
             return
 
         max_r = max_rating_for(self.attempts)
         if max_r == 1:
             log = self.query_one("#diff-pane", RichLog)
-            log.write("\n[#9e0b0f]forced: Again  (4+ attempts)[/]")
+            log.write("\n[bold red]forced: Again  (4+ attempts)[/]")
             sm2_update(self.conn, self.problem.stem, 1)
             self.work_file.unlink(missing_ok=True)
             self.app.pop_screen()
@@ -530,8 +531,8 @@ class MenuScreen(Screen):
             )
 
         self.query_one("#stats-bar", Static).update(
-            f"  [#9e0b0f bold]{due} due[/]  [white bold]{new} new[/]"
-            f"  [#8b5e3c]{upcoming} upcoming  ·  {len(problems)} total[/]"
+            f"  [bold red]{due} due[/]  [bold]{new} new[/]"
+            f"  [dim]{upcoming} upcoming  ·  {len(problems)} total[/]"
         )
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
@@ -548,45 +549,47 @@ class MenuScreen(Screen):
 
 # ── App ───────────────────────────────────────────────────────────────────────
 class MLStudyApp(App):
-    TITLE = "mlstudy"
+    TITLE = "CODI"
     CSS = """
-    Screen        { background: #0c0c0c; color: #ffffff; }
-    Header        { background: #191919; color: #ffffff; }
-    Footer        { background: #191919; color: #8b5e3c; }
+    Screen        { background: $background; color: $foreground; }
+    Header        { background: $surface; color: $foreground; }
+    Footer        { background: $surface; color: $accent; }
 
-    #stats-bar    { height: 1; padding: 0 2; background: #191919; color: #8b5e3c; }
-    #table        { height: 1fr; border: solid #8b5e3c; }
+    #stats-bar    { height: 1; padding: 0 2; background: $surface; color: $accent; }
+    #table        { height: 1fr; border: solid $primary; }
 
-    #problem-bar  { height: 1; padding: 0 2; background: #191919; color: #8b5e3c; }
-    .full-pane    { height: 1fr; border: solid #8b5e3c; padding: 1 2; overflow-y: auto; }
+    #problem-bar  { height: 1; padding: 0 2; background: $surface; color: $accent; }
+    .full-pane    { height: 1fr; border: solid $primary; padding: 1 2; overflow-y: auto; }
 
     #modal-box  {
-        background: #191919;
-        border: double #8b5e3c;
+        background: $surface;
+        border: double $primary;
         padding: 2 4;
         width: 56;
         height: 15;
         align: center middle;
     }
     #modal-title { text-style: bold; margin-bottom: 1; }
-    #modal-skip  { color: #8b5e3c; }
-    RatingModal  { align: center middle; background: #0c0c0c 70%; }
+    #modal-skip  { color: $accent; }
+    RatingModal  { align: center middle; background: $background 70%; }
 
     #hint-box {
-        background: #191919;
-        border: double #8b5e3c;
+        background: $surface;
+        border: double $primary;
         padding: 2 4;
         width: 80%;
         height: 60%;
         align: center middle;
     }
     #hint-title  { text-style: bold; margin-bottom: 1; }
-    #hint-md     { height: 1fr; overflow-y: auto; background: #191919; }
-    HintModal       { align: center middle; background: #0c0c0c 70%; }
-    SuggestFixModal { align: center middle; background: #0c0c0c 70%; }
+    #hint-md     { height: 1fr; overflow-y: auto; background: $surface; }
+    HintModal       { align: center middle; background: $background 70%; }
+    SuggestFixModal { align: center middle; background: $background 70%; }
     """
 
     def on_mount(self) -> None:
+        for theme in TERMINAL_SEXY_THEMES:
+            self.register_theme(theme)
         self.push_screen(MenuScreen())
 
 
