@@ -230,6 +230,40 @@ def max_rating_for(attempts: int) -> int:
     if attempts == 3: return 2
     return 1  # 4+ → forced Again
 
+
+# ── LaTeX → Unicode ───────────────────────────────────────────────────────────
+def render_latex(text: str) -> str:
+    """
+    Convert inline LaTeX math in AI responses to readable Unicode.
+
+    Handles both $...$ and \\(...\\) delimiters, plus bare LaTeX tokens
+    that slip through without delimiters (common in LLM output).
+    Falls back gracefully if pylatexenc is not installed.
+    """
+    try:
+        import re
+        from pylatexenc.latex2text import LatexNodes2Text
+        conv = LatexNodes2Text(math_mode="text")
+
+        def _replace(m: re.Match) -> str:
+            inner = m.group(1) or m.group(2) or m.group(3)
+            try:
+                return conv.latex_to_text(inner)
+            except Exception:
+                return m.group(0)
+
+        # $...$ and $$...$$
+        text = re.sub(r'\$\$(.+?)\$\$', _replace, text, flags=re.DOTALL)
+        text = re.sub(r'\$(.+?)\$',     _replace, text, flags=re.DOTALL)
+        # \(...\)
+        text = re.sub(r'\\\((.+?)\\\)', _replace, text, flags=re.DOTALL)
+        # \[...\]
+        text = re.sub(r'\\\[(.+?)\\\]', _replace, text, flags=re.DOTALL)
+    except ImportError:
+        pass
+    return text
+
+
 # ── AI providers ──────────────────────────────────────────────────────────────
 GEMINI_MODEL     = os.environ.get("GEMINI_MODEL",     "gemini-2.0-flash")
 OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "nvidia/nemotron-3-nano-30b-a3b:free")
@@ -391,7 +425,7 @@ class AIModal(ModalScreen):
         threading.Thread(target=self._run, daemon=True).start()
 
     def _run(self) -> None:
-        text = self._fetch_fn()
+        text = render_latex(self._fetch_fn())
         self.app.call_from_thread(self._display, text)
 
     def _display(self, text: str) -> None:
