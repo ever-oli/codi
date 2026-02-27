@@ -23,12 +23,14 @@ from textual.widgets import DataTable, Footer, Header, Input, RichLog, Static
 
 from ai import get_explain, get_hint, get_suggest_fix
 from db import get_db, get_row, get_streak, reset_progress, sm2_update
-from modals import AIModal, ConfirmModal, RatingModal
+from modals import AIModal, ConfirmModal, RatingModal, CollectionSelectModal
 from problems_utils import (
     build_side_by_side,
+    get_problem_id,
     load_problem_meta,
     max_rating_for,
     scan_problems,
+    scan_collections,
     status_label,
 )
 from themes import TERMINAL_SEXY_THEMES
@@ -58,8 +60,11 @@ class StudyScreen(Screen):
     def __init__(self, problem: Path) -> None:
         super().__init__()
         self.problem   = problem
+        self.pid       = get_problem_id(problem, PROBLEMS_DIR)
         self.meta      = load_problem_meta(problem)
-        self.work_file = _TMP / f"codi_{problem.stem}.py"
+        # Use pid in temp file name to avoid collisions
+        safe_pid       = self.pid.replace("/", "_").replace("\\", "_")
+        self.work_file = _TMP / f"codi_{safe_pid}.py"
         self.conn      = get_db(DB_PATH)
         self.attempts  = 0
         self.has_diff  = False
@@ -77,7 +82,7 @@ class StudyScreen(Screen):
             f"[bold white]{escape(self.problem.name)}[/]{desc_part}"
         )
         log = self.query_one("#diff-pane", RichLog)
-        row = get_row(self.conn, self.problem.stem)
+        row = get_row(self.conn, self.pid)
         if row and row["last_output"] and row["last_output"] != "✓  perfect match":
             log.write("[dim]── last session ──[/]")
             log.write(Syntax(row["last_output"], "diff", theme="ansi_dark", word_wrap=False))
@@ -148,7 +153,7 @@ class StudyScreen(Screen):
         self.conn.execute(
             "INSERT INTO reviews (problem_id, last_output) VALUES (?,?) "
             "ON CONFLICT(problem_id) DO UPDATE SET last_output=excluded.last_output",
-            (self.problem.stem, summary),
+            (self.pid, summary),
         )
         self.conn.commit()
         self.has_diff = True
@@ -161,7 +166,7 @@ class StudyScreen(Screen):
         if max_r == 1:
             log = self.query_one("#diff-pane", RichLog)
             log.write("\n[bold red]forced: Again  (4+ attempts)[/]")
-            sm2_update(self.conn, self.problem.stem, 1)
+            sm2_update(self.conn, self.pid, 1)
             self.work_file.unlink(missing_ok=True)
             self.app.pop_screen()
         else:
@@ -169,7 +174,7 @@ class StudyScreen(Screen):
 
     def _rated(self, rating: int | None) -> None:
         if rating:
-            sm2_update(self.conn, self.problem.stem, rating)
+            sm2_update(self.conn, self.pid, rating)
         self.work_file.unlink(missing_ok=True)
         self.app.pop_screen()
 
@@ -207,6 +212,7 @@ class MenuScreen(Screen):
     BINDINGS = [
         Binding("r",      "refresh",      "Refresh"),
         Binding("/",      "focus_search", "Search"),
+        Binding("c",      "change_collection", "Collection"),
         Binding("escape", "clear_search", "Clear",  show=False),
         Binding("d",      "reset_row",    "Reset",  show=False),
         Binding("q",      "quit_app",     "Quit"),
@@ -217,6 +223,7 @@ class MenuScreen(Screen):
         self.conn        = get_db(DB_PATH)
         self._all_rows: list[tuple] = []
         self._filter     = ""
+        self.current_collection = PROBLEMS_DIR
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -231,12 +238,14 @@ class MenuScreen(Screen):
         self._refresh()
 
     def _refresh(self) -> None:
-        problems = scan_problems(PROBLEMS_DIR)
+        problems = scan_problems(self.current_collection)
         due = new = upcoming = 0
         rows: list[tuple] = []
 
         for p in problems:
-            row          = get_row(self.conn, p.stem)
+            # Determine ID based on root PROBLEMS_DIR
+            pid          = get_problem_id(p, PROBLEMS_DIR)
+            row          = get_row(self.conn, pid)
             label, color = status_label(row)
             reps         = str(row["reps"])      if row else "0"
             interval     = f"{row['interval']}d" if row else "—"
@@ -251,8 +260,21 @@ class MenuScreen(Screen):
 
         streak = get_streak(self.conn)
         streak_str = f"  [bold yellow]🔥 {streak}d streak[/]" if streak >= 2 else ""
+
+        # Determine collection display name
+        if self.current_collection == PROBLEMS_DIR:
+            col_name = "Main"
+        elif self.current_collection.parent == PROBLEMS_DIR:
+            col_name = self.current_collection.name
+        else:
+            try:
+                col_name = str(self.current_collection.relative_to(PROBLEMS_DIR))
+            except ValueError:
+                col_name = self.current_collection.name
+
         self.query_one("#stats-bar", Static).update(
-            f"  [bold red]{due} due[/]  [bold]{new} new[/]"
+            f"  [bold cyan]📂 {col_name}[/]  "
+            f"[bold red]{due} due[/]  [bold]{new} new[/]"
             f"  [dim]{upcoming} upcoming  ·  {len(problems)} total[/]"
             + streak_str
         )
@@ -272,6 +294,18 @@ class MenuScreen(Screen):
 
     def action_focus_search(self) -> None:
         self.query_one("#search-input", Input).focus()
+
+    def action_change_collection(self) -> None:
+        cols = scan_collections(PROBLEMS_DIR)
+        self.app.push_screen(
+            CollectionSelectModal(cols, self.current_collection),
+            self._on_collection_selected
+        )
+
+    def _on_collection_selected(self, collection: Path | None) -> None:
+        if collection:
+            self.current_collection = collection
+            self._refresh()
 
     def action_clear_search(self) -> None:
         inp = self.query_one("#search-input", Input)
@@ -304,14 +338,16 @@ class MenuScreen(Screen):
         if t.cursor_row is None:
             return
         row_key = t.get_row_at(t.cursor_row)
+        p_path = Path(str(row_key.value))
+        pid = get_problem_id(p_path, PROBLEMS_DIR)
         self.app.push_screen(
-            ConfirmModal(f"Reset progress for  {row_key[1]}?"),
-            lambda confirmed: self._do_reset(confirmed, row_key[1]),
+            ConfirmModal(f"Reset progress for  {p_path.name}?"),
+            lambda confirmed: self._do_reset(confirmed, pid),
         )
 
-    def _do_reset(self, confirmed: bool | None, filename: str) -> None:
+    def _do_reset(self, confirmed: bool | None, pid: str) -> None:
         if confirmed:
-            reset_progress(self.conn, Path(filename).stem)
+            reset_progress(self.conn, pid)
             self._refresh()
 
 
@@ -353,6 +389,21 @@ class MLStudyApp(App):
     #hint-title { text-style: bold; margin-bottom: 1; }
     #hint-md    { height: 1fr; overflow-y: auto; background: $surface; }
     AIModal     { align: center middle; background: $background 70%; }
+
+    /* Collection Select Modal */
+    #collection-box {
+        background: $surface;
+        border: double $primary;
+        padding: 2 4;
+        width: 60;
+        height: 20;
+        align: center middle;
+    }
+    #collection-list {
+        height: 1fr;
+        border: solid $accent;
+    }
+    CollectionSelectModal { align: center middle; background: $background 70%; }
     """
 
     def on_mount(self) -> None:

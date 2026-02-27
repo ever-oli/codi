@@ -21,6 +21,51 @@ def scan_problems(problems_dir: Path) -> list[Path]:
     return sorted(p for p in problems_dir.iterdir() if p.suffix == ".py")
 
 
+def scan_collections(root: Path) -> list[Path]:
+    """
+    Recursively find all directories in `root` that contain at least one .py file.
+    Includes `root` itself if it contains .py files.
+    """
+    if not root.exists():
+        return []
+
+    collections = set()
+
+    # Check root itself first
+    if any(p.suffix == ".py" for p in root.iterdir() if p.is_file()):
+        collections.add(root)
+
+    # Walk directory tree
+    for path in root.rglob("*"):
+        if path.is_dir():
+            # Check if this directory contains any .py files
+            has_py = any(p.suffix == ".py" for p in path.iterdir() if p.is_file())
+            if has_py:
+                collections.add(path)
+
+    # Sort by path depth then name for nice display order
+    return sorted(list(collections), key=lambda p: (len(p.parts), p.name))
+
+
+def get_problem_id(problem_path: Path, root: Path) -> str:
+    """
+    Get a stable ID for the problem.
+    - If direct child of root: use filename stem (backward compatibility)
+    - Else: use relative path string without extension
+    """
+    try:
+        rel = problem_path.relative_to(root)
+    except ValueError:
+        # Fallback if somehow path is not relative to root
+        return problem_path.stem
+
+    if len(rel.parts) == 1:
+        return problem_path.stem
+
+    # Use forward slashes for ID regardless of OS
+    return str(rel.with_suffix("")).replace("\\", "/")
+
+
 def load_problem_meta(path: Path) -> dict:
     """Load SOLUTION and DESCRIPTION from a problem file via importlib."""
     spec = importlib.util.spec_from_file_location("_prob", path)
