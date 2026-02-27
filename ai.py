@@ -87,10 +87,21 @@ def ai_call(prompt: str) -> str:
         return _gemini(prompt)
     return _openrouter(prompt)
 
+# ── Helpers ───────────────────────────────────────────────────────────────
+_EXT_TO_LANG = {
+    ".py": "python", ".jl": "julia", ".R": "r",
+}
+
+def _lang_for(name: str) -> str:
+    """Infer code-fence language from a problem filename."""
+    import os
+    _, ext = os.path.splitext(name)
+    return _EXT_TO_LANG.get(ext, "python")
 
 # ── Prompts ───────────────────────────────────────────────────────────────────
 def get_hint(problem_name: str, ref_code: str, user_code: str | None) -> str:
     has_attempt = bool(user_code and user_code.strip())
+    lang = _lang_for(problem_name)
     if has_attempt:
         diff_text = "\n".join(difflib.unified_diff(
             ref_code.splitlines(), (user_code or "").splitlines(),
@@ -102,7 +113,7 @@ You are a coding tutor helping a student study ML implementations from memory.
 Problem: {problem_name}
 
 Reference solution:
-```python
+```{lang}
 {ref_code}
 ```
 
@@ -121,7 +132,7 @@ You are a coding tutor helping a student study ML implementations from memory.
 Problem: {problem_name}
 
 Reference solution:
-```python
+```{lang}
 {ref_code}
 ```
 
@@ -132,6 +143,7 @@ think about? Be concise (2-4 sentences max). Do not give away the answer."""
 
 
 def get_suggest_fix(problem_name: str, ref_code: str, user_code: str) -> str:
+    lang = _lang_for(problem_name)
     diff_text = "\n".join(difflib.unified_diff(
         ref_code.splitlines(), user_code.splitlines(),
         fromfile="reference", tofile="yours", lineterm="",
@@ -142,7 +154,7 @@ You are a coding tutor reviewing a student's ML implementation attempt.
 Problem: {problem_name}
 
 Reference solution:
-```python
+```{lang}
 {ref_code}
 ```
 
@@ -158,6 +170,7 @@ Do not explain concepts they already got right."""
 
 
 def get_explain(problem_name: str, ref_code: str) -> str:
+    lang = _lang_for(problem_name)
     prompt = f"""\
 You are a coding tutor explaining an ML concept to a student who just finished \
 (or attempted) an implementation exercise.
@@ -165,7 +178,7 @@ You are a coding tutor explaining an ML concept to a student who just finished \
 Problem: {problem_name}
 
 Reference solution:
-```python
+```{lang}
 {ref_code}
 ```
 

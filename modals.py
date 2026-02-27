@@ -147,13 +147,16 @@ class CollectionSelectModal(ModalScreen[Path]):
         )
 
     def _display_name(self, path: Path) -> str:
-        # Show relative path from problems dir, or just name
-        # For now let's just show the name or a shortened path
-        # Assuming all are inside a common root, we can show relative path?
-        # But for now let's just show the path name or parts
-        if path.name == "problems":
+        """Show a friendly name relative to the problems root."""
+        if path == self.collections[0] and path.name == "problems":
             return "Main Collection"
-        return str(path.relative_to(path.parent.parent)) if path.parent.name != "problems" else path.name
+        try:
+            # Find the top-level problems dir (first collection entry)
+            root = self.collections[0] if self.collections[0].name == "problems" else path.parent
+            rel = path.relative_to(root)
+            return str(rel) if str(rel) != "." else "Main Collection"
+        except ValueError:
+            return path.name
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         idx = int(event.item.id.split("-")[1])
