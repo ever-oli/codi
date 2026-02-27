@@ -14,17 +14,24 @@ from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
 
+# Supported problem file extensions
+CODE_EXTENSIONS = {".py", ".jl", ".R"}
+
+
+def _is_code_file(p: Path) -> bool:
+    return p.is_file() and p.suffix in CODE_EXTENSIONS
+
 
 def scan_problems(problems_dir: Path) -> list[Path]:
     if not problems_dir.exists():
         return []
-    return sorted(p for p in problems_dir.iterdir() if p.suffix == ".py")
+    return sorted(p for p in problems_dir.iterdir() if _is_code_file(p))
 
 
 def scan_collections(root: Path) -> list[Path]:
     """
-    Recursively find all directories in `root` that contain at least one .py file.
-    Includes `root` itself if it contains .py files.
+    Recursively find all directories in `root` that contain at least one code file.
+    Includes `root` itself if it contains code files.
     """
     if not root.exists():
         return []
@@ -32,15 +39,14 @@ def scan_collections(root: Path) -> list[Path]:
     collections = set()
 
     # Check root itself first
-    if any(p.suffix == ".py" for p in root.iterdir() if p.is_file()):
+    if any(_is_code_file(p) for p in root.iterdir()):
         collections.add(root)
 
     # Walk directory tree
     for path in root.rglob("*"):
         if path.is_dir():
-            # Check if this directory contains any .py files
-            has_py = any(p.suffix == ".py" for p in path.iterdir() if p.is_file())
-            if has_py:
+            has_code = any(_is_code_file(p) for p in path.iterdir())
+            if has_code:
                 collections.add(path)
 
     # Sort by path depth then name for nice display order
@@ -67,7 +73,15 @@ def get_problem_id(problem_path: Path, root: Path) -> str:
 
 
 def load_problem_meta(path: Path) -> dict:
-    """Load SOLUTION and DESCRIPTION from a problem file via importlib."""
+    """Load SOLUTION and DESCRIPTION from a problem file.
+
+    For .py files, tries to import and read SOLUTION/DESCRIPTION variables.
+    For other file types (.jl, .R, etc.), reads raw text as the solution.
+    """
+    # Non-Python files: just read raw text
+    if path.suffix != ".py":
+        return {"solution": path.read_text(), "description": ""}
+
     spec = importlib.util.spec_from_file_location("_prob", path)
     if spec is None or spec.loader is None:
         return {"solution": path.read_text(), "description": ""}

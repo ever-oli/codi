@@ -64,7 +64,8 @@ class StudyScreen(Screen):
         self.meta      = load_problem_meta(problem)
         # Use pid in temp file name to avoid collisions
         safe_pid       = self.pid.replace("/", "_").replace("\\", "_")
-        self.work_file = _TMP / f"codi_{safe_pid}.py"
+        ext            = problem.suffix  # preserve .py, .jl, .R etc.
+        self.work_file = _TMP / f"codi_{safe_pid}{ext}"
         self.conn      = get_db(DB_PATH)
         self.attempts  = 0
         self.has_diff  = False
