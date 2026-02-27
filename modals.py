@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import threading
 from pathlib import Path
-from typing import Callable
 
 from rich.markup import escape
 from textual.binding import Binding
@@ -32,11 +31,9 @@ class AIModal(ModalScreen):
         self._fetch_fn = fetch_fn
 
     def compose(self):
-        yield Vertical(
-            Label(f"[bold]{escape(self._title)}[/]", id="hint-title"),
-            MarkdownWidget("*asking Codi…*", id="hint-md"),
-            id="hint-box"
-        )
+        with Vertical(id="hint-box"):
+            yield Label(f"[bold]{escape(self._title)}[/]", id="hint-title")
+            yield MarkdownWidget("*asking Codi…*", id="hint-md")
 
     def on_mount(self) -> None:
         threading.Thread(target=self._run, daemon=True).start()
@@ -63,13 +60,11 @@ class ConfirmModal(ModalScreen[bool]):
         self._message = message
 
     def compose(self):
-        yield Vertical(
-            Label(f"[bold]{escape(self._message)}[/]", id="modal-title"),
-            Label(""),
-            Label("  [y]  Yes"),
-            Label("  [n]  No"),
-            id="modal-box"
-        )
+        with Vertical(id="modal-box"):
+            yield Label(f"[bold]{escape(self._message)}[/]", id="modal-title")
+            yield Label("")
+            yield Label("  [y]  Yes")
+            yield Label("  [n]  No")
 
     def action_confirm(self, result: bool) -> None:
         self.dismiss(result)
@@ -90,25 +85,21 @@ class RatingModal(ModalScreen[int]):
         self.attempts = attempts
 
     def compose(self):
-        yield Vertical(
-            Label(
+        with Vertical(id="modal-box"):
+            yield Label(
                 f"[white]attempt {self.attempts}[/]  —  "
                 f"max: [dim]{RATING_LABELS[self.max_r]}[/]",
                 id="modal-title",
-            ),
-            Label(""),
-            *[
-                Label(
-                    f"  [{i}]  {RATING_LABELS[i]:<7} {RATING_DESC[i]}"
-                    if i <= self.max_r else
-                    f"[dim]  [{i}]  {RATING_LABELS[i]:<7} {RATING_DESC[i]}  ✕[/]"
-                )
-                for i in range(1, 5)
-            ],
-            Label(""),
-            Label("  [Esc] skip without updating", id="modal-skip"),
-            id="modal-box"
-        )
+            )
+            yield Label("")
+            for i in range(1, 5):
+                line = f"  [{i}]  {RATING_LABELS[i]:<7} {RATING_DESC[i]}"
+                if i <= self.max_r:
+                    yield Label(line)
+                else:
+                    yield Label(f"[dim]{line}  ✕[/]")
+            yield Label("")
+            yield Label("  [Esc] skip without updating", id="modal-skip")
 
     def action_rate(self, rating: int) -> None:
         if rating <= self.max_r:
@@ -127,10 +118,9 @@ class CollectionSelectModal(ModalScreen[Path]):
         self.current     = current
 
     def compose(self):
-        # We'll re-use the modal-box styling but maybe make it taller via CSS in App
-        yield Vertical(
-            Label("[bold]Select Collection[/]", id="modal-title"),
-            ListView(
+        with Vertical(id="collection-box"):
+            yield Label("[bold]Select Collection[/]", id="modal-title")
+            yield ListView(
                 *[
                     ListItem(
                         Label(
@@ -142,19 +132,22 @@ class CollectionSelectModal(ModalScreen[Path]):
                     for i, c in enumerate(self.collections)
                 ],
                 id="collection-list"
-            ),
-            id="collection-box"  # new ID for styling if needed
-        )
+            )
 
     def _display_name(self, path: Path) -> str:
-        # Show relative path from problems dir, or just name
-        # For now let's just show the name or a shortened path
-        # Assuming all are inside a common root, we can show relative path?
-        # But for now let's just show the path name or parts
         if path.name == "problems":
             return "Main Collection"
-        return str(path.relative_to(path.parent.parent)) if path.parent.name != "problems" else path.name
+        # Assuming path is relative to PROBLEMS_DIR's parent or within PROBLEMS_DIR
+        # For simplicity, if it's a subdir of problems, show relative path
+        if path.parent.name == "problems":
+             return path.name
+        try:
+             # Try to show path relative to problems dir
+             return str(path.relative_to(path.parent.parent))
+        except ValueError:
+             return path.name
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
-        idx = int(event.item.id.split("-")[1])
-        self.dismiss(self.collections[idx])
+        if event.item.id:
+            idx = int(event.item.id.split("-")[1])
+            self.dismiss(self.collections[idx])

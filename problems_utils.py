@@ -3,6 +3,7 @@ problems.py — Problem discovery, metadata loading, diff rendering, and helpers
 """
 from __future__ import annotations
 
+import ast
 import difflib
 import importlib.util
 import sqlite3
@@ -67,18 +68,64 @@ def get_problem_id(problem_path: Path, root: Path) -> str:
 
 
 def load_problem_meta(path: Path) -> dict:
-    """Load SOLUTION and DESCRIPTION from a problem file via importlib."""
-    spec = importlib.util.spec_from_file_location("_prob", path)
-    if spec is None or spec.loader is None:
-        return {"solution": path.read_text(), "description": ""}
-    mod = importlib.util.module_from_spec(spec)
+    """
+    Load problem metadata.
+    Attempts to look for 'SOLUTION' and 'DESCRIPTION' variables.
+    If 'SOLUTION' is missing, treats the entire file content as the solution.
+    If 'DESCRIPTION' is missing, tries to use the module docstring, else filename.
+
+    This version avoids executing the module to improve safety and performance.
+    """
     try:
-        spec.loader.exec_module(mod)  # type: ignore[union-attr]
+        content = path.read_text(encoding="utf-8")
     except Exception:
+        return {"solution": "", "description": "Error reading file"}
+
+    # Use AST parsing to find SOLUTION and DESCRIPTION assignments without executing code
+    solution = None
+    description = None
+
+    try:
+        tree = ast.parse(content)
+
+        # 1. Look for module docstring
+        docstring = ast.get_docstring(tree)
+        if docstring:
+            description = docstring.strip().split("\n")[0]
+
+        # 2. Look for top-level assignments to SOLUTION and DESCRIPTION
+        for node in tree.body:
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        if target.id == "SOLUTION":
+                            if isinstance(node.value, ast.Constant): # Python 3.8+
+                                solution = node.value.value
+                            elif isinstance(node.value, ast.Str): # Python < 3.8
+                                solution = node.value.s
+                        elif target.id == "DESCRIPTION":
+                            if isinstance(node.value, ast.Constant):
+                                description = node.value.value
+                            elif isinstance(node.value, ast.Str):
+                                description = node.value.s
+    except Exception:
+        # If parsing fails, fall back to treating as raw file
         pass
+
+    # If SOLUTION was found, return it. Otherwise, treat entire file as solution.
+    if solution is not None:
+        return {
+            "solution": solution,
+            "description": description or ""
+        }
+
+    # Fallback: Raw file content
+    if not description:
+        description = path.stem.replace("-", " ").replace("_", " ").title()
+
     return {
-        "solution":    getattr(mod, "SOLUTION",    path.read_text()),
-        "description": getattr(mod, "DESCRIPTION", ""),
+        "solution": content,
+        "description": description
     }
 
 
