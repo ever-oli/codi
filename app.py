@@ -239,6 +239,17 @@ class MenuScreen(Screen):
 
     def _refresh(self) -> None:
         problems = scan_problems(self.current_collection)
+
+        # Auto-switch if empty and we are at root
+        if not problems and self.current_collection == PROBLEMS_DIR:
+            cols = scan_collections(PROBLEMS_DIR)
+            # Find first collection that has problems
+            for c in cols:
+                if c != PROBLEMS_DIR and scan_problems(c):
+                    self.current_collection = c
+                    problems = scan_problems(c)
+                    break
+
         due = new = upcoming = 0
         rows: list[tuple] = []
 
