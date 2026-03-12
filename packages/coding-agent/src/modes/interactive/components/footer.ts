@@ -33,6 +33,8 @@ function formatTokens(count: number): string {
 export class FooterComponent implements Component {
 	private autoCompactEnabled = true;
 	private activeToolName: string | undefined;
+	private lastResponseMs: number | undefined;
+	private agentStartTime: number | undefined;
 
 	constructor(
 		private session: AgentSession,
@@ -45,6 +47,17 @@ export class FooterComponent implements Component {
 
 	setActiveTool(toolName: string | undefined): void {
 		this.activeToolName = toolName;
+	}
+
+	markAgentStart(): void {
+		this.agentStartTime = Date.now();
+	}
+
+	markAgentEnd(): void {
+		if (this.agentStartTime) {
+			this.lastResponseMs = Date.now() - this.agentStartTime;
+			this.agentStartTime = undefined;
+		}
 	}
 
 	/**
@@ -133,6 +146,12 @@ export class FooterComponent implements Component {
 		if (totalCost || usingSubscription) {
 			const costStr = `$${totalCost.toFixed(3)}${usingSubscription ? " (sub)" : ""}`;
 			statsParts.push(costStr);
+		}
+
+		// Show last response latency
+		if (this.lastResponseMs !== undefined) {
+			const latencyStr = this.lastResponseMs < 1000 ? `${this.lastResponseMs}ms` : `${(this.lastResponseMs / 1000).toFixed(1)}s`;
+			statsParts.push(theme.fg("dim", `⏱${latencyStr}`));
 		}
 
 		// Colorize context percentage based on usage

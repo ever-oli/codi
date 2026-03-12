@@ -57,6 +57,8 @@ export interface InteractiveEventHandlerContext {
 	showError: (message: string) => void;
 	updateEditorBorderColor: () => void;
 	setActiveTool: (toolName: string | undefined) => void;
+	markAgentStart: () => void;
+	markAgentEnd: () => void;
 }
 
 export async function handleInteractiveAgentEvent(
@@ -106,6 +108,7 @@ export async function handleInteractiveAgentEvent(
 				state.pendingWorkingMessage = undefined;
 			}
 			context.updateEditorBorderColor();
+			context.markAgentStart();
 			context.ui.requestRender();
 			break;
 
@@ -259,6 +262,7 @@ export async function handleInteractiveAgentEvent(
 			}
 			context.pendingTools.clear();
 			context.setActiveTool(undefined);
+			context.markAgentEnd();
 
 			await context.checkShutdownRequested();
 

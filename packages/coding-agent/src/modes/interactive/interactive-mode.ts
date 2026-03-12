@@ -2429,6 +2429,12 @@ export class InteractiveMode {
 				setActiveTool: (toolName) => {
 					this.footer.setActiveTool(toolName);
 				},
+				markAgentStart: () => {
+					this.footer.markAgentStart();
+				},
+				markAgentEnd: () => {
+					this.footer.markAgentEnd();
+				},
 			},
 			event,
 		);
