@@ -26,6 +26,28 @@ function formatTokens(count: number): string {
 	return `${Math.round(count / 1000000)}M`;
 }
 
+/** Render a compact progress bar like [████░░░░] */
+function renderProgressBar(percent: number, barWidth: number = 8): string {
+	const filled = Math.round((Math.min(100, Math.max(0, percent)) / 100) * barWidth);
+	return `[${"█".repeat(filled)}${"░".repeat(barWidth - filled)}]`;
+}
+
+/** Render a waveform sparkline from token rate samples using block characters. */
+function renderWaveform(samples: number[], waveWidth: number = 12): string {
+	if (samples.length === 0) return "─".repeat(waveWidth);
+	const max = Math.max(...samples, 1);
+	const blocks = [" ", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"];
+	const step = Math.max(1, Math.floor(samples.length / waveWidth));
+	const sampled: number[] = [];
+	for (let i = 0; i < samples.length && sampled.length < waveWidth; i += step) {
+		sampled.push(samples[i]);
+	}
+	return sampled
+		.map((v) => blocks[Math.round((v / max) * (blocks.length - 1))])
+		.join("")
+		.padEnd(waveWidth, " ");
+}
+
 /**
  * Footer component that shows pwd, token stats, and context usage.
  * Computes token/context stats from session, gets git branch and extension statuses from provider.
@@ -35,6 +57,13 @@ export class FooterComponent implements Component {
 	private activeToolName: string | undefined;
 	private lastResponseMs: number | undefined;
 	private agentStartTime: number | undefined;
+	// Tok/s waveform tracking
+	private tokSamples: number[] = [];
+	private lastSampleTime = 0;
+	private lastOutputTokens = 0;
+	// Breadcrumbs
+	private currentFilePath: string | undefined;
+	private currentLineNumber: number | undefined;
 
 	constructor(
 		private session: AgentSession,
@@ -58,6 +87,26 @@ export class FooterComponent implements Component {
 			this.lastResponseMs = Date.now() - this.agentStartTime;
 			this.agentStartTime = undefined;
 		}
+	}
+
+	/** Record token output sample for waveform. Called during streaming. */
+	recordTokenSample(outputTokens: number): void {
+		const now = Date.now();
+		const elapsed = (now - this.lastSampleTime) / 1000;
+		if (elapsed >= 0.5) {
+			const newTokens = outputTokens - this.lastOutputTokens;
+			const rate = elapsed > 0 ? newTokens / elapsed : 0;
+			this.tokSamples.push(rate);
+			if (this.tokSamples.length > 60) this.tokSamples.shift();
+			this.lastOutputTokens = outputTokens;
+			this.lastSampleTime = now;
+		}
+	}
+
+	/** Set breadcrumb context (current file/line agent is working on). */
+	setBreadcrumbs(filePath: string | undefined, lineNumber: number | undefined): void {
+		this.currentFilePath = filePath;
+		this.currentLineNumber = lineNumber;
 	}
 
 	/**
@@ -96,8 +145,12 @@ export class FooterComponent implements Component {
 			}
 		}
 
+		// Sample tok/s during active streaming
+		if (this.agentStartTime) {
+			this.recordTokenSample(totalOutput);
+		}
+
 		// Calculate context usage from session (handles compaction correctly).
-		// After compaction, tokens are unknown until the next LLM response.
 		const contextUsage = this.session.getContextUsage();
 		const contextWindow = contextUsage?.contextWindow ?? state.model?.contextWindow ?? 0;
 		const contextPercentValue = contextUsage?.percent ?? 0;
@@ -154,21 +207,18 @@ export class FooterComponent implements Component {
 			statsParts.push(theme.fg("dim", `⏱${latencyStr}`));
 		}
 
-		// Colorize context percentage based on usage
-		let contextPercentStr: string;
-		const autoIndicator = this.autoCompactEnabled ? " (auto)" : "";
-		const contextPercentDisplay =
-			contextPercent === "?"
-				? `?/${formatTokens(contextWindow)}${autoIndicator}`
-				: `${contextPercent}%/${formatTokens(contextWindow)}${autoIndicator}`;
+		// Context window bar (#15 Context Window Visualizer)
+		const barWidth = 6;
+		const contextBar = renderProgressBar(contextPercentValue, barWidth);
+		let contextBarColored: string;
 		if (contextPercentValue > 90) {
-			contextPercentStr = theme.fg("error", contextPercentDisplay);
+			contextBarColored = theme.fg("error", contextBar);
 		} else if (contextPercentValue > 70) {
-			contextPercentStr = theme.fg("warning", contextPercentDisplay);
+			contextBarColored = theme.fg("warning", contextBar);
 		} else {
-			contextPercentStr = contextPercentDisplay;
+			contextBarColored = theme.fg("dim", contextBar);
 		}
-		statsParts.push(contextPercentStr);
+		statsParts.push(`${contextBarColored} ${contextPercent}%`);
 
 		let statsLeft = statsParts.join(" ");
 
@@ -244,6 +294,41 @@ export class FooterComponent implements Component {
 		const dimRemainder = theme.fg("dim", remainder);
 
 		const lines = [theme.fg("dim", pwd), dimStatsLeft + dimRemainder];
+
+		// Workflow info line: breadcrumbs + task progress + tok/s waveform
+		const workflowParts: string[] = [];
+
+		// Breadcrumbs (#8)
+		if (this.currentFilePath) {
+			const shortPath = this.currentFilePath.split("/").slice(-2).join("/");
+			const lineInfo = this.currentLineNumber ? `:${this.currentLineNumber}` : "";
+			workflowParts.push(theme.fg("muted", `📎${shortPath}${lineInfo}`));
+		}
+
+		// Task progress (#16)
+		const workflow = this.session.workflow;
+		if (workflow?.taskGraph) {
+			const tasks = workflow.taskGraph.taskOrder;
+			const doneCount = tasks.filter((id) => {
+				const t = workflow.taskGraph.tasks[id];
+				return t?.status === "done";
+			}).length;
+			if (tasks.length > 1) {
+				const pct = (doneCount / tasks.length) * 100;
+				workflowParts.push(theme.fg("dim", `${renderProgressBar(pct, 5)} ${doneCount}/${tasks.length}`));
+			}
+		}
+
+		// Tok/s waveform (#1)
+		if (this.tokSamples.length > 2) {
+			const waveform = renderWaveform(this.tokSamples, 10);
+			const avgRate = this.tokSamples.reduce((a, b) => a + b, 0) / this.tokSamples.length;
+			workflowParts.push(`${theme.fg("accent", `⚡${waveform}`)}${theme.fg("dim", ` ${Math.round(avgRate)}/s`)}`);
+		}
+
+		if (workflowParts.length > 0) {
+			lines.push(truncateToWidth(workflowParts.join("  "), width, theme.fg("dim", "...")));
+		}
 
 		// Add extension statuses on a single line, sorted by key alphabetically
 		const extensionStatuses = this.footerData.getExtensionStatuses();
