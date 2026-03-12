@@ -2450,6 +2450,39 @@ export class InteractiveMode {
 				setHitlPause: (reason) => {
 					this.footer.setHitlPause(reason);
 				},
+				recordCommandUsage: (command) => {
+					this.footer.recordCommandUsage(command);
+				},
+				recordFileVisit: (filePath) => {
+					this.footer.recordFileVisit(filePath);
+				},
+				recordCostSnapshot: (cost) => {
+					this.footer.recordCostSnapshot(cost);
+				},
+				setPersona: (persona) => {
+					this.footer.setPersona(persona);
+				},
+				setConstraints: (constraints) => {
+					this.footer.setConstraints(constraints);
+				},
+				addSummaryCard: (title, text) => {
+					this.footer.addSummaryCard(title, text);
+				},
+				setInterviewMode: (active, question) => {
+					this.footer.setInterviewMode(active, question);
+				},
+				setMemoryCount: (count) => {
+					this.footer.setMemoryCount(count);
+				},
+				setPendingDiffCount: (count) => {
+					this.footer.setPendingDiffCount(count);
+				},
+				setLogStreaming: (active) => {
+					this.footer.setLogStreaming(active);
+				},
+				setCondensedView: (lines) => {
+					this.footer.setCondensedView(lines);
+				},
 			},
 			event,
 		);

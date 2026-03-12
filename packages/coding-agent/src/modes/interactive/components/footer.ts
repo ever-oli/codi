@@ -76,6 +76,29 @@ export class FooterComponent implements Component {
 	// HITL pause state (#13)
 	private hitlPauseReason: string | undefined;
 	private hitlPending = false;
+	// Command familiarity (#3)
+	private commandUsage: Map<string, number> = new Map();
+	// Codebase heatmap (#6)
+	private fileVisitCounts: Map<string, number> = new Map();
+	// Token burn rate trend (#10)
+	private costSnapshots: Array<{ cost: number; time: number }> = [];
+	// Personality toggle (#26)
+	private currentPersona: string | undefined;
+	// Constraint toggle (#38)
+	private activeConstraints: string[] = [];
+	// Summary cards (#39)
+	private summaryCards: Array<{ title: string; text: string }> = [];
+	// Interview mode (#46)
+	private interviewMode = false;
+	private interviewQuestion: string | undefined;
+	// Memory log count (#19)
+	private memoryCount = 0;
+	// Pending diff indicator (#24)
+	private pendingDiffCount = 0;
+	// Live log toggle (#28)
+	private logStreaming = false;
+	// Condensed view (#47)
+	private condensedView: string[] = [];
 
 	constructor(
 		private session: AgentSession,
@@ -149,6 +172,65 @@ export class FooterComponent implements Component {
 	setHitlPause(reason: string | undefined): void {
 		this.hitlPauseReason = reason;
 		this.hitlPending = reason !== undefined;
+	}
+
+	/** Track slash command usage (#3). */
+	recordCommandUsage(command: string): void {
+		this.commandUsage.set(command, (this.commandUsage.get(command) ?? 0) + 1);
+	}
+
+	/** Track file visits for heatmap (#6). */
+	recordFileVisit(filePath: string): void {
+		const short = filePath.split("/").slice(-2).join("/");
+		this.fileVisitCounts.set(short, (this.fileVisitCounts.get(short) ?? 0) + 1);
+	}
+
+	/** Record cost snapshot for burn rate (#10). */
+	recordCostSnapshot(cost: number): void {
+		this.costSnapshots.push({ cost, time: Date.now() });
+		if (this.costSnapshots.length > 20) this.costSnapshots.shift();
+	}
+
+	/** Set current persona (#26). */
+	setPersona(persona: string | undefined): void {
+		this.currentPersona = persona;
+	}
+
+	/** Set active constraints (#38). */
+	setConstraints(constraints: string[]): void {
+		this.activeConstraints = constraints;
+	}
+
+	/** Add summary card (#39). */
+	addSummaryCard(title: string, text: string): void {
+		this.summaryCards.push({ title, text });
+		if (this.summaryCards.length > 3) this.summaryCards.shift();
+	}
+
+	/** Set interview mode (#46). */
+	setInterviewMode(active: boolean, question?: string): void {
+		this.interviewMode = active;
+		this.interviewQuestion = question;
+	}
+
+	/** Set memory count (#19). */
+	setMemoryCount(count: number): void {
+		this.memoryCount = count;
+	}
+
+	/** Set pending diff count (#24). */
+	setPendingDiffCount(count: number): void {
+		this.pendingDiffCount = count;
+	}
+
+	/** Set log streaming state (#28). */
+	setLogStreaming(active: boolean): void {
+		this.logStreaming = active;
+	}
+
+	/** Set condensed view lines (#47). */
+	setCondensedView(lines: string[]): void {
+		this.condensedView = lines;
 	}
 
 	/**
@@ -430,6 +512,97 @@ export class FooterComponent implements Component {
 		// HITL pause indicator (#13)
 		if (this.hitlPending && this.hitlPauseReason) {
 			lines.push(theme.fg("warning", `⏸ Awaiting approval: ${this.hitlPauseReason}`));
+		}
+
+		// Status indicators line: persona, constraints, memory, diffs, logs (#5 #19 #24 #26 #28 #38 #46)
+		const statusParts: string[] = [];
+
+		// Interview mode (#46)
+		if (this.interviewMode) {
+			statusParts.push(theme.fg("accent", "❓ Interview"));
+			if (this.interviewQuestion) {
+				statusParts.push(theme.fg("muted", this.interviewQuestion.slice(0, 40)));
+			}
+		}
+
+		// Personality (#26)
+		if (this.currentPersona) {
+			const personaIcons: Record<string, string> = { concise: "🎯", creative: "🎨", technical: "⚙️" };
+			const icon = personaIcons[this.currentPersona] ?? "👤";
+			statusParts.push(theme.fg("dim", `${icon}${this.currentPersona}`));
+		}
+
+		// Constraints (#38)
+		if (this.activeConstraints.length > 0) {
+			statusParts.push(theme.fg("dim", `🔒${this.activeConstraints.slice(0, 2).join(",")}`));
+		}
+
+		// Memory count (#19)
+		if (this.memoryCount > 0) {
+			statusParts.push(theme.fg("dim", `🧠${this.memoryCount}`));
+		}
+
+		// Pending diffs (#24)
+		if (this.pendingDiffCount > 0) {
+			statusParts.push(theme.fg("warning", `📝${this.pendingDiffCount} pending`));
+		}
+
+		// Log streaming (#28)
+		if (this.logStreaming) {
+			statusParts.push(theme.fg("dim", "📋streaming"));
+		}
+
+		// Command familiarity - top 3 commands (#3)
+		if (this.commandUsage.size > 0) {
+			const topCommands = Array.from(this.commandUsage.entries())
+				.sort((a, b) => b[1] - a[1])
+				.slice(0, 3)
+				.map(([cmd, count]) => `${cmd}(${count})`);
+			statusParts.push(theme.fg("dim", `⌨${topCommands.join(",")}`));
+		}
+
+		// Token burn rate trend (#10)
+		if (this.costSnapshots.length >= 2) {
+			const recent = this.costSnapshots.slice(-5);
+			const trend = recent[recent.length - 1].cost - recent[0].cost;
+			const trendIcon = trend > 0.01 ? "📈" : trend < -0.01 ? "📉" : "➡️";
+			statusParts.push(theme.fg("dim", `${trendIcon}$${trend.toFixed(3)}/run`));
+		}
+
+		if (statusParts.length > 0) {
+			lines.push(truncateToWidth(statusParts.join("  "), width, theme.fg("dim", "...")));
+		}
+
+		// Codebase heatmap - top visited files (#6)
+		if (this.fileVisitCounts.size > 0) {
+			const topFiles = Array.from(this.fileVisitCounts.entries())
+				.sort((a, b) => b[1] - a[1])
+				.slice(0, 4);
+			const maxCount = topFiles[0]?.[1] ?? 1;
+			const heatBlocks = [" ", "░", "▒", "▓", "█"];
+			const heatLine = topFiles
+				.map(([file, count]) => {
+					const level = Math.min(4, Math.ceil((count / maxCount) * 4));
+					return `${heatBlocks[level]}${file}`;
+				})
+				.join(" ");
+			lines.push(truncateToWidth(theme.fg("dim", `🗺${heatLine}`), width, "..."));
+		}
+
+		// Summary cards (#39)
+		if (this.summaryCards.length > 0) {
+			const latest = this.summaryCards[this.summaryCards.length - 1];
+			lines.push(truncateToWidth(theme.fg("muted", `📋 ${latest.title}: ${latest.text}`), width, "..."));
+		}
+
+		// Condensed view (#47)
+		if (this.condensedView.length > 0) {
+			lines.push(truncateToWidth(theme.fg("dim", this.condensedView.join(" › ")), width, "..."));
+		}
+
+		// Game-like controls hint (#5)
+		if (this.agentStartTime) {
+			lines.push(theme.fg("dim", "ESC:cancel  TAB:expand  Ctrl+C:interrupt"));
 		}
 
 		// Add extension statuses on a single line, sorted by key alphabetically

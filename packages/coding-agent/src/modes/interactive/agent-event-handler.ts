@@ -64,6 +64,17 @@ export interface InteractiveEventHandlerContext {
 	recordDiscovery: (text: string) => void;
 	setVerificationReport: (report: Array<{ criteria: string; passed: boolean }>, show?: boolean) => void;
 	setHitlPause: (reason: string | undefined) => void;
+	recordCommandUsage: (command: string) => void;
+	recordFileVisit: (filePath: string) => void;
+	recordCostSnapshot: (cost: number) => void;
+	setPersona: (persona: string | undefined) => void;
+	setConstraints: (constraints: string[]) => void;
+	addSummaryCard: (title: string, text: string) => void;
+	setInterviewMode: (active: boolean, question?: string) => void;
+	setMemoryCount: (count: number) => void;
+	setPendingDiffCount: (count: number) => void;
+	setLogStreaming: (active: boolean) => void;
+	setCondensedView: (lines: string[]) => void;
 }
 
 export async function handleInteractiveAgentEvent(
