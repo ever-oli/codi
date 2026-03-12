@@ -4,8 +4,11 @@ import type { EditorTheme, MarkdownTheme, SelectListTheme } from "@mariozechner/
 import { type Static, Type } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import chalk from "chalk";
-import { highlight, supportsLanguage } from "cli-highlight";
 import { getCustomThemesDir, getThemesDir } from "../../../config.js";
+import { getThemeExportColorsFromJson, isThemeJsonLight, resolveCssThemeColors } from "./theme-export.js";
+import { createMarkdownTheme, highlightCodeWithTheme } from "./theme-highlighting.js";
+
+export { getLanguageFromPath } from "./theme-highlighting.js";
 
 // ============================================================================
 // Types & Schema
@@ -430,6 +433,31 @@ export class Theme {
 	getBashModeBorderColor(): (str: string) => string {
 		return (str: string) => this.fg("bashMode", str);
 	}
+
+	/**
+	 * Get border color based on workflow phase.
+	 * - intake: dim (waiting for input)
+	 * - plan: accent (planning/blue)
+	 * - execute: warning (working/yellow)
+	 * - verify: success (verifying/green)
+	 * - summarize: borderAccent (done/purple)
+	 */
+	getWorkflowPhaseColor(phase: string): (str: string) => string {
+		switch (phase) {
+			case "intake":
+				return (str: string) => this.fg("dim", str);
+			case "plan":
+				return (str: string) => this.fg("accent", str);
+			case "execute":
+				return (str: string) => this.fg("warning", str);
+			case "verify":
+				return (str: string) => this.fg("success", str);
+			case "summarize":
+				return (str: string) => this.fg("borderAccent", str);
+			default:
+				return (str: string) => this.fg("border", str);
+		}
+	}
 }
 
 // ============================================================================
@@ -441,12 +469,16 @@ let BUILTIN_THEMES: Record<string, ThemeJson> | undefined;
 function getBuiltinThemes(): Record<string, ThemeJson> {
 	if (!BUILTIN_THEMES) {
 		const themesDir = getThemesDir();
-		const darkPath = path.join(themesDir, "dark.json");
-		const lightPath = path.join(themesDir, "light.json");
-		BUILTIN_THEMES = {
-			dark: JSON.parse(fs.readFileSync(darkPath, "utf-8")) as ThemeJson,
-			light: JSON.parse(fs.readFileSync(lightPath, "utf-8")) as ThemeJson,
-		};
+		BUILTIN_THEMES = {};
+		for (const file of fs.readdirSync(themesDir).sort()) {
+			if (!file.endsWith(".json") || file === "theme-schema.json") {
+				continue;
+			}
+			const themePath = path.join(themesDir, file);
+			const content = fs.readFileSync(themePath, "utf-8");
+			const themeJson = parseThemeJsonContent(themePath, content);
+			BUILTIN_THEMES[themeJson.name] = themeJson;
+		}
 	}
 	return BUILTIN_THEMES;
 }
@@ -794,84 +826,28 @@ export function stopThemeWatcher(): void {
 // ============================================================================
 
 /**
- * Convert a 256-color index to hex string.
- * Indices 0-15: basic colors (approximate)
- * Indices 16-231: 6x6x6 color cube
- * Indices 232-255: grayscale ramp
- */
-function ansi256ToHex(index: number): string {
-	// Basic colors (0-15) - approximate common terminal values
-	const basicColors = [
-		"#000000",
-		"#800000",
-		"#008000",
-		"#808000",
-		"#000080",
-		"#800080",
-		"#008080",
-		"#c0c0c0",
-		"#808080",
-		"#ff0000",
-		"#00ff00",
-		"#ffff00",
-		"#0000ff",
-		"#ff00ff",
-		"#00ffff",
-		"#ffffff",
-	];
-	if (index < 16) {
-		return basicColors[index];
-	}
-
-	// Color cube (16-231): 6x6x6 = 216 colors
-	if (index < 232) {
-		const cubeIndex = index - 16;
-		const r = Math.floor(cubeIndex / 36);
-		const g = Math.floor((cubeIndex % 36) / 6);
-		const b = cubeIndex % 6;
-		const toHex = (n: number) => (n === 0 ? 0 : 55 + n * 40).toString(16).padStart(2, "0");
-		return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-	}
-
-	// Grayscale (232-255): 24 shades
-	const gray = 8 + (index - 232) * 10;
-	const grayHex = gray.toString(16).padStart(2, "0");
-	return `#${grayHex}${grayHex}${grayHex}`;
-}
-
-/**
  * Get resolved theme colors as CSS-compatible hex strings.
  * Used by HTML export to generate CSS custom properties.
  */
 export function getResolvedThemeColors(themeName?: string): Record<string, string> {
 	const name = themeName ?? currentThemeName ?? getDefaultTheme();
-	const isLight = name === "light";
 	const themeJson = loadThemeJson(name);
+	const isLight = isThemeJsonLight(themeJson, resolveVarRefs, hexToRgb);
 	const resolved = resolveThemeColors(themeJson.colors, themeJson.vars);
-
-	// Default text color for empty values (terminal uses default fg color)
 	const defaultText = isLight ? "#000000" : "#e5e5e7";
-
-	const cssColors: Record<string, string> = {};
-	for (const [key, value] of Object.entries(resolved)) {
-		if (typeof value === "number") {
-			cssColors[key] = ansi256ToHex(value);
-		} else if (value === "") {
-			// Empty means default terminal color - use sensible fallback for HTML
-			cssColors[key] = defaultText;
-		} else {
-			cssColors[key] = value;
-		}
-	}
-	return cssColors;
+	return resolveCssThemeColors(resolved, defaultText);
 }
 
 /**
  * Check if a theme is a "light" theme (for CSS that needs light/dark variants).
  */
 export function isLightTheme(themeName?: string): boolean {
-	// Currently just check the name - could be extended to analyze colors
-	return themeName === "light";
+	const name = themeName ?? currentThemeName ?? getDefaultTheme();
+	try {
+		return isThemeJsonLight(loadThemeJson(name), resolveVarRefs, hexToRgb);
+	} catch {
+		return false;
+	}
 }
 
 /**
@@ -885,28 +861,7 @@ export function getThemeExportColors(themeName?: string): {
 } {
 	const name = themeName ?? currentThemeName ?? getDefaultTheme();
 	try {
-		const themeJson = loadThemeJson(name);
-		const exportSection = themeJson.export;
-		if (!exportSection) return {};
-
-		const vars = themeJson.vars ?? {};
-		const resolve = (value: string | number | undefined): string | undefined => {
-			if (value === undefined) return undefined;
-			if (typeof value === "number") return ansi256ToHex(value);
-			if (value.startsWith("$")) {
-				const resolved = vars[value];
-				if (resolved === undefined) return undefined;
-				if (typeof resolved === "number") return ansi256ToHex(resolved);
-				return resolved;
-			}
-			return value;
-		};
-
-		return {
-			pageBg: resolve(exportSection.pageBg),
-			cardBg: resolve(exportSection.cardBg),
-			infoBg: resolve(exportSection.infoBg),
-		};
+		return getThemeExportColorsFromJson(loadThemeJson(name), resolveVarRefs);
 	} catch {
 		return {};
 	}
@@ -916,160 +871,16 @@ export function getThemeExportColors(themeName?: string): {
 // TUI Helpers
 // ============================================================================
 
-type CliHighlightTheme = Record<string, (s: string) => string>;
-
-let cachedHighlightThemeFor: Theme | undefined;
-let cachedCliHighlightTheme: CliHighlightTheme | undefined;
-
-function buildCliHighlightTheme(t: Theme): CliHighlightTheme {
-	return {
-		keyword: (s: string) => t.fg("syntaxKeyword", s),
-		built_in: (s: string) => t.fg("syntaxType", s),
-		literal: (s: string) => t.fg("syntaxNumber", s),
-		number: (s: string) => t.fg("syntaxNumber", s),
-		string: (s: string) => t.fg("syntaxString", s),
-		comment: (s: string) => t.fg("syntaxComment", s),
-		function: (s: string) => t.fg("syntaxFunction", s),
-		title: (s: string) => t.fg("syntaxFunction", s),
-		class: (s: string) => t.fg("syntaxType", s),
-		type: (s: string) => t.fg("syntaxType", s),
-		attr: (s: string) => t.fg("syntaxVariable", s),
-		variable: (s: string) => t.fg("syntaxVariable", s),
-		params: (s: string) => t.fg("syntaxVariable", s),
-		operator: (s: string) => t.fg("syntaxOperator", s),
-		punctuation: (s: string) => t.fg("syntaxPunctuation", s),
-	};
-}
-
-function getCliHighlightTheme(t: Theme): CliHighlightTheme {
-	if (cachedHighlightThemeFor !== t || !cachedCliHighlightTheme) {
-		cachedHighlightThemeFor = t;
-		cachedCliHighlightTheme = buildCliHighlightTheme(t);
-	}
-	return cachedCliHighlightTheme;
-}
-
 /**
  * Highlight code with syntax coloring based on file extension or language.
  * Returns array of highlighted lines.
  */
 export function highlightCode(code: string, lang?: string): string[] {
-	// Validate language before highlighting to avoid stderr spam from cli-highlight
-	const validLang = lang && supportsLanguage(lang) ? lang : undefined;
-	const opts = {
-		language: validLang,
-		ignoreIllegals: true,
-		theme: getCliHighlightTheme(theme),
-	};
-	try {
-		return highlight(code, opts).split("\n");
-	} catch {
-		return code.split("\n");
-	}
-}
-
-/**
- * Get language identifier from file path extension.
- */
-export function getLanguageFromPath(filePath: string): string | undefined {
-	const ext = filePath.split(".").pop()?.toLowerCase();
-	if (!ext) return undefined;
-
-	const extToLang: Record<string, string> = {
-		ts: "typescript",
-		tsx: "typescript",
-		js: "javascript",
-		jsx: "javascript",
-		mjs: "javascript",
-		cjs: "javascript",
-		py: "python",
-		rb: "ruby",
-		rs: "rust",
-		go: "go",
-		java: "java",
-		kt: "kotlin",
-		swift: "swift",
-		c: "c",
-		h: "c",
-		cpp: "cpp",
-		cc: "cpp",
-		cxx: "cpp",
-		hpp: "cpp",
-		cs: "csharp",
-		php: "php",
-		sh: "bash",
-		bash: "bash",
-		zsh: "bash",
-		fish: "fish",
-		ps1: "powershell",
-		sql: "sql",
-		html: "html",
-		htm: "html",
-		css: "css",
-		scss: "scss",
-		sass: "sass",
-		less: "less",
-		json: "json",
-		yaml: "yaml",
-		yml: "yaml",
-		toml: "toml",
-		xml: "xml",
-		md: "markdown",
-		markdown: "markdown",
-		dockerfile: "dockerfile",
-		makefile: "makefile",
-		cmake: "cmake",
-		lua: "lua",
-		perl: "perl",
-		r: "r",
-		scala: "scala",
-		clj: "clojure",
-		ex: "elixir",
-		exs: "elixir",
-		erl: "erlang",
-		hs: "haskell",
-		ml: "ocaml",
-		vim: "vim",
-		graphql: "graphql",
-		proto: "protobuf",
-		tf: "hcl",
-		hcl: "hcl",
-	};
-
-	return extToLang[ext];
+	return highlightCodeWithTheme(theme, code, lang);
 }
 
 export function getMarkdownTheme(): MarkdownTheme {
-	return {
-		heading: (text: string) => theme.fg("mdHeading", text),
-		link: (text: string) => theme.fg("mdLink", text),
-		linkUrl: (text: string) => theme.fg("mdLinkUrl", text),
-		code: (text: string) => theme.fg("mdCode", text),
-		codeBlock: (text: string) => theme.fg("mdCodeBlock", text),
-		codeBlockBorder: (text: string) => theme.fg("mdCodeBlockBorder", text),
-		quote: (text: string) => theme.fg("mdQuote", text),
-		quoteBorder: (text: string) => theme.fg("mdQuoteBorder", text),
-		hr: (text: string) => theme.fg("mdHr", text),
-		listBullet: (text: string) => theme.fg("mdListBullet", text),
-		bold: (text: string) => theme.bold(text),
-		italic: (text: string) => theme.italic(text),
-		underline: (text: string) => theme.underline(text),
-		strikethrough: (text: string) => chalk.strikethrough(text),
-		highlightCode: (code: string, lang?: string): string[] => {
-			// Validate language before highlighting to avoid stderr spam from cli-highlight
-			const validLang = lang && supportsLanguage(lang) ? lang : undefined;
-			const opts = {
-				language: validLang,
-				ignoreIllegals: true,
-				theme: getCliHighlightTheme(theme),
-			};
-			try {
-				return highlight(code, opts).split("\n");
-			} catch {
-				return code.split("\n").map((line) => theme.fg("mdCodeBlock", line));
-			}
-		},
-	};
+	return createMarkdownTheme(theme);
 }
 
 export function getSelectListTheme(): SelectListTheme {

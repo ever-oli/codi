@@ -8,14 +8,8 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
-import {
-	type AssistantMessage,
-	getOAuthProviders,
-	type ImageContent,
-	type Message,
-	type Model,
-	type OAuthProvider,
-} from "@mariozechner/pi-ai";
+import type { AssistantMessage, ImageContent, Message, Model, OAuthProviderId } from "@mariozechner/pi-ai";
+import { getOAuthProviders } from "@mariozechner/pi-ai/oauth";
 import type {
 	AutocompleteItem,
 	EditorAction,
@@ -40,11 +34,13 @@ import {
 	Text,
 	TruncatedText,
 	TUI,
+	truncateToWidth,
 	visibleWidth,
 } from "@mariozechner/pi-tui";
 import { spawn, spawnSync } from "child_process";
 import {
 	APP_NAME,
+	getAgentDir,
 	getAuthPath,
 	getDebugLogPath,
 	getShareViewerUrl,
@@ -64,20 +60,50 @@ import { FooterDataProvider, type ReadonlyFooterDataProvider } from "../../core/
 import { type AppAction, KeybindingsManager } from "../../core/keybindings.js";
 import { createCompactionSummaryMessage } from "../../core/messages.js";
 import { resolveModelScope } from "../../core/model-resolver.js";
+import { DefaultPackageManager } from "../../core/package-manager.js";
 import type { ResourceDiagnostic } from "../../core/resource-loader.js";
+import {
+	type DelegatedTaskRecord,
+	type DelegatedTaskStatus,
+	LANE_NAMES,
+	type LaneName,
+	MODEL_ROLE_NAMES,
+	type ModelRoleName,
+	RUNTIME_FEATURE_FLAG_NAMES,
+	type RuntimeFeatureFlagName,
+	type RuntimeServices,
+} from "../../core/runtime/index.js";
 import { type SessionContext, SessionManager } from "../../core/session-manager.js";
+import type { StartupDensity } from "../../core/settings-manager.js";
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.js";
 import type { TruncationResult } from "../../core/tools/truncate.js";
+import {
+	getActiveTaskCompletionState,
+	getLatestTaskVerification,
+	getTaskCompletionLabel,
+	getTaskVerificationStatus,
+	WORKFLOW_PHASES,
+	type WorkflowPhase,
+} from "../../core/workflow/session-orchestrator.js";
+import { buildTaskSubagentContract } from "../../core/workflow/subagents.js";
+import {
+	areTaskDependenciesSatisfied,
+	createTaskGraphFromGoal,
+	getSchedulableTasks,
+	type TaskStatus,
+} from "../../core/workflow/task-graph.js";
 import { getChangelogPath, getNewEntries, parseChangelog } from "../../utils/changelog.js";
 import { copyToClipboard } from "../../utils/clipboard.js";
 import { extensionForImageMimeType, readClipboardImage } from "../../utils/clipboard-image.js";
 import { ensureTool } from "../../utils/tools-manager.js";
+import { handleInteractiveAgentEvent } from "./agent-event-handler.js";
 import { ArminComponent } from "./components/armin.js";
 import { AssistantMessageComponent } from "./components/assistant-message.js";
 import { BashExecutionComponent } from "./components/bash-execution.js";
 import { BorderedLoader } from "./components/bordered-loader.js";
 import { BranchSummaryMessageComponent } from "./components/branch-summary-message.js";
 import { CompactionSummaryMessageComponent } from "./components/compaction-summary-message.js";
+import { ConfigSelectorComponent } from "./components/config-selector.js";
 import { CustomEditor } from "./components/custom-editor.js";
 import { CustomMessageComponent } from "./components/custom-message.js";
 import { DaxnutsComponent } from "./components/daxnuts.js";
@@ -98,6 +124,7 @@ import { ToolExecutionComponent } from "./components/tool-execution.js";
 import { TreeSelectorComponent } from "./components/tree-selector.js";
 import { UserMessageComponent } from "./components/user-message.js";
 import { UserMessageSelectorComponent } from "./components/user-message-selector.js";
+import { handleInteractiveSubmit } from "./submit-dispatch.js";
 import {
 	getAvailableThemes,
 	getAvailableThemesWithPaths,
@@ -118,6 +145,8 @@ import {
 interface Expandable {
 	setExpanded(expanded: boolean): void;
 }
+
+const WORKFLOW_TASK_STATUSES: TaskStatus[] = ["pending", "ready", "in_progress", "blocked", "done", "waived"];
 
 function isExpandable(obj: unknown): obj is Expandable {
 	return typeof obj === "object" && obj !== null && "setExpanded" in obj && typeof obj.setExpanded === "function";
@@ -144,6 +173,8 @@ export interface InteractiveModeOptions {
 	initialMessages?: string[];
 	/** Force verbose startup (overrides quietStartup setting) */
 	verbose?: boolean;
+	/** Runtime services for durable queue/lane/event/mailbox/heartbeat orchestration. */
+	runtimeServices?: RuntimeServices;
 }
 
 export class InteractiveMode {
@@ -161,6 +192,7 @@ export class InteractiveMode {
 	private footerDataProvider: FooterDataProvider;
 	private keybindings: KeybindingsManager;
 	private version: string;
+	private startupLogoLines: string[] = [];
 	private isInitialized = false;
 	private onInputCallback?: (text: string) => void;
 	private loadingAnimation: Loader | undefined = undefined;
@@ -228,6 +260,7 @@ export class InteractiveMode {
 	private extensionWidgetsBelow = new Map<string, Component & { dispose?(): void }>();
 	private widgetContainerAbove!: Container;
 	private widgetContainerBelow!: Container;
+	private workflowStripComponent: Component | undefined = undefined;
 
 	// Custom footer from extension (undefined = use built-in footer)
 	private customFooter: (Component & { dispose?(): void }) | undefined = undefined;
@@ -240,6 +273,10 @@ export class InteractiveMode {
 
 	// Custom header from extension (undefined = use built-in header)
 	private customHeader: (Component & { dispose?(): void }) | undefined = undefined;
+	private readonly runtimeServices: RuntimeServices | undefined;
+	private eventTailInterval: ReturnType<typeof setInterval> | undefined;
+	private eventTailLastTs = 0;
+	private startupResourceListingMode: "none" | "summary" | "summaryPreview" | "full" = "summary";
 
 	// Convenience accessors
 	private get agent() {
@@ -257,6 +294,7 @@ export class InteractiveMode {
 		private options: InteractiveModeOptions = {},
 	) {
 		this.session = session;
+		this.runtimeServices = options.runtimeServices;
 		this.version = VERSION;
 		this.ui = new TUI(new ProcessTerminal(), this.settingsManager.getShowHardwareCursor());
 		this.ui.setClearOnShrink(this.settingsManager.getClearOnShrink());
@@ -279,6 +317,7 @@ export class InteractiveMode {
 		this.footerDataProvider = new FooterDataProvider();
 		this.footer = new FooterComponent(session, this.footerDataProvider);
 		this.footer.setAutoCompactEnabled(session.autoCompactionEnabled);
+		this.startupLogoLines = this.loadStartupLogo();
 
 		// Load hide thinking block setting
 		this.hideThinkingBlock = this.settingsManager.getHideThinkingBlock();
@@ -286,6 +325,60 @@ export class InteractiveMode {
 		// Register themes from resource loader and initialize
 		setRegisteredThemes(this.session.resourceLoader.getThemes().themes);
 		initTheme(this.settingsManager.getTheme(), true);
+	}
+
+	private loadStartupLogo(): string[] {
+		if (APP_NAME.toLowerCase() !== "codi") {
+			return [];
+		}
+
+		const envPath = process.env.CODI_UI_LOGO_PATH?.trim();
+		const candidates = [
+			envPath,
+			"/Users/ever/Downloads/2025/spike.txt",
+			path.join(os.homedir(), ".pi", "agent", "spike.txt"),
+		]
+			.filter((p): p is string => Boolean(p))
+			.map((p) => (p.startsWith("~/") ? path.join(os.homedir(), p.slice(2)) : p));
+
+		let raw = "";
+		for (const filePath of candidates) {
+			try {
+				raw = fs.readFileSync(filePath, "utf8");
+				if (raw.trim()) break;
+			} catch {
+				// continue to next candidate
+			}
+		}
+		if (!raw.trim()) {
+			return [];
+		}
+
+		return raw
+			.split("\n")
+			.map((line) => line.replace(/\r/g, "").replace(/\s+$/g, ""))
+			.filter((line) => line.length > 0);
+	}
+
+	private getStartupLogoBlock(verbose: boolean): string[] {
+		if (this.startupLogoLines.length === 0) {
+			return [];
+		}
+
+		// Fit by height first so tall ASCII logos don't get aggressively cut.
+		const terminalRows = this.ui.terminal.rows || process.stdout.rows || 24;
+		const terminalCols = this.ui.terminal.columns || process.stdout.columns || 80;
+		const reservedRows = verbose ? 24 : 13;
+		const minLogoRows = verbose ? 4 : 3;
+		const preferredLogoRows = verbose ? 16 : 9;
+		const maxLinesByHeight = Math.max(minLogoRows, terminalRows - reservedRows);
+		const maxLines = Math.min(preferredLogoRows, maxLinesByHeight, this.startupLogoLines.length);
+
+		const preferredCols = verbose ? 100 : 72;
+		const maxCols = Math.max(24, Math.min(preferredCols, terminalCols - 4));
+		return this.startupLogoLines
+			.slice(0, maxLines)
+			.map((line) => theme.fg("muted", truncateToWidth(line, maxCols, "…")));
 	}
 
 	private setupAutocomplete(fdPath: string | undefined): void {
@@ -379,72 +472,32 @@ export class InteractiveMode {
 		// Add header container as first child
 		this.ui.addChild(this.headerContainer);
 
-		// Add header with keybindings from config (unless silenced)
-		if (this.options.verbose || !this.settingsManager.getQuietStartup()) {
-			const logo = theme.bold(theme.fg("accent", APP_NAME)) + theme.fg("dim", ` v${this.version}`);
+		const startupPresentation = this.getStartupPresentation();
+		this.startupResourceListingMode = startupPresentation.listingMode;
+		this.builtInHeader = new Text(this.buildStartupHeader(startupPresentation.headerVariant), 1, 0);
 
-			// Build startup instructions using keybinding hint helpers
-			const kb = this.keybindings;
-			const hint = (action: AppAction, desc: string) => appKeyHint(kb, action, desc);
+		// Setup UI layout
+		this.headerContainer.addChild(new Spacer(1));
+		this.headerContainer.addChild(this.builtInHeader);
+		this.headerContainer.addChild(new Spacer(1));
 
-			const instructions = [
-				hint("interrupt", "to interrupt"),
-				hint("clear", "to clear"),
-				rawKeyHint(`${appKey(kb, "clear")} twice`, "to exit"),
-				hint("exit", "to exit (empty)"),
-				hint("suspend", "to suspend"),
-				keyHint("deleteToLineEnd", "to delete to end"),
-				hint("cycleThinkingLevel", "to cycle thinking level"),
-				rawKeyHint(`${appKey(kb, "cycleModelForward")}/${appKey(kb, "cycleModelBackward")}`, "to cycle models"),
-				hint("selectModel", "to select model"),
-				hint("expandTools", "to expand tools"),
-				hint("toggleThinking", "to expand thinking"),
-				hint("externalEditor", "for external editor"),
-				rawKeyHint("/", "for commands"),
-				rawKeyHint("!", "to run bash"),
-				rawKeyHint("!!", "to run bash (no context)"),
-				hint("followUp", "to queue follow-up"),
-				hint("dequeue", "to edit all queued messages"),
-				hint("pasteImage", "to paste image"),
-				rawKeyHint("drop files", "to attach"),
-			].join("\n");
-			this.builtInHeader = new Text(`${logo}\n${instructions}`, 1, 0);
-
-			// Setup UI layout
-			this.headerContainer.addChild(new Spacer(1));
-			this.headerContainer.addChild(this.builtInHeader);
-			this.headerContainer.addChild(new Spacer(1));
-
-			// Add changelog if provided
-			if (this.changelogMarkdown) {
-				this.headerContainer.addChild(new DynamicBorder());
-				if (this.settingsManager.getCollapseChangelog()) {
-					const versionMatch = this.changelogMarkdown.match(/##\s+\[?(\d+\.\d+\.\d+)\]?/);
-					const latestVersion = versionMatch ? versionMatch[1] : this.version;
-					const condensedText = `Updated to v${latestVersion}. Use ${theme.bold("/changelog")} to view full changelog.`;
-					this.headerContainer.addChild(new Text(condensedText, 1, 0));
-				} else {
-					this.headerContainer.addChild(new Text(theme.bold(theme.fg("accent", "What's New")), 1, 0));
-					this.headerContainer.addChild(new Spacer(1));
-					this.headerContainer.addChild(
-						new Markdown(this.changelogMarkdown.trim(), 1, 0, this.getMarkdownThemeWithSettings()),
-					);
-					this.headerContainer.addChild(new Spacer(1));
-				}
-				this.headerContainer.addChild(new DynamicBorder());
-			}
-		} else {
-			// Minimal header when silenced
-			this.builtInHeader = new Text("", 0, 0);
-			this.headerContainer.addChild(this.builtInHeader);
-			if (this.changelogMarkdown) {
-				// Still show changelog notification even in silent mode
+		// Add changelog if provided
+		if (this.changelogMarkdown) {
+			this.headerContainer.addChild(new DynamicBorder());
+			const versionMatch = this.changelogMarkdown.match(/##\s+\[?(\d+\.\d+\.\d+)\]?/);
+			const latestVersion = versionMatch ? versionMatch[1] : this.version;
+			const condensedText = `Updated to v${latestVersion}. Use ${theme.bold("/changelog")} to view full changelog.`;
+			if (startupPresentation.headerVariant === "verbose" && !this.settingsManager.getCollapseChangelog()) {
+				this.headerContainer.addChild(new Text(theme.bold(theme.fg("accent", "What's New")), 1, 0));
 				this.headerContainer.addChild(new Spacer(1));
-				const versionMatch = this.changelogMarkdown.match(/##\s+\[?(\d+\.\d+\.\d+)\]?/);
-				const latestVersion = versionMatch ? versionMatch[1] : this.version;
-				const condensedText = `Updated to v${latestVersion}. Use ${theme.bold("/changelog")} to view full changelog.`;
+				this.headerContainer.addChild(
+					new Markdown(this.changelogMarkdown.trim(), 1, 0, this.getMarkdownThemeWithSettings()),
+				);
+				this.headerContainer.addChild(new Spacer(1));
+			} else {
 				this.headerContainer.addChild(new Text(condensedText, 1, 0));
 			}
+			this.headerContainer.addChild(new DynamicBorder());
 		}
 
 		this.ui.addChild(this.chatContainer);
@@ -538,7 +591,7 @@ export class InteractiveMode {
 		// Process initial messages
 		if (initialMessage) {
 			try {
-				await this.session.prompt(initialMessage, { images: initialImages });
+				await this.promptWithMainRole(initialMessage, { images: initialImages });
 			} catch (error: unknown) {
 				const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
 				this.showError(errorMessage);
@@ -548,7 +601,7 @@ export class InteractiveMode {
 		if (initialMessages) {
 			for (const message of initialMessages) {
 				try {
-					await this.session.prompt(message);
+					await this.promptWithMainRole(message);
 				} catch (error: unknown) {
 					const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
 					this.showError(errorMessage);
@@ -560,7 +613,7 @@ export class InteractiveMode {
 		while (true) {
 			const userInput = await this.getUserInput();
 			try {
-				await this.session.prompt(userInput);
+				await this.promptWithMainRole(userInput);
 			} catch (error: unknown) {
 				const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
 				this.showError(errorMessage);
@@ -736,6 +789,42 @@ export class InteractiveMode {
 		);
 	}
 
+	private countScopeGroupEntries(group: {
+		scope: "user" | "project" | "path";
+		paths: string[];
+		packages: Map<string, string[]>;
+	}): number {
+		let total = group.paths.length;
+		for (const paths of group.packages.values()) {
+			total += paths.length;
+		}
+		return total;
+	}
+
+	private summarizeScopeGroups(
+		groups: Array<{ scope: "user" | "project" | "path"; paths: string[]; packages: Map<string, string[]> }>,
+	): string {
+		return groups
+			.map((group) => ({ scope: group.scope, count: this.countScopeGroupEntries(group) }))
+			.filter((group) => group.count > 0)
+			.map((group) => `${group.scope} ${group.count}`)
+			.join(", ");
+	}
+
+	private formatInlinePreview(items: string[], maxVisible = 3): string {
+		const visible = items.slice(0, maxVisible);
+		const hiddenCount = Math.max(0, items.length - visible.length);
+		const preview = visible.join(", ");
+		if (hiddenCount === 0) {
+			return preview;
+		}
+		return preview ? `${preview}, +${hiddenCount} more` : `+${hiddenCount} more`;
+	}
+
+	private formatCount(count: number, singular: string, plural = `${singular}s`): string {
+		return `${count} ${count === 1 ? singular : plural}`;
+	}
+
 	private formatScopeGroups(
 		groups: Array<{ scope: "user" | "project" | "path"; paths: string[]; packages: Map<string, string[]> }>,
 		options: {
@@ -866,13 +955,101 @@ export class InteractiveMode {
 		return lines.join("\n");
 	}
 
+	private resolveStartupDensity(): StartupDensity {
+		if (this.options.verbose === true) {
+			return "verbose";
+		}
+		return this.settingsManager.getStartupDensity();
+	}
+
+	private getStartupPresentation(): {
+		density: StartupDensity;
+		headerVariant: "single" | "compact" | "verbose";
+		listingMode: "none" | "summary" | "summaryPreview" | "full";
+	} {
+		const density = this.resolveStartupDensity();
+		if (density === "verbose") {
+			return { density, headerVariant: "verbose", listingMode: "full" };
+		}
+		if (density === "compact") {
+			return { density, headerVariant: "compact", listingMode: "summary" };
+		}
+		const terminalRows = this.ui.terminal.rows || process.stdout.rows || 24;
+		if (terminalRows < 34) {
+			return { density, headerVariant: "single", listingMode: "none" };
+		}
+		if (terminalRows < 48) {
+			return { density, headerVariant: "compact", listingMode: "summary" };
+		}
+		return { density, headerVariant: "compact", listingMode: "summaryPreview" };
+	}
+
+	private buildStartupHeader(variant: "single" | "compact" | "verbose"): string {
+		const logo = theme.bold(theme.fg("accent", APP_NAME)) + theme.fg("dim", ` v${this.version}`);
+		const logoBlock = this.getStartupLogoBlock(variant === "verbose");
+		const kb = this.keybindings;
+		const hint = (action: AppAction, desc: string) => appKeyHint(kb, action, desc);
+
+		if (variant === "verbose") {
+			const instructions = [
+				hint("interrupt", "to interrupt"),
+				hint("clear", "to clear"),
+				rawKeyHint(`${appKey(kb, "clear")} twice`, "to exit"),
+				hint("exit", "to exit (empty)"),
+				hint("suspend", "to suspend"),
+				keyHint("deleteToLineEnd", "to delete to end"),
+				hint("cycleThinkingLevel", "to cycle thinking level"),
+				rawKeyHint(`${appKey(kb, "cycleModelForward")}/${appKey(kb, "cycleModelBackward")}`, "to cycle models"),
+				hint("selectModel", "to select model"),
+				hint("expandTools", "to expand tools"),
+				hint("toggleThinking", "to expand thinking"),
+				hint("externalEditor", "for external editor"),
+				rawKeyHint("/", "for commands"),
+				rawKeyHint("!", "to run bash"),
+				rawKeyHint("!!", "to run bash (no context)"),
+				hint("followUp", "to queue follow-up"),
+				hint("dequeue", "to edit all queued messages"),
+				hint("pasteImage", "to paste image"),
+				rawKeyHint("drop files", "to attach"),
+			].join("\n");
+			if (logoBlock.length > 0) {
+				return `${logo}\n${logoBlock.join("\n")}\n${instructions}`;
+			}
+			return `${logo}\n${instructions}`;
+		}
+
+		const compactPrimary = [
+			hint("interrupt", "interrupt"),
+			hint("selectModel", "model"),
+			hint("expandTools", "tools"),
+			hint("toggleThinking", "thinking"),
+			hint("externalEditor", "editor"),
+			rawKeyHint("/", "commands"),
+		].join(theme.fg("dim", " | "));
+		const compactSecondary = [
+			hint("clear", "clear"),
+			hint("followUp", "queue"),
+			rawKeyHint("!", "bash"),
+			theme.fg("dim", "Use /hotkeys for full list"),
+		].join(theme.fg("dim", " | "));
+
+		if (variant === "single") {
+			return `${logo} ${theme.fg("dim", "|")} ${compactPrimary}`;
+		}
+		return `${logo} ${theme.fg("dim", "|")} ${compactPrimary}\n${compactSecondary}`;
+	}
+
 	private showLoadedResources(options?: {
 		extensionPaths?: string[];
-		force?: boolean;
-		showDiagnosticsWhenQuiet?: boolean;
+		listingMode?: "none" | "summary" | "summaryPreview" | "full";
+		issuesOnly?: boolean;
+		showDiagnostics?: boolean;
 	}): void {
-		const showListing = options?.force || this.options.verbose || !this.settingsManager.getQuietStartup();
-		const showDiagnostics = showListing || options?.showDiagnosticsWhenQuiet === true;
+		const listingMode = options?.issuesOnly ? "none" : (options?.listingMode ?? "summary");
+		const showListing = listingMode !== "none";
+		const showDetailedListing = listingMode === "full";
+		const showPreview = listingMode === "summaryPreview";
+		const showDiagnostics = options?.showDiagnostics ?? true;
 		if (!showListing && !showDiagnostics) {
 			return;
 		}
@@ -886,69 +1063,152 @@ export class InteractiveMode {
 
 		if (showListing) {
 			const contextFiles = this.session.resourceLoader.getAgentsFiles().agentsFiles;
-			if (contextFiles.length > 0) {
-				this.chatContainer.addChild(new Spacer(1));
-				const contextList = contextFiles
-					.map((f) => theme.fg("dim", `  ${this.formatDisplayPath(f.path)}`))
-					.join("\n");
-				this.chatContainer.addChild(new Text(`${sectionHeader("Context")}\n${contextList}`, 0, 0));
-				this.chatContainer.addChild(new Spacer(1));
-			}
-
 			const skills = skillsResult.skills;
-			if (skills.length > 0) {
-				const skillPaths = skills.map((s) => s.filePath);
-				const groups = this.buildScopeGroups(skillPaths, metadata);
-				const skillList = this.formatScopeGroups(groups, {
-					formatPath: (p) => this.formatDisplayPath(p),
-					formatPackagePath: (p, source) => this.getShortPath(p, source),
-				});
-				this.chatContainer.addChild(new Text(`${sectionHeader("Skills")}\n${skillList}`, 0, 0));
-				this.chatContainer.addChild(new Spacer(1));
-			}
-
 			const templates = this.session.promptTemplates;
-			if (templates.length > 0) {
-				const templatePaths = templates.map((t) => t.filePath);
-				const groups = this.buildScopeGroups(templatePaths, metadata);
-				const templateByPath = new Map(templates.map((t) => [t.filePath, t]));
-				const templateList = this.formatScopeGroups(groups, {
-					formatPath: (p) => {
-						const template = templateByPath.get(p);
-						return template ? `/${template.name}` : this.formatDisplayPath(p);
-					},
-					formatPackagePath: (p) => {
-						const template = templateByPath.get(p);
-						return template ? `/${template.name}` : this.formatDisplayPath(p);
-					},
-				});
-				this.chatContainer.addChild(new Text(`${sectionHeader("Prompts")}\n${templateList}`, 0, 0));
-				this.chatContainer.addChild(new Spacer(1));
-			}
-
 			const extensionPaths = options?.extensionPaths ?? [];
-			if (extensionPaths.length > 0) {
-				const groups = this.buildScopeGroups(extensionPaths, metadata);
-				const extList = this.formatScopeGroups(groups, {
-					formatPath: (p) => this.formatDisplayPath(p),
-					formatPackagePath: (p, source) => this.getShortPath(p, source),
-				});
-				this.chatContainer.addChild(new Text(`${sectionHeader("Extensions", "mdHeading")}\n${extList}`, 0, 0));
-				this.chatContainer.addChild(new Spacer(1));
-			}
-
-			// Show loaded themes (excluding built-in)
 			const loadedThemes = themesResult.themes;
 			const customThemes = loadedThemes.filter((t) => t.sourcePath);
-			if (customThemes.length > 0) {
-				const themePaths = customThemes.map((t) => t.sourcePath!);
-				const groups = this.buildScopeGroups(themePaths, metadata);
-				const themeList = this.formatScopeGroups(groups, {
-					formatPath: (p) => this.formatDisplayPath(p),
-					formatPackagePath: (p, source) => this.getShortPath(p, source),
-				});
-				this.chatContainer.addChild(new Text(`${sectionHeader("Themes")}\n${themeList}`, 0, 0));
-				this.chatContainer.addChild(new Spacer(1));
+			if (showDetailedListing) {
+				if (contextFiles.length > 0) {
+					this.chatContainer.addChild(new Spacer(1));
+					const contextList = contextFiles
+						.map((f) => theme.fg("dim", `  ${this.formatDisplayPath(f.path)}`))
+						.join("\n");
+					this.chatContainer.addChild(new Text(`${sectionHeader("Context")}\n${contextList}`, 0, 0));
+					this.chatContainer.addChild(new Spacer(1));
+				}
+
+				if (skills.length > 0) {
+					const skillPaths = skills.map((s) => s.filePath);
+					const groups = this.buildScopeGroups(skillPaths, metadata);
+					const skillList = this.formatScopeGroups(groups, {
+						formatPath: (p) => this.formatDisplayPath(p),
+						formatPackagePath: (p, source) => this.getShortPath(p, source),
+					});
+					this.chatContainer.addChild(new Text(`${sectionHeader("Skills")}\n${skillList}`, 0, 0));
+					this.chatContainer.addChild(new Spacer(1));
+				}
+
+				if (templates.length > 0) {
+					const templatePaths = templates.map((t) => t.filePath);
+					const groups = this.buildScopeGroups(templatePaths, metadata);
+					const templateByPath = new Map(templates.map((t) => [t.filePath, t]));
+					const templateList = this.formatScopeGroups(groups, {
+						formatPath: (p) => {
+							const template = templateByPath.get(p);
+							return template ? `/${template.name}` : this.formatDisplayPath(p);
+						},
+						formatPackagePath: (p) => {
+							const template = templateByPath.get(p);
+							return template ? `/${template.name}` : this.formatDisplayPath(p);
+						},
+					});
+					this.chatContainer.addChild(new Text(`${sectionHeader("Prompts")}\n${templateList}`, 0, 0));
+					this.chatContainer.addChild(new Spacer(1));
+				}
+
+				if (extensionPaths.length > 0) {
+					const groups = this.buildScopeGroups(extensionPaths, metadata);
+					const extList = this.formatScopeGroups(groups, {
+						formatPath: (p) => this.formatDisplayPath(p),
+						formatPackagePath: (p, source) => this.getShortPath(p, source),
+					});
+					this.chatContainer.addChild(new Text(`${sectionHeader("Extensions", "mdHeading")}\n${extList}`, 0, 0));
+					this.chatContainer.addChild(new Spacer(1));
+				}
+
+				if (customThemes.length > 0) {
+					const themePaths = customThemes.map((t) => t.sourcePath!);
+					const groups = this.buildScopeGroups(themePaths, metadata);
+					const themeList = this.formatScopeGroups(groups, {
+						formatPath: (p) => this.formatDisplayPath(p),
+						formatPackagePath: (p, source) => this.getShortPath(p, source),
+					});
+					this.chatContainer.addChild(new Text(`${sectionHeader("Themes")}\n${themeList}`, 0, 0));
+					this.chatContainer.addChild(new Spacer(1));
+				}
+			} else {
+				const summaryLines: string[] = [];
+
+				if (contextFiles.length > 0) {
+					if (showPreview) {
+						const contextPreview = this.formatInlinePreview(
+							contextFiles.map((file) => this.formatDisplayPath(file.path)),
+							2,
+						);
+						const suffix = contextPreview ? `: ${theme.fg("dim", contextPreview)}` : "";
+						summaryLines.push(
+							`${sectionHeader("Context")} ${this.formatCount(contextFiles.length, "file")}${suffix}`,
+						);
+					} else {
+						summaryLines.push(`${sectionHeader("Context")} ${this.formatCount(contextFiles.length, "file")}`);
+					}
+				}
+
+				if (skills.length > 0) {
+					const skillPaths = skills.map((s) => s.filePath);
+					const groups = this.buildScopeGroups(skillPaths, metadata);
+					if (showPreview) {
+						const scopeSummary = this.summarizeScopeGroups(groups);
+						const suffix = scopeSummary ? ` ${theme.fg("dim", `(${scopeSummary})`)}` : "";
+						summaryLines.push(
+							`${sectionHeader("Skills")} ${this.formatCount(skills.length, "loaded skill")}${suffix}`,
+						);
+					} else {
+						summaryLines.push(`${sectionHeader("Skills")} ${this.formatCount(skills.length, "loaded skill")}`);
+					}
+				}
+
+				if (templates.length > 0) {
+					if (showPreview) {
+						const templatePreview = this.formatInlinePreview(
+							templates.map((template) => `/${template.name}`),
+							2,
+						);
+						const suffix = templatePreview ? `: ${theme.fg("dim", templatePreview)}` : "";
+						summaryLines.push(
+							`${sectionHeader("Prompts")} ${this.formatCount(templates.length, "prompt")}${suffix}`,
+						);
+					} else {
+						summaryLines.push(`${sectionHeader("Prompts")} ${this.formatCount(templates.length, "prompt")}`);
+					}
+				}
+
+				if (extensionPaths.length > 0) {
+					const groups = this.buildScopeGroups(extensionPaths, metadata);
+					if (showPreview) {
+						const scopeSummary = this.summarizeScopeGroups(groups);
+						const suffix = scopeSummary ? ` ${theme.fg("dim", `(${scopeSummary})`)}` : "";
+						summaryLines.push(
+							`${sectionHeader("Extensions")} ${this.formatCount(extensionPaths.length, "loaded extension")}${suffix}`,
+						);
+					} else {
+						summaryLines.push(
+							`${sectionHeader("Extensions")} ${this.formatCount(extensionPaths.length, "loaded extension")}`,
+						);
+					}
+				}
+
+				if (customThemes.length > 0) {
+					const themePaths = customThemes.map((t) => t.sourcePath!);
+					const groups = this.buildScopeGroups(themePaths, metadata);
+					if (showPreview) {
+						const scopeSummary = this.summarizeScopeGroups(groups);
+						const suffix = scopeSummary ? ` ${theme.fg("dim", `(${scopeSummary})`)}` : "";
+						summaryLines.push(
+							`${sectionHeader("Themes")} ${this.formatCount(customThemes.length, "theme")}${suffix}`,
+						);
+					} else {
+						summaryLines.push(`${sectionHeader("Themes")} ${this.formatCount(customThemes.length, "theme")}`);
+					}
+				}
+
+				if (summaryLines.length > 0) {
+					summaryLines.push(theme.fg("dim", "Use /resources full for detailed startup listings."));
+					this.chatContainer.addChild(new Spacer(1));
+					this.chatContainer.addChild(new Text(summaryLines.join("\n"), 0, 0));
+					this.chatContainer.addChild(new Spacer(1));
+				}
 			}
 		}
 
@@ -1093,12 +1353,20 @@ export class InteractiveMode {
 
 		const extensionRunner = this.session.extensionRunner;
 		if (!extensionRunner) {
-			this.showLoadedResources({ extensionPaths: [], force: false });
+			this.showLoadedResources({
+				extensionPaths: [],
+				listingMode: this.startupResourceListingMode,
+				showDiagnostics: true,
+			});
 			return;
 		}
 
 		this.setupExtensionShortcuts(extensionRunner);
-		this.showLoadedResources({ extensionPaths: extensionRunner.getExtensionPaths(), force: false });
+		this.showLoadedResources({
+			extensionPaths: extensionRunner.getExtensionPaths(),
+			listingMode: this.startupResourceListingMode,
+			showDiagnostics: true,
+		});
 	}
 
 	/**
@@ -1264,6 +1532,7 @@ export class InteractiveMode {
 	 */
 	private renderWidgets(): void {
 		if (!this.widgetContainerAbove || !this.widgetContainerBelow) return;
+		this.updateWorkflowStrip();
 		this.renderWidgetContainer(this.widgetContainerAbove, this.extensionWidgetsAbove, true, true);
 		this.renderWidgetContainer(this.widgetContainerBelow, this.extensionWidgetsBelow, false, false);
 		this.ui.requestRender();
@@ -1276,8 +1545,9 @@ export class InteractiveMode {
 		leadingSpacer: boolean,
 	): void {
 		container.clear();
+		const includeWorkflowStrip = container === this.widgetContainerAbove && this.workflowStripComponent !== undefined;
 
-		if (widgets.size === 0) {
+		if (widgets.size === 0 && !includeWorkflowStrip) {
 			if (spacerWhenEmpty) {
 				container.addChild(new Spacer(1));
 			}
@@ -1286,6 +1556,9 @@ export class InteractiveMode {
 
 		if (leadingSpacer) {
 			container.addChild(new Spacer(1));
+		}
+		if (includeWorkflowStrip && this.workflowStripComponent) {
+			container.addChild(this.workflowStripComponent);
 		}
 		for (const component of widgets.values()) {
 			container.addChild(component);
@@ -1868,169 +2141,206 @@ export class InteractiveMode {
 		}
 	}
 
+	private isRuntimeFeatureEnabled(flag: Parameters<RuntimeServices["isFeatureEnabled"]>[0]): boolean {
+		return this.runtimeServices?.isFeatureEnabled(flag) ?? false;
+	}
+
+	private async ensureRoleModel(role: ModelRoleName): Promise<void> {
+		if (!this.runtimeServices || !this.isRuntimeFeatureEnabled("model.roleProfiles")) {
+			return;
+		}
+		const roleModel = this.runtimeServices.modelRoles.resolveRoleModel(role);
+		if (!roleModel) {
+			return;
+		}
+		const currentModel = this.session.model;
+		if (currentModel && currentModel.provider === roleModel.provider && currentModel.id === roleModel.id) {
+			return;
+		}
+		await this.session.setModel(roleModel);
+		this.footer.invalidate();
+		this.updateEditorBorderColor();
+	}
+
+	private async withTemporaryRoleModel<T>(role: ModelRoleName, run: () => Promise<T>): Promise<T> {
+		if (!this.runtimeServices || !this.isRuntimeFeatureEnabled("model.roleProfiles")) {
+			return run();
+		}
+		const roleModel = this.runtimeServices.modelRoles.resolveRoleModel(role);
+		const previous = this.session.model;
+		const shouldSwitch =
+			roleModel && (!previous || previous.provider !== roleModel.provider || previous.id !== roleModel.id);
+		if (!shouldSwitch) {
+			return run();
+		}
+		await this.session.setModel(roleModel!);
+		this.footer.invalidate();
+		this.updateEditorBorderColor();
+		try {
+			return await run();
+		} finally {
+			if (previous) {
+				try {
+					await this.session.setModel(previous);
+					this.footer.invalidate();
+					this.updateEditorBorderColor();
+				} catch {
+					// Keep current model if restoration fails.
+				}
+			}
+		}
+	}
+
+	private async promptWithMainRole(text: string, options?: Parameters<AgentSession["prompt"]>[1]): Promise<void> {
+		await this.ensureRoleModel("main");
+		await this.session.prompt(text, options);
+	}
+
 	private setupEditorSubmitHandler(): void {
 		this.defaultEditor.onSubmit = async (text: string) => {
-			text = text.trim();
-			if (!text) return;
-
-			// Handle commands
-			if (text === "/settings") {
-				this.showSettingsSelector();
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/scoped-models") {
-				this.editor.setText("");
-				await this.showModelsSelector();
-				return;
-			}
-			if (text === "/model" || text.startsWith("/model ")) {
-				const searchTerm = text.startsWith("/model ") ? text.slice(7).trim() : undefined;
-				this.editor.setText("");
-				await this.handleModelCommand(searchTerm);
-				return;
-			}
-			if (text.startsWith("/export")) {
-				await this.handleExportCommand(text);
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/share") {
-				await this.handleShareCommand();
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/copy") {
-				this.handleCopyCommand();
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/name" || text.startsWith("/name ")) {
-				this.handleNameCommand(text);
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/session") {
-				this.handleSessionCommand();
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/changelog") {
-				this.handleChangelogCommand();
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/hotkeys") {
-				this.handleHotkeysCommand();
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/fork") {
-				this.showUserMessageSelector();
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/tree") {
-				this.showTreeSelector();
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/login") {
-				this.showOAuthSelector("login");
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/logout") {
-				this.showOAuthSelector("logout");
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/new") {
-				this.editor.setText("");
-				await this.handleClearCommand();
-				return;
-			}
-			if (text === "/compact" || text.startsWith("/compact ")) {
-				const customInstructions = text.startsWith("/compact ") ? text.slice(9).trim() : undefined;
-				this.editor.setText("");
-				await this.handleCompactCommand(customInstructions);
-				return;
-			}
-			if (text === "/reload") {
-				this.editor.setText("");
-				await this.handleReloadCommand();
-				return;
-			}
-			if (text === "/debug") {
-				this.handleDebugCommand();
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/arminsayshi") {
-				this.handleArminSaysHi();
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/resume") {
-				this.showSessionSelector();
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/quit") {
-				this.editor.setText("");
-				await this.shutdown();
-				return;
-			}
-
-			// Handle bash command (! for normal, !! for excluded from context)
-			if (text.startsWith("!")) {
-				const isExcluded = text.startsWith("!!");
-				const command = isExcluded ? text.slice(2).trim() : text.slice(1).trim();
-				if (command) {
-					if (this.session.isBashRunning) {
-						this.showWarning("A bash command is already running. Press Esc to cancel it first.");
-						this.editor.setText(text);
-						return;
-					}
-					this.editor.addToHistory?.(text);
-					await this.handleBashCommand(command, isExcluded);
-					this.isBashMode = false;
-					this.updateEditorBorderColor();
-					return;
-				}
-			}
-
-			// Queue input during compaction (extension commands execute immediately)
-			if (this.session.isCompacting) {
-				if (this.isExtensionCommand(text)) {
-					this.editor.addToHistory?.(text);
-					this.editor.setText("");
-					await this.session.prompt(text);
-				} else {
-					this.queueCompactionMessage(text, "steer");
-				}
-				return;
-			}
-
-			// If streaming, use prompt() with steer behavior
-			// This handles extension commands (execute immediately), prompt template expansion, and queueing
-			if (this.session.isStreaming) {
-				this.editor.addToHistory?.(text);
-				this.editor.setText("");
-				await this.session.prompt(text, { streamingBehavior: "steer" });
-				this.updatePendingMessagesDisplay();
-				this.ui.requestRender();
-				return;
-			}
-
-			// Normal message submission
-			// First, move any pending bash components to chat
-			this.flushPendingBashComponents();
-
-			if (this.onInputCallback) {
-				this.onInputCallback(text);
-			}
-			this.editor.addToHistory?.(text);
+			await handleInteractiveSubmit(
+				{
+					editor: this.editor,
+					session: this.session,
+					onInputCallback: this.onInputCallback,
+					setBashMode: (enabled) => {
+						this.isBashMode = enabled;
+					},
+					updateEditorBorderColor: () => {
+						this.updateEditorBorderColor();
+					},
+					showWarning: (message) => {
+						this.showWarning(message);
+					},
+					showSettingsSelector: () => {
+						this.showSettingsSelector();
+					},
+					showModelsSelector: async () => {
+						await this.showModelsSelector();
+					},
+					handleModelCommand: async (searchTerm) => {
+						await this.handleModelCommand(searchTerm);
+					},
+					handleExportCommand: async (submitText) => {
+						await this.handleExportCommand(submitText);
+					},
+					handleShareCommand: async () => {
+						await this.handleShareCommand();
+					},
+					handleCopyCommand: () => {
+						this.handleCopyCommand();
+					},
+					handleNameCommand: (submitText) => {
+						this.handleNameCommand(submitText);
+					},
+					handleSessionCommand: () => {
+						this.handleSessionCommand();
+					},
+					handleEventsCommand: async (submitText) => {
+						await this.handleEventsCommand(submitText);
+					},
+					handleQueueCommand: async (submitText) => {
+						await this.handleQueueCommand(submitText);
+					},
+					handleLanesCommand: async (submitText) => {
+						await this.handleLanesCommand(submitText);
+					},
+					handlePackagesCommand: async (submitText) => {
+						await this.handlePackagesCommand(submitText);
+					},
+					handleMailboxCommand: async (submitText) => {
+						await this.handleMailboxCommand(submitText);
+					},
+					handleDelegatedCommand: async (submitText) => {
+						await this.handleDelegatedCommand(submitText);
+					},
+					handleHeartbeatCommand: async (submitText) => {
+						await this.handleHeartbeatCommand(submitText);
+					},
+					handleModelsCommand: async (submitText) => {
+						await this.handleModelsCommand(submitText);
+					},
+					handleOpsCommand: async (submitText) => {
+						await this.handleOpsCommand(submitText);
+					},
+					handleWorkflowPlanCommand: (submitText) => {
+						this.handleWorkflowPlanCommand(submitText);
+					},
+					handleWorkflowPhaseCommand: (submitText) => {
+						this.handleWorkflowPhaseCommand(submitText);
+					},
+					handleWorkflowTaskCommand: (submitText) => {
+						this.handleWorkflowTaskCommand(submitText);
+					},
+					handleWorkflowVerifyCommand: (submitText) => {
+						this.handleWorkflowVerifyCommand(submitText);
+					},
+					handleWorkflowSummaryCommand: () => {
+						this.handleWorkflowSummaryCommand();
+					},
+					handleResourcesCommand: (submitText) => {
+						this.handleResourcesCommand(submitText);
+					},
+					handleChangelogCommand: () => {
+						this.handleChangelogCommand();
+					},
+					handleHotkeysCommand: () => {
+						this.handleHotkeysCommand();
+					},
+					showUserMessageSelector: () => {
+						this.showUserMessageSelector();
+					},
+					showTreeSelector: () => {
+						this.showTreeSelector();
+					},
+					showOAuthSelector: (mode) => {
+						this.showOAuthSelector(mode);
+					},
+					handleClearCommand: async () => {
+						await this.handleClearCommand();
+					},
+					handleCompactCommand: async (customInstructions) => {
+						await this.handleCompactCommand(customInstructions);
+					},
+					handleReloadCommand: async () => {
+						await this.handleReloadCommand();
+					},
+					handleDebugCommand: () => {
+						this.handleDebugCommand();
+					},
+					handleArminSaysHi: () => {
+						this.handleArminSaysHi();
+					},
+					showSessionSelector: () => {
+						this.showSessionSelector();
+					},
+					shutdown: async () => {
+						await this.shutdown();
+					},
+					handleBashCommand: async (command, isExcluded) => {
+						await this.handleBashCommand(command, isExcluded);
+					},
+					isExtensionCommand: (submitText) => {
+						return this.isExtensionCommand(submitText);
+					},
+					queueCompactionMessage: (submitText, mode) => {
+						this.queueCompactionMessage(submitText, mode);
+					},
+					promptWithMainRole: async (submitText, options) => {
+						await this.promptWithMainRole(submitText, options);
+					},
+					updatePendingMessagesDisplay: () => {
+						this.updatePendingMessagesDisplay();
+					},
+					requestRender: () => {
+						this.ui.requestRender();
+					},
+					flushPendingBashComponents: () => {
+						this.flushPendingBashComponents();
+					},
+				},
+				text,
+			);
 		};
 	}
 
@@ -2041,291 +2351,92 @@ export class InteractiveMode {
 	}
 
 	private async handleEvent(event: AgentSessionEvent): Promise<void> {
-		if (!this.isInitialized) {
-			await this.init();
-		}
+		const state = {
+			retryEscapeHandler: this.retryEscapeHandler,
+			retryLoader: this.retryLoader,
+			loadingAnimation: this.loadingAnimation,
+			pendingWorkingMessage: this.pendingWorkingMessage,
+			streamingComponent: this.streamingComponent,
+			streamingMessage: this.streamingMessage,
+			autoCompactionEscapeHandler: this.autoCompactionEscapeHandler,
+			autoCompactionLoader: this.autoCompactionLoader,
+		};
 
-		this.footer.invalidate();
-
-		switch (event.type) {
-			case "agent_start":
-				// Restore main escape handler if retry handler is still active
-				// (retry success event fires later, but we need main handler now)
-				if (this.retryEscapeHandler) {
-					this.defaultEditor.onEscape = this.retryEscapeHandler;
-					this.retryEscapeHandler = undefined;
-				}
-				if (this.retryLoader) {
-					this.retryLoader.stop();
-					this.retryLoader = undefined;
-				}
-				if (this.loadingAnimation) {
-					this.loadingAnimation.stop();
-				}
-				this.statusContainer.clear();
-				this.loadingAnimation = new Loader(
-					this.ui,
-					(spinner) => theme.fg("accent", spinner),
-					(text) => theme.fg("muted", text),
-					this.defaultWorkingMessage,
-				);
-				this.statusContainer.addChild(this.loadingAnimation);
-				// Apply any pending working message queued before loader existed
-				if (this.pendingWorkingMessage !== undefined) {
-					if (this.pendingWorkingMessage) {
-						this.loadingAnimation.setMessage(this.pendingWorkingMessage);
-					}
-					this.pendingWorkingMessage = undefined;
-				}
-				this.ui.requestRender();
-				break;
-
-			case "message_start":
-				if (event.message.role === "custom") {
-					this.addMessageToChat(event.message);
-					this.ui.requestRender();
-				} else if (event.message.role === "user") {
-					this.addMessageToChat(event.message);
+		await handleInteractiveAgentEvent(
+			{
+				state,
+				isInitialized: this.isInitialized,
+				init: async () => {
+					await this.init();
+				},
+				runtimeServices: this.runtimeServices,
+				sessionId: this.session.sessionId,
+				defaultEditor: this.defaultEditor,
+				session: {
+					abortCompaction: () => {
+						this.session.abortCompaction();
+					},
+					abortRetry: () => {
+						this.session.abortRetry();
+					},
+					retryAttempt: this.session.retryAttempt,
+				},
+				statusContainer: this.statusContainer,
+				chatContainer: this.chatContainer,
+				ui: this.ui,
+				defaultWorkingMessage: this.defaultWorkingMessage,
+				interruptKeyLabel: appKey(this.keybindings, "interrupt"),
+				hideThinkingBlock: this.hideThinkingBlock,
+				settingsManager: this.settingsManager,
+				toolOutputExpanded: this.toolOutputExpanded,
+				pendingTools: this.pendingTools,
+				footerInvalidate: () => {
+					this.footer.invalidate();
+				},
+				getMarkdownThemeWithSettings: () => {
+					return this.getMarkdownThemeWithSettings();
+				},
+				getRegisteredToolDefinition: (toolName) => {
+					return this.getRegisteredToolDefinition(toolName);
+				},
+				addMessageToChat: (message) => {
+					this.addMessageToChat(message);
+				},
+				updatePendingMessagesDisplay: () => {
 					this.updatePendingMessagesDisplay();
-					this.ui.requestRender();
-				} else if (event.message.role === "assistant") {
-					this.streamingComponent = new AssistantMessageComponent(
-						undefined,
-						this.hideThinkingBlock,
-						this.getMarkdownThemeWithSettings(),
-					);
-					this.streamingMessage = event.message;
-					this.chatContainer.addChild(this.streamingComponent);
-					this.streamingComponent.updateContent(this.streamingMessage);
-					this.ui.requestRender();
-				}
-				break;
-
-			case "message_update":
-				if (this.streamingComponent && event.message.role === "assistant") {
-					this.streamingMessage = event.message;
-					this.streamingComponent.updateContent(this.streamingMessage);
-
-					for (const content of this.streamingMessage.content) {
-						if (content.type === "toolCall") {
-							if (!this.pendingTools.has(content.id)) {
-								const component = new ToolExecutionComponent(
-									content.name,
-									content.arguments,
-									{
-										showImages: this.settingsManager.getShowImages(),
-									},
-									this.getRegisteredToolDefinition(content.name),
-									this.ui,
-								);
-								component.setExpanded(this.toolOutputExpanded);
-								this.chatContainer.addChild(component);
-								this.pendingTools.set(content.id, component);
-							} else {
-								const component = this.pendingTools.get(content.id);
-								if (component) {
-									component.updateArgs(content.arguments);
-								}
-							}
-						}
-					}
-					this.ui.requestRender();
-				}
-				break;
-
-			case "message_end":
-				if (event.message.role === "user") break;
-				if (this.streamingComponent && event.message.role === "assistant") {
-					this.streamingMessage = event.message;
-					let errorMessage: string | undefined;
-					if (this.streamingMessage.stopReason === "aborted") {
-						const retryAttempt = this.session.retryAttempt;
-						errorMessage =
-							retryAttempt > 0
-								? `Aborted after ${retryAttempt} retry attempt${retryAttempt > 1 ? "s" : ""}`
-								: "Operation aborted";
-						this.streamingMessage.errorMessage = errorMessage;
-					}
-					this.streamingComponent.updateContent(this.streamingMessage);
-
-					if (this.streamingMessage.stopReason === "aborted" || this.streamingMessage.stopReason === "error") {
-						if (!errorMessage) {
-							errorMessage = this.streamingMessage.errorMessage || "Error";
-						}
-						for (const [, component] of this.pendingTools.entries()) {
-							component.updateResult({
-								content: [{ type: "text", text: errorMessage }],
-								isError: true,
-							});
-						}
-						this.pendingTools.clear();
-					} else {
-						// Args are now complete - trigger diff computation for edit tools
-						for (const [, component] of this.pendingTools.entries()) {
-							component.setArgsComplete();
-						}
-					}
-					this.streamingComponent = undefined;
-					this.streamingMessage = undefined;
-					this.footer.invalidate();
-				}
-				this.ui.requestRender();
-				break;
-
-			case "tool_execution_start": {
-				if (!this.pendingTools.has(event.toolCallId)) {
-					const component = new ToolExecutionComponent(
-						event.toolName,
-						event.args,
-						{
-							showImages: this.settingsManager.getShowImages(),
-						},
-						this.getRegisteredToolDefinition(event.toolName),
-						this.ui,
-					);
-					component.setExpanded(this.toolOutputExpanded);
-					this.chatContainer.addChild(component);
-					this.pendingTools.set(event.toolCallId, component);
-					this.ui.requestRender();
-				}
-				break;
-			}
-
-			case "tool_execution_update": {
-				const component = this.pendingTools.get(event.toolCallId);
-				if (component) {
-					component.updateResult({ ...event.partialResult, isError: false }, true);
-					this.ui.requestRender();
-				}
-				break;
-			}
-
-			case "tool_execution_end": {
-				const component = this.pendingTools.get(event.toolCallId);
-				if (component) {
-					component.updateResult({ ...event.result, isError: event.isError });
-					this.pendingTools.delete(event.toolCallId);
-					this.ui.requestRender();
-				}
-				break;
-			}
-
-			case "agent_end":
-				if (this.loadingAnimation) {
-					this.loadingAnimation.stop();
-					this.loadingAnimation = undefined;
-					this.statusContainer.clear();
-				}
-				if (this.streamingComponent) {
-					this.chatContainer.removeChild(this.streamingComponent);
-					this.streamingComponent = undefined;
-					this.streamingMessage = undefined;
-				}
-				this.pendingTools.clear();
-
-				await this.checkShutdownRequested();
-
-				this.ui.requestRender();
-				break;
-
-			case "auto_compaction_start": {
-				// Keep editor active; submissions are queued during compaction.
-				// Set up escape to abort auto-compaction
-				this.autoCompactionEscapeHandler = this.defaultEditor.onEscape;
-				this.defaultEditor.onEscape = () => {
-					this.session.abortCompaction();
-				};
-				// Show compacting indicator with reason
-				this.statusContainer.clear();
-				const reasonText = event.reason === "overflow" ? "Context overflow detected, " : "";
-				this.autoCompactionLoader = new Loader(
-					this.ui,
-					(spinner) => theme.fg("accent", spinner),
-					(text) => theme.fg("muted", text),
-					`${reasonText}Auto-compacting... (${appKey(this.keybindings, "interrupt")} to cancel)`,
-				);
-				this.statusContainer.addChild(this.autoCompactionLoader);
-				this.ui.requestRender();
-				break;
-			}
-
-			case "auto_compaction_end": {
-				// Restore escape handler
-				if (this.autoCompactionEscapeHandler) {
-					this.defaultEditor.onEscape = this.autoCompactionEscapeHandler;
-					this.autoCompactionEscapeHandler = undefined;
-				}
-				// Stop loader
-				if (this.autoCompactionLoader) {
-					this.autoCompactionLoader.stop();
-					this.autoCompactionLoader = undefined;
-					this.statusContainer.clear();
-				}
-				// Handle result
-				if (event.aborted) {
-					this.showStatus("Auto-compaction cancelled");
-				} else if (event.result) {
-					// Rebuild chat to show compacted state
-					this.chatContainer.clear();
+				},
+				renderWidgets: () => {
+					this.renderWidgets();
+				},
+				checkShutdownRequested: async () => {
+					await this.checkShutdownRequested();
+				},
+				rebuildChatFromMessages: () => {
 					this.rebuildChatFromMessages();
-					// Add compaction component at bottom so user sees it without scrolling
-					this.addMessageToChat({
-						role: "compactionSummary",
-						tokensBefore: event.result.tokensBefore,
-						summary: event.result.summary,
-						timestamp: Date.now(),
-					});
-					this.footer.invalidate();
-				} else if (event.errorMessage) {
-					// Compaction failed (e.g., quota exceeded, API error)
-					this.chatContainer.addChild(new Spacer(1));
-					this.chatContainer.addChild(new Text(theme.fg("error", event.errorMessage), 1, 0));
-				}
-				void this.flushCompactionQueue({ willRetry: event.willRetry });
-				this.ui.requestRender();
-				break;
-			}
-
-			case "auto_retry_start": {
-				// Set up escape to abort retry
-				this.retryEscapeHandler = this.defaultEditor.onEscape;
-				this.defaultEditor.onEscape = () => {
-					this.session.abortRetry();
-				};
-				// Show retry indicator
-				this.statusContainer.clear();
-				const delaySeconds = Math.round(event.delayMs / 1000);
-				this.retryLoader = new Loader(
-					this.ui,
-					(spinner) => theme.fg("warning", spinner),
-					(text) => theme.fg("muted", text),
-					`Retrying (${event.attempt}/${event.maxAttempts}) in ${delaySeconds}s... (${appKey(this.keybindings, "interrupt")} to cancel)`,
-				);
-				this.statusContainer.addChild(this.retryLoader);
-				this.ui.requestRender();
-				break;
-			}
-
-			case "auto_retry_end": {
-				// Restore escape handler
-				if (this.retryEscapeHandler) {
-					this.defaultEditor.onEscape = this.retryEscapeHandler;
-					this.retryEscapeHandler = undefined;
-				}
-				// Stop loader
-				if (this.retryLoader) {
-					this.retryLoader.stop();
-					this.retryLoader = undefined;
-					this.statusContainer.clear();
-				}
-				// Show error only on final failure (success shows normal response)
-				if (!event.success) {
-					this.showError(`Retry failed after ${event.attempt} attempts: ${event.finalError || "Unknown error"}`);
-				}
-				this.ui.requestRender();
-				break;
-			}
-		}
+				},
+				flushCompactionQueue: async (options) => {
+					await this.flushCompactionQueue(options);
+				},
+				showStatus: (message) => {
+					this.showStatus(message);
+				},
+				showError: (message) => {
+					this.showError(message);
+				},
+				updateEditorBorderColor: () => {
+					this.updateEditorBorderColor();
+				},
+			},
+			event,
+		);
+		this.retryEscapeHandler = state.retryEscapeHandler;
+		this.retryLoader = state.retryLoader;
+		this.loadingAnimation = state.loadingAnimation;
+		this.pendingWorkingMessage = state.pendingWorkingMessage;
+		this.streamingComponent = state.streamingComponent;
+		this.streamingMessage = state.streamingMessage;
+		this.autoCompactionEscapeHandler = state.autoCompactionEscapeHandler;
+		this.autoCompactionLoader = state.autoCompactionLoader;
 	}
 
 	/** Extract text content from a user message */
@@ -2362,6 +2473,152 @@ export class InteractiveMode {
 		this.lastStatusSpacer = spacer;
 		this.lastStatusText = text;
 		this.ui.requestRender();
+	}
+
+	private formatWorkflowLabel(value: string): string {
+		return value.replace(/\b\w/g, (char) => char.toUpperCase());
+	}
+
+	private formatTaskCompletionLabel(value: string): string {
+		switch (value) {
+			case "completion_ready":
+				return "Completion Ready";
+			case "needs_verification":
+				return "Needs Verification";
+			case "failed_verification":
+				return "Failed Verification";
+			default:
+				return this.formatWorkflowLabel(value.replace(/_/g, " "));
+		}
+	}
+
+	private buildTaskExecutionContractText(taskId: string): string | undefined {
+		const workflow = this.session.workflow;
+		const task = workflow.taskGraph.tasks[taskId];
+		if (!task) {
+			return undefined;
+		}
+		const contract = buildTaskSubagentContract(task, {
+			phase: workflow.currentPhase,
+			relevantFiles: workflow.workspace.changedFiles.slice(0, 8),
+			extraInputs:
+				workflow.workspace.lastCommandResults.length > 0
+					? [
+							`last-command:${workflow.workspace.lastCommandResults[workflow.workspace.lastCommandResults.length - 1]!.command}`,
+						]
+					: [],
+		});
+		return [
+			`Goal: ${contract.goal}`,
+			contract.inputs.length > 0 ? `Inputs: ${contract.inputs.join(" | ")}` : "Inputs: none",
+			contract.constraints.length > 0 ? `Constraints: ${contract.constraints.join(" | ")}` : "Constraints: none",
+		].join("\n");
+	}
+
+	private getWorkflowDisplayState(): {
+		goal: string;
+		phase: string;
+		status: string;
+		activeTaskId?: string;
+		activeTaskGoal?: string;
+		activeTaskStatus?: string;
+		activeTaskVerification?: string;
+		activeTaskCompletion?: string;
+		activeTaskCompletionReady: boolean;
+		activeTaskCriteriaCount: number;
+		activeTaskNotesCount: number;
+		schedulableTasks: number;
+		artifacts: number;
+		verification: number;
+		transitions: number;
+	} {
+		const workflow = this.session.workflow;
+		const activeTaskId = workflow.taskGraph.activeTaskId;
+		const activeTask = activeTaskId ? workflow.taskGraph.tasks[activeTaskId] : undefined;
+		const activeTaskCompletion = getActiveTaskCompletionState(workflow);
+
+		return {
+			goal: workflow.goal,
+			phase: this.formatWorkflowLabel(workflow.currentPhase),
+			status: this.formatWorkflowLabel(workflow.status),
+			activeTaskId,
+			activeTaskGoal: activeTask?.goal,
+			activeTaskStatus: activeTask ? this.formatWorkflowLabel(activeTask.status) : undefined,
+			activeTaskVerification: activeTask
+				? this.formatWorkflowLabel(activeTaskCompletion.verificationStatus)
+				: undefined,
+			activeTaskCompletion: activeTask
+				? this.formatTaskCompletionLabel(activeTaskCompletion.completionLabel)
+				: undefined,
+			activeTaskCompletionReady: activeTaskCompletion.completionReady,
+			activeTaskCriteriaCount: activeTask?.acceptanceCriteria.length ?? 0,
+			activeTaskNotesCount: activeTask?.notes.length ?? 0,
+			schedulableTasks: getSchedulableTasks(workflow.taskGraph).length,
+			artifacts: workflow.artifacts.length,
+			verification: workflow.verification.length,
+			transitions: workflow.transitions.length,
+		};
+	}
+
+	private buildWorkflowStripLines(maxWidth: number, maxHeight: number): string[] {
+		const workflow = this.getWorkflowDisplayState();
+		const changedFilesCount = this.session.workflow.workspace.changedFiles.length;
+		const width = Math.max(40, maxWidth - 2);
+		const lines: string[] = [];
+		const idleSegments: string[] = [];
+		if (!workflow.activeTaskGoal && maxWidth >= 90) {
+			if (workflow.schedulableTasks > 0) {
+				idleSegments.push(`${theme.fg("dim", "schedulable:")} ${workflow.schedulableTasks}`);
+			}
+			if (changedFilesCount > 0) {
+				idleSegments.push(`${theme.fg("dim", "files:")} ${changedFilesCount}`);
+			}
+		}
+		const workflowLine = `${theme.bold(theme.fg("accent", "Workflow"))} ${theme.fg("dim", `${workflow.phase} | ${workflow.status}`)}${idleSegments.length > 0 ? ` ${theme.fg("dim", "•")} ${idleSegments.join(theme.fg("dim", " • "))}` : ""}`;
+		lines.push(truncateToWidth(workflowLine, width, "…"));
+
+		if (!workflow.activeTaskGoal) {
+			return lines;
+		}
+
+		const detailSegments: string[] = [];
+		if (workflow.activeTaskVerification) {
+			detailSegments.push(`${theme.fg("dim", "verify:")} ${workflow.activeTaskVerification}`);
+		}
+		if (workflow.activeTaskCompletion) {
+			detailSegments.push(`${theme.fg("dim", "complete:")} ${workflow.activeTaskCompletion}`);
+		}
+		if (workflow.activeTaskCompletionReady) {
+			detailSegments.push(theme.fg("success", "ready"));
+		}
+		if (changedFilesCount > 0 && maxWidth >= 78) {
+			detailSegments.push(`${theme.fg("dim", "files:")} ${changedFilesCount}`);
+		}
+
+		const taskLine = `${theme.fg("accent", "Task:")} ${theme.fg("text", workflow.activeTaskGoal)}`;
+		const allowThirdLine = detailSegments.length > 0 && maxWidth >= 100 && maxHeight >= 40;
+		if (allowThirdLine) {
+			lines.push(truncateToWidth(taskLine, width, "…"));
+			lines.push(truncateToWidth(detailSegments.join(theme.fg("dim", " • ")), width, "…"));
+			return lines;
+		}
+
+		const mergedTaskLine =
+			detailSegments.length > 0
+				? `${taskLine} ${theme.fg("dim", "•")} ${detailSegments.join(theme.fg("dim", " • "))}`
+				: taskLine;
+		lines.push(truncateToWidth(mergedTaskLine, width, "…"));
+		return lines;
+	}
+
+	private updateWorkflowStrip(): void {
+		const container = new Container();
+		const maxWidth = this.ui.terminal.columns || process.stdout.columns || 80;
+		const maxHeight = this.ui.terminal.rows || process.stdout.rows || 24;
+		for (const line of this.buildWorkflowStripLines(maxWidth, maxHeight)) {
+			container.addChild(new TruncatedText(line, 1, 0));
+		}
+		this.workflowStripComponent = container;
 	}
 
 	private addMessageToChat(message: AgentMessage, options?: { populateHistory?: boolean }): void {
@@ -2518,6 +2775,7 @@ export class InteractiveMode {
 		}
 
 		this.pendingTools.clear();
+		this.renderWidgets();
 		this.ui.requestRender();
 	}
 
@@ -2532,9 +2790,13 @@ export class InteractiveMode {
 		// Show compaction info if session was compacted
 		const allEntries = this.sessionManager.getEntries();
 		const compactionCount = allEntries.filter((e) => e.type === "compaction").length;
+		const statusMessages: string[] = [];
 		if (compactionCount > 0) {
 			const times = compactionCount === 1 ? "1 time" : `${compactionCount} times`;
-			this.showStatus(`Session compacted ${times}`);
+			statusMessages.unshift(`Session compacted ${times}`);
+		}
+		if (statusMessages.length > 0) {
+			this.showStatus(statusMessages.join("\n"));
 		}
 	}
 
@@ -2651,7 +2913,7 @@ export class InteractiveMode {
 		if (this.session.isStreaming) {
 			this.editor.addToHistory?.(text);
 			this.editor.setText("");
-			await this.session.prompt(text, { streamingBehavior: "followUp" });
+			await this.promptWithMainRole(text, { streamingBehavior: "followUp" });
 			this.updatePendingMessagesDisplay();
 			this.ui.requestRender();
 		}
@@ -2675,7 +2937,15 @@ export class InteractiveMode {
 			this.editor.borderColor = theme.getBashModeBorderColor();
 		} else {
 			const level = this.session.thinkingLevel || "off";
-			this.editor.borderColor = theme.getThinkingBorderColor(level);
+			// If thinking is active, show thinking color; otherwise show workflow phase color
+			if (level !== "off") {
+				this.editor.borderColor = theme.getThinkingBorderColor(level);
+			} else {
+				const phase = this.session.workflow?.currentPhase;
+				this.editor.borderColor = phase
+					? theme.getWorkflowPhaseColor(phase)
+					: theme.getThinkingBorderColor("off");
+			}
 		}
 		this.ui.requestRender();
 	}
@@ -2982,7 +3252,7 @@ export class InteractiveMode {
 			}
 
 			// Send first prompt (starts streaming)
-			const promptPromise = this.session.prompt(firstPrompt.text).catch((error) => {
+			const promptPromise = this.promptWithMainRole(firstPrompt.text).catch((error) => {
 				restoreQueue(error);
 			});
 
@@ -3056,7 +3326,16 @@ export class InteractiveMode {
 					editorPaddingX: this.settingsManager.getEditorPaddingX(),
 					autocompleteMaxVisible: this.settingsManager.getAutocompleteMaxVisible(),
 					quietStartup: this.settingsManager.getQuietStartup(),
+					startupDensity: this.settingsManager.getStartupDensity(),
 					clearOnShrink: this.settingsManager.getClearOnShrink(),
+					runtimeFeatureFlags: this.settingsManager.getRuntimeFeatureFlags(),
+					laneConcurrency: {
+						default: this.settingsManager.getLanePolicies().default.concurrency,
+						delegate: this.settingsManager.getLanePolicies().delegate.concurrency,
+						cron: this.settingsManager.getLanePolicies().cron.concurrency,
+						compact: this.settingsManager.getLanePolicies().compact.concurrency,
+						notification: this.settingsManager.getLanePolicies().notification.concurrency,
+					},
 				},
 				{
 					onAutoCompactChange: (enabled) => {
@@ -3125,8 +3404,8 @@ export class InteractiveMode {
 					onCollapseChangelogChange: (collapsed) => {
 						this.settingsManager.setCollapseChangelog(collapsed);
 					},
-					onQuietStartupChange: (enabled) => {
-						this.settingsManager.setQuietStartup(enabled);
+					onStartupDensityChange: (density) => {
+						this.settingsManager.setStartupDensity(density);
 					},
 					onDoubleEscapeActionChange: (action) => {
 						this.settingsManager.setDoubleEscapeAction(action);
@@ -3152,6 +3431,23 @@ export class InteractiveMode {
 					onClearOnShrinkChange: (enabled) => {
 						this.settingsManager.setClearOnShrink(enabled);
 						this.ui.setClearOnShrink(enabled);
+					},
+					onRuntimeFeatureFlagChange: (flag, enabled) => {
+						this.settingsManager.setRuntimeFeatureFlag(flag, enabled);
+						if (flag === "runtime.heartbeatCronCore") {
+							if (enabled) {
+								this.runtimeServices?.heartbeat.start();
+							} else {
+								this.runtimeServices?.heartbeat.stop();
+							}
+						}
+						if (flag === "ui.eventStreamViewer" && !enabled) {
+							this.stopEventTail(true);
+						}
+					},
+					onLaneConcurrencyChange: (lane, concurrency) => {
+						this.settingsManager.setLaneConcurrency(lane, concurrency);
+						this.runtimeServices?.syncLanePoliciesFromSettings();
 					},
 					onCancel: () => {
 						done();
@@ -3681,7 +3977,7 @@ export class InteractiveMode {
 		};
 
 		try {
-			await this.session.modelRegistry.authStorage.login(providerId as OAuthProvider, {
+			await this.session.modelRegistry.authStorage.login(providerId as OAuthProviderId, {
 				onAuth: (info: { url: string; instructions?: string }) => {
 					dialog.showAuth(info.url, info.instructions);
 
@@ -3787,6 +4083,7 @@ export class InteractiveMode {
 			}
 			this.ui.setShowHardwareCursor(this.settingsManager.getShowHardwareCursor());
 			this.ui.setClearOnShrink(this.settingsManager.getClearOnShrink());
+			this.runtimeServices?.syncLanePoliciesFromSettings();
 			this.setupAutocomplete(this.fdPath);
 			const runner = this.session.extensionRunner;
 			if (runner) {
@@ -3796,8 +4093,8 @@ export class InteractiveMode {
 			dismissLoader(this.editor as Component);
 			this.showLoadedResources({
 				extensionPaths: runner?.getExtensionPaths() ?? [],
-				force: false,
-				showDiagnosticsWhenQuiet: true,
+				listingMode: "summary",
+				showDiagnostics: true,
 			});
 			const modelsJsonError = this.session.modelRegistry.getError();
 			if (modelsJsonError) {
@@ -3808,6 +4105,38 @@ export class InteractiveMode {
 			dismissLoader(previousEditor as Component);
 			this.showError(`Reload failed: ${error instanceof Error ? error.message : String(error)}`);
 		}
+	}
+
+	private handleResourcesCommand(text: string): void {
+		const argText = text
+			.replace(/^\/resources\s*/, "")
+			.trim()
+			.toLowerCase();
+		if (!argText || argText === "summary") {
+			this.showLoadedResources({
+				extensionPaths: this.session.extensionRunner?.getExtensionPaths() ?? [],
+				listingMode: "summary",
+				showDiagnostics: true,
+			});
+			return;
+		}
+		if (argText === "issues") {
+			this.showLoadedResources({
+				extensionPaths: this.session.extensionRunner?.getExtensionPaths() ?? [],
+				issuesOnly: true,
+				showDiagnostics: true,
+			});
+			return;
+		}
+		if (argText === "full") {
+			this.showLoadedResources({
+				extensionPaths: this.session.extensionRunner?.getExtensionPaths() ?? [],
+				listingMode: "full",
+				showDiagnostics: true,
+			});
+			return;
+		}
+		this.showWarning("Usage: /resources [summary|issues|full]");
 	}
 
 	private async handleExportCommand(text: string): Promise<void> {
@@ -3955,6 +4284,21 @@ export class InteractiveMode {
 	private handleSessionCommand(): void {
 		const stats = this.session.getSessionStats();
 		const sessionName = this.sessionManager.getSessionName();
+		const workflow = this.getWorkflowDisplayState();
+		const workflowSnapshot = this.session.workflow;
+		const latestVerification =
+			workflow.activeTaskId !== undefined
+				? getLatestTaskVerification(workflowSnapshot, workflow.activeTaskId)
+				: undefined;
+		const latestCommand =
+			workflowSnapshot.workspace.lastCommandResults.length > 0
+				? workflowSnapshot.workspace.lastCommandResults[workflowSnapshot.workspace.lastCommandResults.length - 1]
+				: undefined;
+		const latestTest =
+			workflowSnapshot.workspace.testResults.length > 0
+				? workflowSnapshot.workspace.testResults[workflowSnapshot.workspace.testResults.length - 1]
+				: undefined;
+		const changedFilesPreview = workflowSnapshot.workspace.changedFiles.slice(0, 3);
 
 		let info = `${theme.bold("Session Info")}\n\n`;
 		if (sessionName) {
@@ -3984,9 +4328,1337 @@ export class InteractiveMode {
 			info += `${theme.fg("dim", "Total:")} ${stats.cost.toFixed(4)}`;
 		}
 
+		info += `\n\n${theme.bold("Workflow")}\n`;
+		info += `${theme.fg("dim", "Goal:")} ${workflow.goal}\n`;
+		info += `${theme.fg("dim", "Phase:")} ${workflow.phase}\n`;
+		info += `${theme.fg("dim", "Status:")} ${workflow.status}\n`;
+		if (workflow.activeTaskId) {
+			info += `${theme.fg("dim", "Active Task ID:")} ${workflow.activeTaskId}\n`;
+		}
+		if (workflow.activeTaskGoal) {
+			info += `${theme.fg("dim", "Active Task:")} ${workflow.activeTaskGoal}\n`;
+		}
+		if (workflow.activeTaskStatus) {
+			info += `${theme.fg("dim", "Task Status:")} ${workflow.activeTaskStatus}\n`;
+		}
+		if (workflow.activeTaskVerification) {
+			info += `${theme.fg("dim", "Task Verification:")} ${workflow.activeTaskVerification}\n`;
+		}
+		if (workflow.activeTaskCompletion) {
+			info += `${theme.fg("dim", "Completion State:")} ${workflow.activeTaskCompletion}\n`;
+		}
+		info += `${theme.fg("dim", "Completion Ready:")} ${workflow.activeTaskCompletionReady ? "yes" : "no"}\n`;
+		info += `${theme.fg("dim", "Acceptance Criteria:")} ${workflow.activeTaskCriteriaCount}\n`;
+		info += `${theme.fg("dim", "Task Notes:")} ${workflow.activeTaskNotesCount}\n`;
+		info += `${theme.fg("dim", "Schedulable Tasks:")} ${workflow.schedulableTasks}\n`;
+		info += `${theme.fg("dim", "Transitions:")} ${workflow.transitions}\n`;
+		info += `${theme.fg("dim", "Verification Records:")} ${workflow.verification}\n`;
+		info += `${theme.fg("dim", "Artifacts:")} ${workflow.artifacts}\n`;
+		info += `${theme.fg("dim", "Changed Files:")} ${workflowSnapshot.workspace.changedFiles.length}\n`;
+		if (changedFilesPreview.length > 0) {
+			info += `${theme.fg("dim", "Recent Changes:")} ${changedFilesPreview.join(", ")}\n`;
+		}
+		if (workflowSnapshot.workspace.git.branch) {
+			info += `${theme.fg("dim", "Git Branch:")} ${workflowSnapshot.workspace.git.branch}\n`;
+		}
+		if (workflowSnapshot.workspace.git.head) {
+			info += `${theme.fg("dim", "Git Head:")} ${workflowSnapshot.workspace.git.head}\n`;
+		}
+		if (workflowSnapshot.workspace.refreshedAt) {
+			info += `${theme.fg("dim", "Workspace Refreshed:")} ${workflowSnapshot.workspace.refreshedAt}\n`;
+		}
+		if (latestCommand) {
+			info += `${theme.fg("dim", "Last Command:")} ${latestCommand.command} (exit ${latestCommand.exitCode})\n`;
+		}
+		if (latestTest) {
+			info += `${theme.fg("dim", "Latest Test:")} ${latestTest.command} (${latestTest.passed ? "passed" : "failed"})\n`;
+		}
+		if (latestVerification) {
+			info += `${theme.fg("dim", "Latest Verification:")} ${latestVerification.status} for ${latestVerification.taskId}\n`;
+		}
+		if (workflow.activeTaskId) {
+			const contractText = this.buildTaskExecutionContractText(workflow.activeTaskId);
+			if (contractText) {
+				info += `${theme.fg("dim", "Execution Contract:")}\n${contractText}\n`;
+			}
+		}
+
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new Text(info, 1, 0));
 		this.ui.requestRender();
+	}
+
+	private renderRuntimePanel(title: string, lines: string[]): void {
+		this.chatContainer.addChild(new Spacer(1));
+		this.chatContainer.addChild(new DynamicBorder());
+		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", title)), 1, 0));
+		this.chatContainer.addChild(new Spacer(1));
+		this.chatContainer.addChild(new Text(lines.join("\n"), 1, 0));
+		this.chatContainer.addChild(new DynamicBorder());
+		this.ui.requestRender();
+	}
+
+	private getRuntimeOrWarn(flag?: Parameters<RuntimeServices["isFeatureEnabled"]>[0]): RuntimeServices | undefined {
+		if (!this.runtimeServices) {
+			this.showWarning("Runtime services are unavailable in this mode.");
+			return undefined;
+		}
+		if (flag && !this.runtimeServices.isFeatureEnabled(flag)) {
+			this.showWarning(`${flag} is disabled. Enable it in settings.runtime.featureFlags.`);
+			return undefined;
+		}
+		return this.runtimeServices;
+	}
+
+	private formatRuntimeEventLine(event: {
+		id: string;
+		type: string;
+		severity: string;
+		source: string;
+		lane?: string;
+		createdAt: number;
+		payload: Record<string, unknown>;
+	}): string {
+		const ts = new Date(event.createdAt).toLocaleTimeString();
+		const lane = event.lane ? ` lane=${event.lane}` : "";
+		if (event.type.startsWith("delegated_task.")) {
+			const delegatedTaskId =
+				typeof event.payload.delegatedTaskId === "string" ? event.payload.delegatedTaskId.slice(0, 8) : "unknown";
+			const assignee = typeof event.payload.assignee === "string" ? event.payload.assignee : "unknown";
+			const status = typeof event.payload.status === "string" ? event.payload.status : "unknown";
+			const goal = typeof event.payload.goal === "string" ? event.payload.goal : "";
+			const summary = typeof event.payload.summary === "string" ? event.payload.summary : "";
+			const lastError = typeof event.payload.lastError === "string" ? event.payload.lastError : "";
+			const detail = [
+				goal ? `goal=${JSON.stringify(goal)}` : "",
+				summary ? `summary=${JSON.stringify(summary)}` : "",
+				lastError ? `error=${JSON.stringify(lastError)}` : "",
+			]
+				.filter((part) => part.length > 0)
+				.join(" ");
+			return `${theme.fg("dim", ts)} ${theme.fg("accent", event.type)} ${theme.fg("muted", `[${event.severity}]`)} ${theme.fg("dim", event.source)}${lane} task=${delegatedTaskId} assignee=${assignee} status=${status}${detail ? ` ${detail}` : ""}`;
+		}
+		const payloadSummary = Object.keys(event.payload).length > 0 ? ` ${JSON.stringify(event.payload)}` : "";
+		const payloadText = payloadSummary.length > 120 ? `${payloadSummary.slice(0, 117)}...` : payloadSummary;
+		return `${theme.fg("dim", ts)} ${theme.fg("accent", event.type)} ${theme.fg("muted", `[${event.severity}]`)} ${theme.fg("dim", event.source)}${lane}${payloadText}`;
+	}
+
+	private stopEventTail(silent = false): void {
+		if (this.eventTailInterval) {
+			clearInterval(this.eventTailInterval);
+			this.eventTailInterval = undefined;
+		}
+		if (!silent) {
+			this.showStatus("Event tail stopped");
+		}
+	}
+
+	private startEventTail(limit: number): void {
+		const runtime = this.getRuntimeOrWarn("ui.eventStreamViewer");
+		if (!runtime) return;
+
+		this.stopEventTail(true);
+		const latest = runtime.events.tail(1);
+		this.eventTailLastTs = latest[0]?.createdAt ?? 0;
+		this.eventTailInterval = setInterval(() => {
+			if (!this.runtimeServices) return;
+			const rows = this.runtimeServices.events.list({
+				fromTs: this.eventTailLastTs + 1,
+				limit: Math.max(1, Math.min(100, limit)),
+			});
+			if (rows.length === 0) {
+				return;
+			}
+			const ordered = [...rows].reverse();
+			this.eventTailLastTs = Math.max(this.eventTailLastTs, ...ordered.map((row) => row.createdAt));
+			for (const row of ordered) {
+				this.chatContainer.addChild(new Text(this.formatRuntimeEventLine(row), 1, 0));
+			}
+			this.ui.requestRender();
+		}, 1000);
+		this.showStatus("Event tail started (/events tail off to stop)");
+	}
+
+	private async handleEventsCommand(text: string): Promise<void> {
+		const runtime = this.getRuntimeOrWarn("ui.eventStreamViewer");
+		if (!runtime) return;
+		const argText = text.replace(/^\/events\s*/, "").trim();
+		if (!argText) {
+			const events = runtime.events.list({ limit: 40 });
+			const lines =
+				events.length > 0
+					? events.map((event) => this.formatRuntimeEventLine(event))
+					: [theme.fg("dim", "No events yet.")];
+			this.renderRuntimePanel("Runtime Events", lines);
+			return;
+		}
+
+		const [subcommand, ...rest] = argText.split(/\s+/);
+		if (subcommand === "tail") {
+			const mode = rest[0];
+			if (mode === "off") {
+				this.stopEventTail();
+				return;
+			}
+			const limit = Number.parseInt(rest[1] ?? rest[0] ?? "20", 10);
+			this.startEventTail(Number.isFinite(limit) ? limit : 20);
+			return;
+		}
+
+		if (subcommand === "prune") {
+			const days = Number.parseInt(rest[0] ?? "7", 10);
+			if (!Number.isFinite(days) || days <= 0) {
+				this.showWarning("Usage: /events prune <days>");
+				return;
+			}
+			const removed = runtime.events.pruneByAge(days * 24 * 60 * 60 * 1000);
+			this.showStatus(`Pruned ${removed} runtime events older than ${days} day(s).`);
+			return;
+		}
+
+		const filters: {
+			type?: string;
+			lane?: LaneName;
+			severity?: "debug" | "info" | "warn" | "error";
+			limit: number;
+		} = { limit: 50 };
+		for (const token of argText.split(/\s+/)) {
+			if (!token.includes("=")) continue;
+			const [key, value] = token.split("=", 2);
+			if (key === "type" && value) filters.type = value;
+			if (key === "lane" && (LANE_NAMES as readonly string[]).includes(value)) filters.lane = value as LaneName;
+			if (key === "severity" && ["debug", "info", "warn", "error"].includes(value)) {
+				filters.severity = value as "debug" | "info" | "warn" | "error";
+			}
+			if (key === "limit" && value) {
+				const parsed = Number.parseInt(value, 10);
+				if (Number.isFinite(parsed)) {
+					filters.limit = Math.max(1, Math.min(parsed, 200));
+				}
+			}
+		}
+		const events = runtime.events.list(filters);
+		const lines =
+			events.length > 0
+				? events.map((event) => this.formatRuntimeEventLine(event))
+				: [theme.fg("dim", "No matching events.")];
+		this.renderRuntimePanel("Runtime Events", lines);
+	}
+
+	private formatQueueLine(message: {
+		id: string;
+		topic: string;
+		state: string;
+		lane: string;
+		attempts: number;
+		maxAttempts: number;
+		availableAt: number;
+		lastError?: string;
+	}): string {
+		const available = new Date(message.availableAt).toLocaleTimeString();
+		const error = message.lastError ? ` error=${message.lastError}` : "";
+		return `${theme.fg("accent", message.id.slice(0, 8))} ${message.topic} ${theme.fg("muted", `[${message.state}]`)} lane=${message.lane} attempts=${message.attempts}/${message.maxAttempts} at=${available}${error}`;
+	}
+
+	private async handleQueueCommand(text: string): Promise<void> {
+		const runtime = this.getRuntimeOrWarn("runtime.deliveryQueue");
+		if (!runtime) return;
+		const argText = text.replace(/^\/queue\s*/, "").trim();
+		if (!argText || argText === "list") {
+			const messages = runtime.queue.list(undefined, 50);
+			const lines =
+				messages.length > 0
+					? messages.map((message) => this.formatQueueLine(message))
+					: [theme.fg("dim", "Queue is empty.")];
+			this.renderRuntimePanel("Delivery Queue", lines);
+			return;
+		}
+
+		const [subcommand, ...rest] = argText.split(/\s+/);
+		if (subcommand === "dead-letter") {
+			const messages = runtime.queue.list("dead_letter", 50);
+			const lines =
+				messages.length > 0
+					? messages.map((message) => this.formatQueueLine(message))
+					: [theme.fg("dim", "No dead-letter messages.")];
+			this.renderRuntimePanel("Queue Dead Letter", lines);
+			return;
+		}
+		if (subcommand === "retry") {
+			const id = rest[0];
+			if (!id) {
+				this.showWarning("Usage: /queue retry <messageId>");
+				return;
+			}
+			const retried = runtime.queue.retryDeadLetter(id);
+			if (!retried) {
+				this.showWarning(`No dead-letter message found for ${id}`);
+				return;
+			}
+			this.showStatus(`Queue message retried: ${id}`);
+			return;
+		}
+		if (subcommand === "process") {
+			await runtime.queue.processDue();
+			this.showStatus("Queue processing tick complete.");
+			return;
+		}
+
+		this.showWarning("Usage: /queue [list] | /queue dead-letter | /queue retry <id> | /queue process");
+	}
+
+	private async handleLanesCommand(text: string): Promise<void> {
+		const runtime = this.getRuntimeOrWarn("runtime.namedLanes");
+		if (!runtime) return;
+		const argText = text.replace(/^\/lanes\s*/, "").trim();
+		if (!argText || argText === "list") {
+			const lines = runtime.lanes
+				.getSnapshots()
+				.map(
+					(snapshot) =>
+						`${theme.fg("accent", snapshot.lane)} concurrency=${snapshot.concurrency} active=${snapshot.active} queued=${snapshot.queued}`,
+				);
+			this.renderRuntimePanel("Lane Scheduler", lines.length > 0 ? lines : [theme.fg("dim", "No lane data.")]);
+			return;
+		}
+
+		const [subcommand, ...rest] = argText.split(/\s+/);
+		if (subcommand === "set") {
+			const lane = rest[0];
+			const concurrency = Number.parseInt(rest[1] ?? "", 10);
+			if (!(LANE_NAMES as readonly string[]).includes(lane ?? "") || !Number.isFinite(concurrency)) {
+				this.showWarning("Usage: /lanes set <default|delegate|cron|compact|notification> <concurrency>");
+				return;
+			}
+			this.settingsManager.setLaneConcurrency(lane as LaneName, concurrency);
+			runtime.syncLanePoliciesFromSettings();
+			this.showStatus(`Lane ${lane} concurrency set to ${Math.max(1, Math.floor(concurrency))}`);
+			return;
+		}
+		if (subcommand === "run") {
+			const lane = rest[0];
+			const label = rest.slice(1).join(" ").trim() || "manual-task";
+			if (!(LANE_NAMES as readonly string[]).includes(lane ?? "")) {
+				this.showWarning("Usage: /lanes run <default|delegate|cron|compact|notification> [label]");
+				return;
+			}
+			void runtime.lanes.schedule(lane as LaneName, label, async () => {
+				await new Promise<void>((resolve) => setTimeout(resolve, 500));
+			});
+			this.showStatus(`Scheduled synthetic lane task on ${lane}: ${label}`);
+			return;
+		}
+
+		this.showWarning("Usage: /lanes [list] | /lanes set <lane> <concurrency> | /lanes run <lane> [label]");
+	}
+
+	private async handlePackagesCommand(text: string): Promise<void> {
+		if (!this.isRuntimeFeatureEnabled("ui.marketplace")) {
+			this.showWarning("ui.marketplace is disabled. Enable it in settings.runtime.featureFlags.");
+			return;
+		}
+		if (this.session.isStreaming || this.session.isCompacting) {
+			this.showWarning("Wait until the current task is idle before managing packages.");
+			return;
+		}
+		const argText = text.replace(/^\/packages\s*/, "").trim();
+		const packageManager = new DefaultPackageManager({
+			cwd: process.cwd(),
+			agentDir: getAgentDir(),
+			settingsManager: this.settingsManager,
+		});
+		packageManager.setProgressCallback((event) => {
+			if (event.type === "start") {
+				this.showStatus(event.message || "Working...");
+			}
+		});
+
+		if (!argText) {
+			const globalPackages = this.settingsManager.getGlobalSettings().packages ?? [];
+			const projectPackages = this.settingsManager.getProjectSettings().packages ?? [];
+			this.renderRuntimePanel("Packages", [
+				`${theme.fg("accent", "Installed")} user=${globalPackages.length} project=${projectPackages.length}`,
+				"Commands:",
+				"  /packages list",
+				"  /packages install <source> [--local]",
+				"  /packages remove <source> [--local]",
+				"  /packages update [source]",
+				"  /packages manage",
+			]);
+			return;
+		}
+
+		const [subcommand, ...rest] = argText.split(/\s+/);
+		if (subcommand === "list") {
+			const globalPackages = this.settingsManager.getGlobalSettings().packages ?? [];
+			const projectPackages = this.settingsManager.getProjectSettings().packages ?? [];
+			const lines: string[] = [];
+			if (globalPackages.length > 0) {
+				lines.push(theme.bold("User packages:"));
+				for (const pkg of globalPackages) {
+					const source = typeof pkg === "string" ? pkg : pkg.source;
+					lines.push(`  ${source}`);
+				}
+			}
+			if (projectPackages.length > 0) {
+				lines.push(theme.bold("Project packages:"));
+				for (const pkg of projectPackages) {
+					const source = typeof pkg === "string" ? pkg : pkg.source;
+					lines.push(`  ${source}`);
+				}
+			}
+			if (lines.length === 0) {
+				lines.push(theme.fg("dim", "No packages configured."));
+			}
+			this.renderRuntimePanel("Packages", lines);
+			return;
+		}
+
+		if (subcommand === "manage") {
+			await this.showPackageManageSelector(packageManager);
+			return;
+		}
+
+		if (subcommand === "install" || subcommand === "remove" || subcommand === "update") {
+			const local = rest.includes("--local") || rest.includes("-l");
+			const source = rest.find((token) => !token.startsWith("-"));
+			try {
+				if (subcommand === "install") {
+					if (!source) {
+						this.showWarning("Usage: /packages install <source> [--local]");
+						return;
+					}
+					await packageManager.install(source, { local });
+					packageManager.addSourceToSettings(source, { local });
+					this.showStatus(`Installed ${source}`);
+					await this.handleReloadCommand();
+					return;
+				}
+				if (subcommand === "remove") {
+					if (!source) {
+						this.showWarning("Usage: /packages remove <source> [--local]");
+						return;
+					}
+					await packageManager.remove(source, { local });
+					packageManager.removeSourceFromSettings(source, { local });
+					this.showStatus(`Removed ${source}`);
+					await this.handleReloadCommand();
+					return;
+				}
+				await packageManager.update(source);
+				this.showStatus(source ? `Updated ${source}` : "Updated configured packages");
+				await this.handleReloadCommand();
+				return;
+			} catch (error) {
+				this.showError(error instanceof Error ? error.message : String(error));
+				return;
+			}
+		}
+
+		this.showWarning(
+			"Usage: /packages [list] | /packages install <source> [--local] | /packages remove <source> [--local] | /packages update [source] | /packages manage",
+		);
+	}
+
+	private async showPackageManageSelector(packageManager: DefaultPackageManager): Promise<void> {
+		const resolvedPaths = await packageManager.resolve();
+		await new Promise<void>((resolve) => {
+			this.showSelector((done) => {
+				const selector = new ConfigSelectorComponent(
+					resolvedPaths,
+					this.settingsManager,
+					process.cwd(),
+					getAgentDir(),
+					() => {
+						done();
+						resolve();
+					},
+					() => {
+						done();
+						void this.shutdown();
+						resolve();
+					},
+					() => this.ui.requestRender(),
+				);
+				return { component: selector, focus: selector.getResourceList() };
+			});
+		});
+		this.showStatus("Package resource enablement updated.");
+		await this.handleReloadCommand();
+	}
+
+	private formatMailboxLine(message: {
+		messageId: string;
+		threadId: string;
+		from: string;
+		to: string;
+		intent: string;
+		state: string;
+		priority: number;
+		updatedAt: number;
+		lastError?: string;
+	}): string {
+		const ts = new Date(message.updatedAt).toLocaleTimeString();
+		const error = message.lastError ? ` error=${message.lastError}` : "";
+		return `${theme.fg("accent", message.messageId.slice(0, 8))} thread=${message.threadId.slice(0, 8)} ${message.from} -> ${message.to} intent=${message.intent} ${theme.fg("muted", `[${message.state}]`)} p=${message.priority} ${ts}${error}`;
+	}
+
+	private async handleMailboxCommand(text: string): Promise<void> {
+		const runtime = this.getRuntimeOrWarn("runtime.mailboxProtocolV2");
+		if (!runtime) return;
+		const argText = text.replace(/^\/mailbox\s*/, "").trim();
+		const actor = this.session.sessionId;
+
+		if (!argText || argText === "inbox") {
+			const inbox = runtime.mailbox.listInbox(actor, 50);
+			const lines =
+				inbox.length > 0 ? inbox.map((msg) => this.formatMailboxLine(msg)) : [theme.fg("dim", "Inbox empty.")];
+			this.renderRuntimePanel(`Mailbox Inbox (${actor.slice(0, 8)})`, lines);
+			return;
+		}
+
+		const [subcommand, ...rest] = argText.split(/\s+/);
+		if (subcommand === "outbox") {
+			const outbox = runtime.mailbox.listOutbox(actor, 50);
+			const lines =
+				outbox.length > 0 ? outbox.map((msg) => this.formatMailboxLine(msg)) : [theme.fg("dim", "Outbox empty.")];
+			this.renderRuntimePanel(`Mailbox Outbox (${actor.slice(0, 8)})`, lines);
+			return;
+		}
+		if (subcommand === "thread") {
+			const threadId = rest[0];
+			if (!threadId) {
+				this.showWarning("Usage: /mailbox thread <threadId>");
+				return;
+			}
+			const messages = runtime.mailbox.listThread(threadId, 100);
+			const lines =
+				messages.length > 0
+					? messages.map((msg) => this.formatMailboxLine(msg))
+					: [theme.fg("dim", "Thread empty.")];
+			this.renderRuntimePanel(`Mailbox Thread ${threadId}`, lines);
+			return;
+		}
+		if (subcommand === "send") {
+			const to = rest[0];
+			const intent = rest[1];
+			const payloadText = rest.slice(2).join(" ").trim();
+			if (!to || !intent) {
+				this.showWarning("Usage: /mailbox send <to> <intent> [payload]");
+				return;
+			}
+			const envelope = runtime.mailbox.send({
+				from: actor,
+				to,
+				intent,
+				payload: payloadText ? { text: payloadText } : {},
+				completionCriteria: "Acknowledge and include outcome summary.",
+				retryPolicy: "exponential_backoff:max_5",
+				delegatedTask:
+					intent === "delegate"
+						? {
+								goal: payloadText || "Delegated task",
+								summary: "Queued from interactive mailbox send.",
+							}
+						: undefined,
+			});
+			const delegatedTaskId =
+				typeof envelope.payload.delegatedTaskId === "string"
+					? `\ndelegated=${envelope.payload.delegatedTaskId}`
+					: "";
+			this.showStatus(
+				`Mailbox message queued: ${envelope.messageId}\nthread=${envelope.threadId}\nfrom=${envelope.from} to=${envelope.to}${delegatedTaskId}`,
+			);
+			return;
+		}
+		if (subcommand === "ack") {
+			const messageId = rest[0];
+			if (!messageId) {
+				this.showWarning("Usage: /mailbox ack <messageId>");
+				return;
+			}
+			const acked = runtime.mailbox.ack(messageId, actor);
+			if (!acked) {
+				this.showWarning(`Unable to ack ${messageId}.`);
+				return;
+			}
+			this.showStatus(`Mailbox acked: ${messageId}`);
+			return;
+		}
+		if (subcommand === "retry") {
+			const messageId = rest[0];
+			if (!messageId) {
+				this.showWarning("Usage: /mailbox retry <messageId>");
+				return;
+			}
+			const retried = runtime.mailbox.retry(messageId);
+			if (!retried) {
+				this.showWarning(`Unable to retry ${messageId}.`);
+				return;
+			}
+			this.showStatus(`Mailbox retried: ${messageId}`);
+			return;
+		}
+
+		this.showWarning(
+			"Usage: /mailbox [inbox] | /mailbox outbox | /mailbox thread <threadId> | /mailbox send <to> <intent> [payload] | /mailbox ack <messageId> | /mailbox retry <messageId>",
+		);
+	}
+
+	private formatDelegatedTaskLine(task: DelegatedTaskRecord): string {
+		const ts = new Date(task.updatedAt).toLocaleTimeString();
+		const summary = task.summary ? ` summary=${JSON.stringify(task.summary)}` : "";
+		const error = task.lastError ? ` error=${JSON.stringify(task.lastError)}` : "";
+		return `${theme.fg("accent", task.delegatedTaskId.slice(0, 8))} ${task.owner} -> ${task.assignee} ${theme.fg("muted", `[${task.status}]`)} ${theme.fg("dim", ts)} goal=${JSON.stringify(task.goal)}${summary}${error}`;
+	}
+
+	private async handleDelegatedCommand(text: string): Promise<void> {
+		const runtime = this.getRuntimeOrWarn("runtime.mailboxProtocolV2");
+		if (!runtime) return;
+		const argText = text.replace(/^\/delegated\s*/, "").trim();
+		const actor = this.session.sessionId;
+
+		if (!argText || argText === "list") {
+			const tasks = runtime.delegatedTasks.list({ parentSessionId: actor, limit: 50 });
+			const lines =
+				tasks.length > 0
+					? tasks.map((task) => this.formatDelegatedTaskLine(task))
+					: [theme.fg("dim", "No delegated tasks.")];
+			this.renderRuntimePanel(`Delegated Tasks (${actor.slice(0, 8)})`, lines);
+			return;
+		}
+
+		const [subcommand, ...rest] = argText.split(/\s+/);
+		if (subcommand === "thread") {
+			const threadId = rest[0];
+			if (!threadId) {
+				this.showWarning("Usage: /delegated thread <threadId>");
+				return;
+			}
+			const tasks = runtime.delegatedTasks.list({ threadId, limit: 50 });
+			const lines =
+				tasks.length > 0
+					? tasks.map((task) => this.formatDelegatedTaskLine(task))
+					: [theme.fg("dim", "No delegated tasks for thread.")];
+			this.renderRuntimePanel(`Delegated Thread ${threadId}`, lines);
+			return;
+		}
+		if (subcommand === "start" || subcommand === "block" || subcommand === "complete" || subcommand === "fail") {
+			const delegatedTaskId = rest[0];
+			const detail = rest.slice(1).join(" ").trim();
+			if (!delegatedTaskId) {
+				this.showWarning(
+					`Usage: /delegated ${subcommand} <delegatedTaskId> ${subcommand === "fail" || subcommand === "block" ? "<details>" : "[details]"}`,
+				);
+				return;
+			}
+			let updated: DelegatedTaskRecord | undefined;
+			if (subcommand === "start") {
+				updated = runtime.delegatedTasks.markRunning(
+					delegatedTaskId,
+					detail || "Started from interactive command.",
+				);
+			}
+			if (subcommand === "block") {
+				if (!detail) {
+					this.showWarning("Usage: /delegated block <delegatedTaskId> <details>");
+					return;
+				}
+				updated = runtime.delegatedTasks.markBlocked(delegatedTaskId, detail);
+			}
+			if (subcommand === "complete") {
+				updated = runtime.delegatedTasks.markCompleted(
+					delegatedTaskId,
+					detail || "Completed from interactive command.",
+				);
+			}
+			if (subcommand === "fail") {
+				if (!detail) {
+					this.showWarning("Usage: /delegated fail <delegatedTaskId> <details>");
+					return;
+				}
+				updated = runtime.delegatedTasks.markFailed(delegatedTaskId, detail);
+			}
+			if (!updated) {
+				this.showWarning(`Unable to update delegated task ${delegatedTaskId}.`);
+				return;
+			}
+			this.showStatus(`Delegated task ${updated.delegatedTaskId}: ${updated.status}`);
+			return;
+		}
+
+		const filters: { status?: DelegatedTaskStatus; limit: number } = { limit: 50 };
+		for (const token of argText.split(/\s+/)) {
+			if (!token.includes("=")) continue;
+			const [key, value] = token.split("=", 2);
+			if (
+				key === "status" &&
+				(value === "queued" ||
+					value === "running" ||
+					value === "blocked" ||
+					value === "completed" ||
+					value === "failed")
+			) {
+				filters.status = value;
+			}
+			if (key === "limit" && value) {
+				const parsed = Number.parseInt(value, 10);
+				if (Number.isFinite(parsed)) {
+					filters.limit = Math.max(1, Math.min(parsed, 200));
+				}
+			}
+		}
+		const tasks = runtime.delegatedTasks.list({
+			parentSessionId: actor,
+			status: filters.status,
+			limit: filters.limit,
+		});
+		const lines =
+			tasks.length > 0
+				? tasks.map((task) => this.formatDelegatedTaskLine(task))
+				: [theme.fg("dim", "No matching delegated tasks.")];
+		this.renderRuntimePanel(`Delegated Tasks (${actor.slice(0, 8)})`, lines);
+	}
+
+	private async handleHeartbeatCommand(text: string): Promise<void> {
+		const runtime = this.getRuntimeOrWarn("runtime.heartbeatCronCore");
+		if (!runtime) return;
+		const argText = text.replace(/^\/heartbeat\s*/, "").trim();
+		if (!argText || argText === "status") {
+			const status = runtime.heartbeat.getStatus();
+			const jobs = runtime.heartbeat.listJobs(10);
+			const lines = [
+				`running=${status.running ? "yes" : "no"} intervalMs=${status.intervalMs} ticks=${status.tickCount} jobsEnabled=${status.jobsEnabled}`,
+				`lastTick=${status.lastTickAt ? new Date(status.lastTickAt).toISOString() : "never"}`,
+				"",
+				theme.bold("Cron jobs:"),
+			];
+			if (jobs.length === 0) {
+				lines.push(theme.fg("dim", "  none"));
+			} else {
+				for (const job of jobs) {
+					lines.push(
+						`  ${theme.fg("accent", job.id.slice(0, 8))} ${job.name} every ${job.intervalSeconds}s ${job.enabled ? "enabled" : "paused"} next=${new Date(job.nextRunAt).toLocaleTimeString()}`,
+					);
+				}
+			}
+			this.renderRuntimePanel("Heartbeat + Cron", lines);
+			return;
+		}
+
+		const [subcommand, ...rest] = argText.split(/\s+/);
+		if (subcommand === "tick") {
+			await runtime.heartbeat.tick();
+			this.showStatus("Heartbeat tick executed.");
+			return;
+		}
+		if (subcommand === "add") {
+			const name = rest[0];
+			const intervalSeconds = Number.parseInt(rest[1] ?? "", 10);
+			const intent = rest[2];
+			const payloadText = rest.slice(3).join(" ").trim();
+			if (!name || !Number.isFinite(intervalSeconds) || !intent) {
+				this.showWarning("Usage: /heartbeat add <name> <intervalSeconds> <intent> [payload]");
+				return;
+			}
+			const job = runtime.heartbeat.addJob({
+				name,
+				intervalSeconds,
+				intent,
+				payload: payloadText ? { text: payloadText } : {},
+			});
+			this.showStatus(`Cron job added: ${job.id} (${job.name})`);
+			return;
+		}
+		if (subcommand === "pause" || subcommand === "resume") {
+			const jobId = rest[0];
+			if (!jobId) {
+				this.showWarning(`Usage: /heartbeat ${subcommand} <jobId>`);
+				return;
+			}
+			const ok = runtime.heartbeat.setJobEnabled(jobId, subcommand === "resume");
+			if (!ok) {
+				this.showWarning(`Unknown cron job: ${jobId}`);
+				return;
+			}
+			this.showStatus(`Cron job ${subcommand}d: ${jobId}`);
+			return;
+		}
+		if (subcommand === "remove") {
+			const jobId = rest[0];
+			if (!jobId) {
+				this.showWarning("Usage: /heartbeat remove <jobId>");
+				return;
+			}
+			const ok = runtime.heartbeat.removeJob(jobId);
+			if (!ok) {
+				this.showWarning(`Unknown cron job: ${jobId}`);
+				return;
+			}
+			this.showStatus(`Cron job removed: ${jobId}`);
+			return;
+		}
+		if (subcommand === "list") {
+			const jobs = runtime.heartbeat.listJobs(100);
+			const lines =
+				jobs.length > 0
+					? jobs.map(
+							(job) =>
+								`${theme.fg("accent", job.id.slice(0, 8))} ${job.name} every ${job.intervalSeconds}s ${job.enabled ? "enabled" : "paused"} next=${new Date(job.nextRunAt).toISOString()}`,
+						)
+					: [theme.fg("dim", "No cron jobs.")];
+			this.renderRuntimePanel("Heartbeat Jobs", lines);
+			return;
+		}
+
+		this.showWarning(
+			"Usage: /heartbeat [status] | /heartbeat tick | /heartbeat list | /heartbeat add <name> <intervalSeconds> <intent> [payload] | /heartbeat pause <jobId> | /heartbeat resume <jobId> | /heartbeat remove <jobId>",
+		);
+	}
+
+	private async handleModelsCommand(text: string): Promise<void> {
+		if (text === "/models" || text.trim() === "/models") {
+			this.showStatus("Usage: /models roles [show|set|clear]");
+			return;
+		}
+		if (text.startsWith("/models roles")) {
+			await this.handleModelRolesCommand(text);
+			return;
+		}
+		this.showWarning("Unknown /models command. Use /models roles.");
+	}
+
+	private async handleModelRolesCommand(text: string): Promise<void> {
+		const runtime = this.getRuntimeOrWarn("model.roleProfiles");
+		if (!runtime) return;
+		const argText = text.replace(/^\/models\s+roles\s*/, "").trim();
+		if (!argText || argText === "show") {
+			const profile = this.settingsManager.getRoleModelProfile();
+			const lines = MODEL_ROLE_NAMES.map((role) => {
+				const value = profile[role];
+				const resolved = runtime.modelRoles.resolveRoleModel(role);
+				const resolvedText = resolved ? `${resolved.provider}/${resolved.id}` : "unresolved";
+				return `${theme.fg("accent", role)}: ${value ?? theme.fg("dim", "not set")} ${theme.fg("muted", `(${resolvedText})`)}`;
+			});
+			lines.push("");
+			lines.push("Usage: /models roles set <main|task|compact|quick> <provider>/<model>");
+			lines.push("       /models roles clear <main|task|compact|quick>");
+			this.renderRuntimePanel("Model Roles", lines);
+			return;
+		}
+
+		const [subcommand, ...rest] = argText.split(/\s+/);
+		if (subcommand === "set") {
+			const role = rest[0] as ModelRoleName | undefined;
+			const modelRef = rest.slice(1).join(" ").trim();
+			if (!role || !(MODEL_ROLE_NAMES as readonly string[]).includes(role) || !modelRef) {
+				this.showWarning("Usage: /models roles set <main|task|compact|quick> <provider>/<model>");
+				return;
+			}
+			if (!modelRef.includes("/")) {
+				this.showWarning("Model reference must be provider/model.");
+				return;
+			}
+			this.settingsManager.setRoleModel(role, modelRef);
+			runtime.events.record({
+				type: "model.roles.updated",
+				source: "interactive:/models roles set",
+				payload: {
+					role,
+					modelRef,
+				},
+			});
+			if (role === "main") {
+				try {
+					await this.ensureRoleModel("main");
+				} catch {
+					// Preserve setting even when model cannot be switched immediately.
+				}
+			}
+			this.showStatus(`Model role ${role} set to ${modelRef}`);
+			return;
+		}
+		if (subcommand === "clear") {
+			const role = rest[0] as ModelRoleName | undefined;
+			if (!role || !(MODEL_ROLE_NAMES as readonly string[]).includes(role)) {
+				this.showWarning("Usage: /models roles clear <main|task|compact|quick>");
+				return;
+			}
+			this.settingsManager.setRoleModel(role, undefined);
+			runtime.events.record({
+				type: "model.roles.updated",
+				source: "interactive:/models roles clear",
+				payload: { role, modelRef: null },
+			});
+			this.showStatus(`Model role ${role} cleared`);
+			return;
+		}
+
+		this.showWarning(
+			"Usage: /models roles [show] | /models roles set <role> <provider/model> | /models roles clear <role>",
+		);
+	}
+
+	private async handleOpsCommand(text: string): Promise<void> {
+		const runtime = this.getRuntimeOrWarn();
+		if (!runtime) return;
+
+		const argText = text.replace(/^\/ops\s*/, "").trim();
+		if (!argText) {
+			const flags = this.settingsManager.getRuntimeFeatureFlags();
+			const queueQueued = runtime.queue.list("queued", 200).length;
+			const queueLeased = runtime.queue.list("leased", 200).length;
+			const queueDead = runtime.queue.list("dead_letter", 200).length;
+			const actor = this.session.sessionId;
+			const heartbeat = runtime.heartbeat.getStatus();
+			const laneSnapshots = runtime.lanes
+				.getSnapshots()
+				.map((snapshot) => `${snapshot.lane}:${snapshot.active}/${snapshot.queued} c=${snapshot.concurrency}`)
+				.join(" | ");
+
+			const lines = [
+				theme.bold("Runtime"),
+				`queue queued=${queueQueued} leased=${queueLeased} dead=${queueDead}`,
+				`lanes ${laneSnapshots || "none"}`,
+				`mailbox inbox=${runtime.mailbox.listInbox(actor, 200).length} outbox=${runtime.mailbox.listOutbox(actor, 200).length}`,
+				`delegated tasks=${runtime.delegatedTasks.list({ parentSessionId: actor, limit: 200 }).length}`,
+				`heartbeat running=${heartbeat.running ? "yes" : "no"} jobs=${heartbeat.jobsEnabled} ticks=${heartbeat.tickCount}`,
+				"",
+				theme.bold("Flags"),
+				...RUNTIME_FEATURE_FLAG_NAMES.map((flag) => `${flag}=${flags[flag] ? "on" : "off"}`),
+				"",
+				"Use /ops <events|queue|lanes|packages|mailbox|delegated|heartbeat|models roles|flags>",
+			];
+			this.renderRuntimePanel("Ops", lines);
+			return;
+		}
+
+		const [subcommand, ...rest] = argText.split(/\s+/);
+		if (subcommand === "events") {
+			await this.handleEventsCommand(`/events ${rest.join(" ").trim()}`.trim());
+			return;
+		}
+		if (subcommand === "queue") {
+			await this.handleQueueCommand(`/queue ${rest.join(" ").trim()}`.trim());
+			return;
+		}
+		if (subcommand === "lanes") {
+			await this.handleLanesCommand(`/lanes ${rest.join(" ").trim()}`.trim());
+			return;
+		}
+		if (subcommand === "packages") {
+			await this.handlePackagesCommand(`/packages ${rest.join(" ").trim()}`.trim());
+			return;
+		}
+		if (subcommand === "mailbox") {
+			await this.handleMailboxCommand(`/mailbox ${rest.join(" ").trim()}`.trim());
+			return;
+		}
+		if (subcommand === "delegated") {
+			await this.handleDelegatedCommand(`/delegated ${rest.join(" ").trim()}`.trim());
+			return;
+		}
+		if (subcommand === "heartbeat") {
+			await this.handleHeartbeatCommand(`/heartbeat ${rest.join(" ").trim()}`.trim());
+			return;
+		}
+		if (subcommand === "models") {
+			await this.handleModelsCommand(`/models ${rest.join(" ").trim()}`.trim());
+			return;
+		}
+		if (subcommand === "flags") {
+			const action = rest[0];
+			const flagName = rest[1] as RuntimeFeatureFlagName | undefined;
+			if (!action || action === "list") {
+				const flags = this.settingsManager.getRuntimeFeatureFlags();
+				const lines = RUNTIME_FEATURE_FLAG_NAMES.map((flag) => `${flag}=${flags[flag] ? "on" : "off"}`);
+				lines.push("");
+				lines.push("Usage: /ops flags [list] | /ops flags enable <flag> | /ops flags disable <flag>");
+				this.renderRuntimePanel("Runtime Flags", lines);
+				return;
+			}
+			if ((action === "enable" || action === "disable") && flagName) {
+				if (!(RUNTIME_FEATURE_FLAG_NAMES as readonly string[]).includes(flagName)) {
+					this.showWarning(`Unknown flag "${flagName}"`);
+					return;
+				}
+				const enabled = action === "enable";
+				this.settingsManager.setRuntimeFeatureFlag(flagName, enabled);
+				if (flagName === "runtime.heartbeatCronCore") {
+					if (enabled) runtime.heartbeat.start();
+					else runtime.heartbeat.stop();
+				}
+				if (flagName === "ui.eventStreamViewer" && !enabled) {
+					this.stopEventTail(true);
+				}
+				this.showStatus(`${flagName} ${enabled ? "enabled" : "disabled"}`);
+				return;
+			}
+			this.showWarning("Usage: /ops flags [list] | /ops flags enable <flag> | /ops flags disable <flag>");
+			return;
+		}
+
+		this.showWarning("Usage: /ops [events|queue|lanes|packages|mailbox|delegated|heartbeat|models roles|flags]");
+	}
+
+	private handleWorkflowPlanCommand(text: string): void {
+		const argText = text.replace(/^\/plan\s*/, "").trim();
+		const workflow = this.session.workflow;
+		const activeTaskId = workflow.taskGraph.activeTaskId;
+		const activeTask = activeTaskId ? workflow.taskGraph.tasks[activeTaskId] : undefined;
+		const activeTaskCompletion = getActiveTaskCompletionState(workflow);
+
+		if (!argText || argText === "show") {
+			const taskSummary = activeTask ? `${activeTask.id}: ${activeTask.goal} [${activeTask.status}]` : "none";
+			this.showStatus(
+				`Plan goal: ${workflow.goal}\nPhase: ${this.formatWorkflowLabel(workflow.currentPhase)}\nActive task: ${taskSummary}\nCompletion ready: ${activeTaskCompletion.completionReady ? "yes" : "no"}\nTasks: ${workflow.taskGraph.taskOrder.length}`,
+			);
+			return;
+		}
+
+		if (argText === "start") {
+			if (workflow.currentPhase === "plan") {
+				this.showStatus("Workflow is already in Plan");
+				return;
+			}
+			try {
+				this.session.transitionWorkflow("plan", "Manual planning start from /plan");
+				this.renderWidgets();
+				this.showStatus("Workflow phase: Plan");
+			} catch (error) {
+				this.showError(error instanceof Error ? error.message : String(error));
+			}
+			return;
+		}
+
+		if (argText.startsWith("goal ")) {
+			const nextGoal = argText.slice(5).trim();
+			if (!nextGoal) {
+				this.showWarning("Usage: /plan goal <goal>");
+				return;
+			}
+
+			const activeTaskGoalShouldTrackGoal =
+				activeTask && workflow.taskGraph.taskOrder.length === 1 && activeTask.goal.trim() === workflow.goal.trim();
+
+			const nextSnapshot = {
+				...workflow,
+				goal: nextGoal,
+				taskGraph:
+					activeTaskGoalShouldTrackGoal && activeTaskId
+						? {
+								...workflow.taskGraph,
+								tasks: {
+									...workflow.taskGraph.tasks,
+									[activeTaskId]: {
+										...activeTask,
+										goal: nextGoal,
+									},
+								},
+							}
+						: workflow.taskGraph,
+			};
+
+			this.session.replaceWorkflowSnapshot(nextSnapshot);
+			this.renderWidgets();
+			this.showStatus(`Plan goal updated: ${nextGoal}`);
+			return;
+		}
+
+		if (argText === "split") {
+			const nextGraph = createTaskGraphFromGoal(workflow.goal, {
+				existingGraph: workflow.taskGraph,
+			});
+			this.session.replaceWorkflowTaskGraph(nextGraph);
+			this.session.recordWorkflowArtifact({
+				id: `plan-split-${Date.now()}`,
+				type: "plan",
+				label: "Workflow task graph generated from goal",
+				producer: "interactive:/plan split",
+				metadata: {
+					goal: workflow.goal,
+					taskCount: nextGraph.taskOrder.length,
+				},
+			});
+			this.renderWidgets();
+			const activeTaskAfterSplit = nextGraph.activeTaskId ? nextGraph.tasks[nextGraph.activeTaskId] : undefined;
+			this.showStatus(
+				`Plan graph updated from goal\nTasks: ${nextGraph.taskOrder.length}\nActive task: ${activeTaskAfterSplit ? `${activeTaskAfterSplit.id} (${activeTaskAfterSplit.status})` : "none"}`,
+			);
+			return;
+		}
+
+		this.showWarning("Usage: /plan [show] | /plan start | /plan goal <goal> | /plan split");
+	}
+
+	private handleWorkflowPhaseCommand(text: string): void {
+		const argText = text.replace(/^\/phase\s*/, "").trim();
+		const currentPhase = this.session.workflow.currentPhase;
+
+		if (!argText) {
+			const phases = WORKFLOW_PHASES.join(" -> ");
+			this.showStatus(`Workflow phase: ${this.formatWorkflowLabel(currentPhase)}\nFlow: ${phases}`);
+			return;
+		}
+
+		const [phaseToken, ...reasonParts] = argText.split(/\s+/);
+		const nextPhase = phaseToken as WorkflowPhase;
+		if (!WORKFLOW_PHASES.includes(nextPhase)) {
+			this.showWarning(`Unknown workflow phase "${phaseToken}"`);
+			return;
+		}
+
+		const reason = reasonParts.join(" ").trim() || `Manual phase update from /phase`;
+		try {
+			this.session.transitionWorkflow(nextPhase, reason);
+			const nextSnapshot = this.session.workflow;
+			const completionState = getActiveTaskCompletionState(nextSnapshot);
+			this.renderWidgets();
+			this.updateEditorBorderColor();
+			let message = `Workflow phase: ${this.formatWorkflowLabel(currentPhase)} -> ${this.formatWorkflowLabel(nextPhase)}`;
+			if (nextPhase === "summarize" && !completionState.completionReady) {
+				message += `\nWarning: active task is ${this.formatTaskCompletionLabel(completionState.completionLabel)} and is not completion-ready.`;
+			}
+			this.showStatus(message);
+		} catch (error) {
+			this.showError(error instanceof Error ? error.message : String(error));
+		}
+	}
+
+	private handleWorkflowTaskCommand(text: string): void {
+		const argText = text.replace(/^\/task\s*/, "").trim();
+		const workflow = this.session.workflow;
+
+		if (!argText || argText === "list") {
+			const lines = workflow.taskGraph.taskOrder.map((taskId) => {
+				const task = workflow.taskGraph.tasks[taskId];
+				if (!task) return undefined;
+				const isActive = workflow.taskGraph.activeTaskId === taskId ? " *" : "";
+				const verificationStatus = getTaskVerificationStatus(workflow, taskId);
+				const completionLabel = getTaskCompletionLabel(workflow, taskId);
+				const dependenciesReady = areTaskDependenciesSatisfied(workflow.taskGraph, taskId);
+				return `${task.id}: ${task.goal} [${task.status}]${isActive} | deps=${dependenciesReady ? "ready" : "waiting"} | verification=${verificationStatus} | completion=${this.formatTaskCompletionLabel(completionLabel)} (${task.acceptanceCriteria.length} criteria, ${task.notes.length} notes)`;
+			});
+			const visibleLines = lines.filter((line): line is string => line !== undefined);
+			this.showStatus(
+				visibleLines.length > 0 ? `Workflow tasks:\n${visibleLines.join("\n")}` : "Workflow tasks: none yet",
+			);
+			return;
+		}
+
+		const [subcommand, ...rest] = argText.split(/\s+/);
+		if (subcommand === "add") {
+			const taskId = rest[0];
+			const goal = rest.slice(1).join(" ").trim();
+			if (!taskId || !goal) {
+				this.showWarning("Usage: /task add <id> <goal>");
+				return;
+			}
+			try {
+				this.session.upsertWorkflowTask({ id: taskId, goal, status: "ready" });
+				this.renderWidgets();
+				this.showStatus(`Workflow task added: ${taskId}`);
+			} catch (error) {
+				this.showError(error instanceof Error ? error.message : String(error));
+			}
+			return;
+		}
+
+		if (subcommand === "show") {
+			const taskId = rest[0];
+			if (!taskId) {
+				this.showWarning("Usage: /task show <id>");
+				return;
+			}
+			const task = workflow.taskGraph.tasks[taskId];
+			if (!task) {
+				this.showWarning(`Unknown workflow task "${taskId}"`);
+				return;
+			}
+			const verificationStatus = getTaskVerificationStatus(workflow, taskId);
+			const completionLabel = getTaskCompletionLabel(workflow, taskId);
+			const latestVerification = getLatestTaskVerification(workflow, taskId);
+			const dependenciesReady = areTaskDependenciesSatisfied(workflow.taskGraph, taskId);
+			const contractText = this.buildTaskExecutionContractText(taskId) ?? "none";
+			const criteria =
+				task.acceptanceCriteria.length > 0
+					? task.acceptanceCriteria.map((criterion) => `- ${criterion}`).join("\n")
+					: "- none";
+			const notes = task.notes.length > 0 ? task.notes.map((note) => `- ${note}`).join("\n") : "- none";
+			this.showStatus(
+				`Task ${task.id}: ${task.goal}\nStatus: ${this.formatWorkflowLabel(task.status)}\nDependencies: ${dependenciesReady ? "Satisfied" : "Waiting"}\nVerification: ${this.formatWorkflowLabel(verificationStatus)}\nCompletion: ${this.formatTaskCompletionLabel(completionLabel)}\nAcceptance criteria:\n${criteria}\nNotes:\n${notes}\nLatest verification details: ${latestVerification?.evidence.diffSummary ?? latestVerification?.evidence.userWaiver ?? latestVerification?.evidence.commands[0]?.details ?? "none"}\nExecution contract:\n${contractText}`,
+			);
+			return;
+		}
+
+		if (subcommand === "active") {
+			const taskId = rest[0];
+			if (!taskId) {
+				this.showWarning("Usage: /task active <id>");
+				return;
+			}
+			try {
+				this.session.setWorkflowActiveTask(taskId);
+				this.renderWidgets();
+				this.showStatus(`Workflow active task: ${taskId}`);
+			} catch (error) {
+				this.showError(error instanceof Error ? error.message : String(error));
+			}
+			return;
+		}
+
+		if (subcommand === "status") {
+			const taskId = rest[0];
+			const statusToken = rest[1] as TaskStatus | undefined;
+			if (!taskId || !statusToken) {
+				this.showWarning("Usage: /task status <id> <pending|ready|in_progress|blocked|done|waived>");
+				return;
+			}
+			if (!WORKFLOW_TASK_STATUSES.includes(statusToken)) {
+				this.showWarning(`Unknown task status "${statusToken}"`);
+				return;
+			}
+			try {
+				this.session.updateWorkflowTaskStatus(taskId, statusToken);
+				const nextWorkflow = this.session.workflow;
+				const completionLabel = getTaskCompletionLabel(nextWorkflow, taskId);
+				this.renderWidgets();
+				this.showStatus(
+					`Workflow task ${taskId}: ${this.formatWorkflowLabel(statusToken)}\nCompletion: ${this.formatTaskCompletionLabel(completionLabel)}`,
+				);
+			} catch (error) {
+				this.showError(error instanceof Error ? error.message : String(error));
+			}
+			return;
+		}
+
+		if (subcommand === "criteria") {
+			const taskId = rest[0];
+			const criterion = rest.slice(1).join(" ").trim();
+			if (!taskId || !criterion) {
+				this.showWarning("Usage: /task criteria <id> <criterion>");
+				return;
+			}
+			const task = workflow.taskGraph.tasks[taskId];
+			if (!task) {
+				this.showWarning(`Unknown workflow task "${taskId}"`);
+				return;
+			}
+			try {
+				this.session.updateWorkflowTask(taskId, {
+					acceptanceCriteria: [...task.acceptanceCriteria, criterion],
+				});
+				this.renderWidgets();
+				this.showStatus(`Workflow task ${taskId}: added acceptance criterion`);
+			} catch (error) {
+				this.showError(error instanceof Error ? error.message : String(error));
+			}
+			return;
+		}
+
+		if (subcommand === "note") {
+			const taskId = rest[0];
+			const note = rest.slice(1).join(" ").trim();
+			if (!taskId || !note) {
+				this.showWarning("Usage: /task note <id> <note>");
+				return;
+			}
+			const task = workflow.taskGraph.tasks[taskId];
+			if (!task) {
+				this.showWarning(`Unknown workflow task "${taskId}"`);
+				return;
+			}
+			try {
+				this.session.updateWorkflowTask(taskId, {
+					notes: [...task.notes, note],
+				});
+				this.renderWidgets();
+				this.showStatus(`Workflow task ${taskId}: added note`);
+			} catch (error) {
+				this.showError(error instanceof Error ? error.message : String(error));
+			}
+			return;
+		}
+
+		this.showWarning(
+			"Usage: /task [list] | /task show <id> | /task add <id> <goal> | /task active <id> | /task status <id> <status> | /task criteria <id> <criterion> | /task note <id> <note>",
+		);
+	}
+
+	private handleWorkflowVerifyCommand(text: string): void {
+		const argText = text.replace(/^\/verify\s*/, "").trim();
+		const workflow = this.session.workflow;
+		const activeTaskId = workflow.taskGraph.activeTaskId;
+		if (!activeTaskId) {
+			this.showWarning("No active workflow task. Use /task active <id> first.");
+			return;
+		}
+
+		const [statusTokenRaw, ...detailParts] = argText ? argText.split(/\s+/) : [];
+		const statusToken = statusTokenRaw?.toLowerCase();
+		const detailText = detailParts.join(" ").trim();
+		const verificationStatus =
+			statusToken === "pass" || statusToken === "passed"
+				? "passed"
+				: statusToken === "fail" || statusToken === "failed"
+					? "failed"
+					: statusToken === "waive" || statusToken === "waived"
+						? "waived"
+						: undefined;
+
+		if (!verificationStatus) {
+			this.showWarning("Usage: /verify <passed|failed|waived> <details>");
+			return;
+		}
+
+		this.session.recordWorkflowVerification(activeTaskId, verificationStatus, {
+			tests: [],
+			commands: [
+				{
+					command: "manual:/verify",
+					validated: verificationStatus === "passed",
+					details: detailText || undefined,
+				},
+			],
+			userWaiver: verificationStatus === "waived" ? detailText || "Manual waiver recorded." : undefined,
+			diffSummary: detailText || undefined,
+		});
+		this.session.recordWorkflowArtifact({
+			id: `manual-verify-${Date.now()}`,
+			type: "verification",
+			label: `Manual verification for ${activeTaskId}`,
+			producer: "interactive:/verify",
+			metadata: {
+				status: verificationStatus,
+				details: detailText || null,
+			},
+		});
+		const nextWorkflow = this.session.workflow;
+		const completionLabel = getTaskCompletionLabel(nextWorkflow, activeTaskId);
+		this.renderWidgets();
+		this.showStatus(
+			`Workflow verification for ${activeTaskId}: ${this.formatWorkflowLabel(verificationStatus)}\nCompletion: ${this.formatTaskCompletionLabel(completionLabel)}`,
+		);
+	}
+
+	private handleWorkflowSummaryCommand(): void {
+		const workflow = this.session.workflow;
+		const activeTaskId = workflow.taskGraph.activeTaskId;
+		const activeTask = activeTaskId ? workflow.taskGraph.tasks[activeTaskId] : undefined;
+		const completion = getActiveTaskCompletionState(workflow);
+
+		const lines: string[] = [
+			`Phase: ${this.formatWorkflowLabel(workflow.currentPhase)}`,
+			`Status: ${this.formatWorkflowLabel(workflow.status)}`,
+			`Goal: ${workflow.goal}`,
+			`Active task: ${activeTask ? `${activeTask.id} - ${activeTask.goal} [${this.formatWorkflowLabel(activeTask.status)}]` : "none"}`,
+			`Verification: ${this.formatWorkflowLabel(completion.verificationStatus)}`,
+			`Completion: ${this.formatTaskCompletionLabel(completion.completionLabel)}`,
+			`Completion ready: ${completion.completionReady ? "yes" : "no"}`,
+			`Tasks: ${workflow.taskGraph.taskOrder.length}`,
+		];
+
+		this.showStatus(lines.join("\n"));
 	}
 
 	private handleChangelogCommand(): void {
@@ -4171,6 +5843,7 @@ export class InteractiveMode {
 
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new Text(`${theme.fg("accent", "✓ New session started")}`, 1, 1));
+		this.renderWidgets();
 		this.ui.requestRender();
 	}
 
@@ -4323,7 +5996,9 @@ export class InteractiveMode {
 			return;
 		}
 
-		await this.executeCompaction(customInstructions, false);
+		await this.withTemporaryRoleModel("compact", async () => {
+			await this.executeCompaction(customInstructions, false);
+		});
 	}
 
 	private async executeCompaction(customInstructions?: string, isAuto = false): Promise<CompactionResult | undefined> {
@@ -4387,9 +6062,11 @@ export class InteractiveMode {
 			this.loadingAnimation.stop();
 			this.loadingAnimation = undefined;
 		}
+		this.stopEventTail(true);
 		this.clearExtensionTerminalInputListeners();
 		this.footer.dispose();
 		this.footerDataProvider.dispose();
+		this.runtimeServices?.stop();
 		if (this.unsubscribe) {
 			this.unsubscribe();
 		}
