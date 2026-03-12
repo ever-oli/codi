@@ -64,6 +64,12 @@ export class FooterComponent implements Component {
 	// Breadcrumbs
 	private currentFilePath: string | undefined;
 	private currentLineNumber: number | undefined;
+	// Rearview mirror - recent actions (#7)
+	private recentActions: Array<{ action: string; time: number }> = [];
+	// Touched files (#31)
+	private touchedFiles: string[] = [];
+	// Discovery treasures (#40)
+	private discoveries: Array<{ text: string; time: number }> = [];
 
 	constructor(
 		private session: AgentSession,
@@ -107,6 +113,24 @@ export class FooterComponent implements Component {
 	setBreadcrumbs(filePath: string | undefined, lineNumber: number | undefined): void {
 		this.currentFilePath = filePath;
 		this.currentLineNumber = lineNumber;
+	}
+
+	/** Record a recent action for rearview mirror (#7). */
+	recordAction(action: string): void {
+		this.recentActions.push({ action, time: Date.now() });
+		if (this.recentActions.length > 5) this.recentActions.shift();
+	}
+
+	/** Track a touched file (#31). */
+	recordFileAccess(filePath: string): void {
+		const short = filePath.split("/").slice(-2).join("/");
+		this.touchedFiles = [short, ...this.touchedFiles.filter((f) => f !== short)].slice(0, 6);
+	}
+
+	/** Record a discovery/treasure (#40). */
+	recordDiscovery(text: string): void {
+		this.discoveries.push({ text, time: Date.now() });
+		if (this.discoveries.length > 3) this.discoveries.shift();
 	}
 
 	/**
@@ -328,6 +352,33 @@ export class FooterComponent implements Component {
 
 		if (workflowParts.length > 0) {
 			lines.push(truncateToWidth(workflowParts.join("  "), width, theme.fg("dim", "...")));
+		}
+
+		// Rearview mirror / activity line (#7, #31, #40)
+		const activityParts: string[] = [];
+
+		// Recent actions (rearview mirror)
+		if (this.recentActions.length > 0) {
+			const recent = this.recentActions
+				.slice(-3)
+				.map((a) => a.action)
+				.join(" → ");
+			activityParts.push(theme.fg("dim", `◀ ${recent}`));
+		}
+
+		// Touched files
+		if (this.touchedFiles.length > 0) {
+			activityParts.push(theme.fg("muted", `📂${this.touchedFiles.slice(0, 3).join(",")}`));
+		}
+
+		// Discoveries
+		if (this.discoveries.length > 0) {
+			const latest = this.discoveries[this.discoveries.length - 1];
+			activityParts.push(theme.fg("warning", `💎${latest.text}`));
+		}
+
+		if (activityParts.length > 0) {
+			lines.push(truncateToWidth(activityParts.join("  "), width, theme.fg("dim", "...")));
 		}
 
 		// Add extension statuses on a single line, sorted by key alphabetically

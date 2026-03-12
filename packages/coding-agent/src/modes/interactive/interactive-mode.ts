@@ -2435,6 +2435,15 @@ export class InteractiveMode {
 				markAgentEnd: () => {
 					this.footer.markAgentEnd();
 				},
+				recordAction: (action) => {
+					this.footer.recordAction(action);
+				},
+				recordFileAccess: (filePath) => {
+					this.footer.recordFileAccess(filePath);
+				},
+				recordDiscovery: (text) => {
+					this.footer.recordDiscovery(text);
+				},
 			},
 			event,
 		);

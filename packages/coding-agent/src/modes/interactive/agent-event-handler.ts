@@ -59,6 +59,9 @@ export interface InteractiveEventHandlerContext {
 	setActiveTool: (toolName: string | undefined) => void;
 	markAgentStart: () => void;
 	markAgentEnd: () => void;
+	recordAction: (action: string) => void;
+	recordFileAccess: (filePath: string) => void;
+	recordDiscovery: (text: string) => void;
 }
 
 export async function handleInteractiveAgentEvent(
@@ -219,6 +222,7 @@ export async function handleInteractiveAgentEvent(
 				context.pendingTools.set(event.toolCallId, component);
 			}
 			context.setActiveTool(event.toolName);
+			context.recordAction(event.toolName);
 			context.footerInvalidate();
 			context.ui.requestRender();
 			break;
