@@ -17,12 +17,7 @@
 
 import { spawn } from "node:child_process";
 import { complete } from "@mariozechner/pi-ai";
-import type {
-	AgentToolResult,
-	AgentToolUpdateCallback,
-	ExtensionAPI,
-	ExtensionContext,
-} from "@mariozechner/pi-coding-agent";
+import type { AgentToolResult, ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { Container, Spacer, Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 
@@ -98,9 +93,10 @@ function stripEpisodeBlock(output: string): string {
 function extractFilePaths(output: string): string[] {
 	const paths = new Set<string>();
 	const pathRegex = /(?:^|\s)((?:\/|\.\/|~\/)[^\s:,'"]+\.\w+)/gm;
-	let match: RegExpExecArray | null;
-	while ((match = pathRegex.exec(output)) !== null) {
+	let match = pathRegex.exec(output);
+	while (match !== null) {
 		paths.add(match[1]);
+		match = pathRegex.exec(output);
 	}
 	return Array.from(paths).slice(0, 20);
 }
@@ -233,7 +229,7 @@ async function runDelegate(taskSpec: TaskSpec, defaultCwd: string, timeoutSecond
 	};
 	let finalText = "";
 	let model = taskSpec.model?.trim();
-	let stderr = "";
+	let _stderr = "";
 	let timedOut = false;
 
 	const exitCode = await new Promise<number>((resolve) => {
@@ -278,10 +274,10 @@ async function runDelegate(taskSpec: TaskSpec, defaultCwd: string, timeoutSecond
 		});
 
 		proc.stderr.on("data", (chunk: Buffer) => {
-			stderr += chunk.toString();
+			_stderr += chunk.toString();
 		});
 
-		proc.on("error", (error: NodeJS.ErrnoException) => {
+		proc.on("error", (_error: NodeJS.ErrnoException) => {
 			clearTimeout(timeout);
 			resolve(127);
 		});
@@ -516,14 +512,12 @@ export default function (pi: ExtensionAPI) {
 				return {
 					content: [{ type: "text", text: "No tasks provided." }],
 					details: { episodes: [], synthesis: null, synthesisEpisodeId: null },
-					isError: true,
 				};
 			}
 			if (tasks.length > MAX_TASKS) {
 				return {
 					content: [{ type: "text", text: `Too many tasks (${tasks.length}). Maximum is ${MAX_TASKS}.` }],
 					details: { episodes: [], synthesis: null, synthesisEpisodeId: null },
-					isError: true,
 				};
 			}
 
@@ -737,7 +731,7 @@ export default function (pi: ExtensionAPI) {
 				container.addChild(
 					new Text(
 						theme.fg("muted", "Task: ") +
-							theme.fg("dim", ep.task.length > 80 ? ep.task.slice(0, 80) + "..." : ep.task),
+							theme.fg("dim", ep.task.length > 80 ? `${ep.task.slice(0, 80)}...` : ep.task),
 						0,
 						0,
 					),

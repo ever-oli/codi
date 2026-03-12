@@ -239,6 +239,16 @@ export default function (pi: ExtensionAPI) {
 									text: `REPL executing... (${consoleOutput.length} lines output)`,
 								},
 							],
+							details: {
+								code,
+								result: {
+									consoleOutput: [...consoleOutput],
+									finalValue: undefined,
+									hasFinal: false,
+									variableChanges: new Map(),
+									error: undefined,
+								},
+							},
 						});
 					}
 				},
@@ -376,6 +386,16 @@ export default function (pi: ExtensionAPI) {
 			if (onUpdate) {
 				onUpdate({
 					content: [{ type: "text", text: "REPL executing..." }],
+					details: {
+						code,
+						result: {
+							consoleOutput: [],
+							finalValue: undefined,
+							hasFinal: false,
+							variableChanges: new Map(),
+							error: undefined,
+						},
+					},
 				});
 			}
 
@@ -462,7 +482,6 @@ export default function (pi: ExtensionAPI) {
 			return {
 				content: [{ type: "text", text: lines.join("\n") }],
 				details,
-				isError: !!errorMessage && !hasFinal,
 			};
 		},
 

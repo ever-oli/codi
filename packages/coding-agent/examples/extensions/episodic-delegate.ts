@@ -456,7 +456,6 @@ export default function (pi: ExtensionAPI) {
 				return {
 					content: [{ type: "text", text: `Delegate error: ${message}` }],
 					details,
-					isError: true,
 				};
 			}
 

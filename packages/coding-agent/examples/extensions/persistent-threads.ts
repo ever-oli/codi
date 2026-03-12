@@ -477,7 +477,6 @@ export default function (pi: ExtensionAPI) {
 						{ type: "text", text: `Thread "${name}" already exists. Use thread_action to send work to it.` },
 					],
 					details: { threadName: name, model, cwd: cwd || ctx.cwd },
-					isError: true,
 				};
 			}
 
@@ -530,7 +529,9 @@ export default function (pi: ExtensionAPI) {
 
 		renderResult(result, _options, theme) {
 			const details = result.details as ThreadSpawnDetails | undefined;
-			const icon = result.isError ? theme.fg("error", "✗") : theme.fg("success", "✓");
+			const block = result.content[0];
+			const text = block?.type === "text" ? block.text : "";
+			const icon = text.includes("already exists") ? theme.fg("error", "✗") : theme.fg("success", "✓");
 			return new Text(
 				`${icon} ${theme.fg("toolTitle", theme.bold("thread"))} ${theme.fg("accent", details?.threadName || "?")}${details?.model ? theme.fg("dim", ` ${details.model}`) : ""}`,
 				0,
@@ -571,7 +572,6 @@ export default function (pi: ExtensionAPI) {
 				return {
 					content: [{ type: "text", text: `Thread "${threadName}" not found. Use thread_spawn first.` }],
 					details: { threadName, action, episode: null },
-					isError: true,
 				};
 			}
 
@@ -584,7 +584,6 @@ export default function (pi: ExtensionAPI) {
 						},
 					],
 					details: { threadName, action, episode: null },
-					isError: true,
 				};
 			}
 
@@ -595,6 +594,7 @@ export default function (pi: ExtensionAPI) {
 					content: [
 						{ type: "text", text: `Thread "${threadName}" executing action #${thread.actionCount + 1}...` },
 					],
+					details: { threadName, action, episode: null },
 				});
 			}
 
@@ -659,7 +659,6 @@ export default function (pi: ExtensionAPI) {
 			return {
 				content: [{ type: "text", text: lines.join("\n") }],
 				details,
-				isError: episode.exitCode !== 0,
 			};
 		},
 

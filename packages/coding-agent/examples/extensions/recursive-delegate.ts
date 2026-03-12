@@ -598,7 +598,6 @@ export default function (pi: ExtensionAPI) {
 				return {
 					content: [{ type: "text", text: "Budget exhausted." }],
 					details: { episode: errorEpisode, priorEpisodeIds },
-					isError: true,
 				};
 			}
 
@@ -610,6 +609,32 @@ export default function (pi: ExtensionAPI) {
 							text: `Recursive delegate: depth ${depth}/${maxDepth}${maxBudget !== undefined ? `, budget $${maxBudget.toFixed(4)}` : ""}, timeout ${maxTimeout}s...`,
 						},
 					],
+					details: {
+						episode: {
+							id: generateEpisodeId(),
+							label: params.episodeLabel,
+							timestamp: Date.now(),
+							task,
+							cwd: delegatedCwd,
+							summary: "Recursive delegate in progress.",
+							discoveries: [],
+							decisions: [],
+							filesRead: [],
+							filesModified: [],
+							errors: [],
+							durationMs: 0,
+							exitCode: 0,
+							turns: 0,
+							usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, turns: 0 },
+							rawOutput: "",
+							depth,
+							maxDepth,
+							childEpisodes: [],
+							budgetUsed: 0,
+							budgetRemaining: maxBudget ?? -1,
+						},
+						priorEpisodeIds,
+					},
 				});
 			}
 
@@ -634,6 +659,32 @@ export default function (pi: ExtensionAPI) {
 				if (onUpdate) {
 					onUpdate({
 						content: [{ type: "text", text: `At max depth ${depth}/${maxDepth} — using plain LLM...` }],
+						details: {
+							episode: {
+								id: generateEpisodeId(),
+								label: params.episodeLabel,
+								timestamp: Date.now(),
+								task,
+								cwd: delegatedCwd,
+								summary: "Plain LLM fallback in progress.",
+								discoveries: [],
+								decisions: [],
+								filesRead: [],
+								filesModified: [],
+								errors: [],
+								durationMs: 0,
+								exitCode: 0,
+								turns: 0,
+								usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, turns: 0 },
+								rawOutput: "",
+								depth,
+								maxDepth,
+								childEpisodes: [],
+								budgetUsed: 0,
+								budgetRemaining: maxBudget ?? -1,
+							},
+							priorEpisodeIds,
+						},
 					});
 				}
 				episode = await runPlainLLM(augmentedTask, ctx, childTimeout, params.episodeLabel);
@@ -712,7 +763,6 @@ export default function (pi: ExtensionAPI) {
 			return {
 				content: [{ type: "text", text: lines.join("\n") }],
 				details,
-				isError: episode.exitCode !== 0,
 			};
 		},
 

@@ -53,7 +53,6 @@ function renderWaveform(samples: number[], waveWidth: number = 12): string {
  * Computes token/context stats from session, gets git branch and extension statuses from provider.
  */
 export class FooterComponent implements Component {
-	private autoCompactEnabled = true;
 	private activeToolName: string | undefined;
 	private lastResponseMs: number | undefined;
 	private agentStartTime: number | undefined;
@@ -106,7 +105,7 @@ export class FooterComponent implements Component {
 	) {}
 
 	setAutoCompactEnabled(enabled: boolean): void {
-		this.autoCompactEnabled = enabled;
+		void enabled;
 	}
 
 	setActiveTool(toolName: string | undefined): void {
@@ -276,7 +275,6 @@ export class FooterComponent implements Component {
 
 		// Calculate context usage from session (handles compaction correctly).
 		const contextUsage = this.session.getContextUsage();
-		const contextWindow = contextUsage?.contextWindow ?? state.model?.contextWindow ?? 0;
 		const contextPercentValue = contextUsage?.percent ?? 0;
 		const contextPercent = contextUsage?.percent !== null ? contextPercentValue.toFixed(1) : "?";
 

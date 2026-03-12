@@ -1,60 +1,133 @@
 ![Codi Header](wallhaven-jew6op.jpg)
 
-# Codi Monorepo
+# Codi
 
-> **Looking for the coding agent package?** See **[packages/coding-agent](packages/coding-agent)** for installation and usage.
+Codi is a customized Pi-based coding agent workspace. This repo is no longer just a light fork snapshot of upstream Pi. It is the active source tree for a local-first coding agent setup with:
 
-Codi is a maintained fork of the Pi monorepo for custom local workflows while staying aligned with upstream Pi releases.
+- the Pi core packages (`ai`, `agent`, `coding-agent`, `tui`, `web-ui`, `mom`, `pods`)
+- custom installable tool packages used in daily sessions
+- project-scoped package loading for repo-specific workflows
+- a split CLI setup so local Codi changes stay separate from upstream `pi`
 
-## CLI Split (Recommended)
+If you want the main terminal app, start with [`packages/coding-agent`](packages/coding-agent). The rest of the monorepo supports that runtime.
 
-This fork uses a split CLI setup:
+## What The App Is Now
 
-- `codi`: runs this local fork from source (`/Users/ever/Documents/GitHub/Codi `)
-- `pi`: runs upstream npm-installed Pi in an isolated config dir (`~/.pi-upstream/agent`)
+The current app is a terminal coding agent with:
 
-This keeps custom Codi extensions/settings separate from upstream Pi.
+- interactive chat + editor UI
+- OAuth and API-key model access through the Pi AI layer
+- session history with branching, compaction, export, and replay
+- local package loading for tools, prompts, skills, extensions, and themes
+- repo-local workflow packages for research, delegation, memory, cron, images, search, and other task-specific actions
 
-## Current Package Scope
+In this checkout, Codi is being used as a programmable operator shell rather than a stock Pi install.
 
-The custom package split in this fork is currently:
+## CLI Layout
 
-- User scope (`~/.pi/agent/settings.json`): general-purpose packages you may want from any directory
-- Project scope ([`.pi/settings.json`](/Users/ever/Documents/GitHub/Codi%20/.pi/settings.json)): repo-local packages that should only load inside this checkout
+This repo uses a split CLI workflow:
 
-Current status:
+- `codi`: runs this checkout from source
+- `pi`: runs the separately installed upstream Pi in its own config directory
 
-- `pokemon-tools` is intended for user scope so `/pokemon` and the `pokemon-player` skill are available across Codi sessions
-- `evolution-tools` stays project-scoped because it writes outputs under `<cwd>/.pi/evolution/`
-- `autoresearch-tools` remains project-scoped in this repo
+That keeps local experiments, packages, and settings isolated from upstream.
 
-## Packages
+## Current Package Layout
 
-| Package | Description |
-|---------|-------------|
-| **[@mariozechner/pi-ai](packages/ai)** | Unified multi-provider LLM API (OpenAI, Anthropic, Google, etc.) |
-| **[@mariozechner/pi-agent-core](packages/agent)** | Agent runtime with tool calling and state management |
-| **[@mariozechner/pi-coding-agent](packages/coding-agent)** | Interactive coding agent CLI |
-| **[@mariozechner/pi-mom](packages/mom)** | Slack bot that delegates messages to the pi coding agent |
-| **[@mariozechner/pi-tui](packages/tui)** | Terminal UI library with differential rendering |
-| **[@mariozechner/pi-web-ui](packages/web-ui)** | Web components for AI chat interfaces |
-| **[@mariozechner/pi-pods](packages/pods)** | CLI for managing vLLM deployments on GPU pods |
+The monorepo has two layers.
 
-## Contributing
+Core Pi packages:
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines and [AGENTS.md](AGENTS.md) for project-specific rules (for both humans and agents).
+- [`packages/ai`](packages/ai): model/provider abstraction, OAuth helpers, generated model catalog, streaming APIs
+- [`packages/agent`](packages/agent): agent runtime and shared orchestration primitives
+- [`packages/coding-agent`](packages/coding-agent): the main terminal coding agent
+- [`packages/tui`](packages/tui): terminal UI primitives, editor, markdown, key handling
+- [`packages/web-ui`](packages/web-ui): web components and browser-facing UI pieces
+- [`packages/mom`](packages/mom): Slack bot integration
+- [`packages/pods`](packages/pods): vLLM pod management CLI
+
+Custom Codi packages currently in this repo:
+
+- [`packages/clarify-tools`](packages/clarify-tools): structured clarification UI/tooling
+- [`packages/session-search-tools`](packages/session-search-tools): search current session and branches
+- [`packages/todo-tools`](packages/todo-tools): installable todo workflow
+- [`packages/image-tools`](packages/image-tools): image generation via Google Antigravity
+- [`packages/web-tools`](packages/web-tools): lightweight web search and extract helpers
+- [`packages/memory-tools`](packages/memory-tools): persistent user/environment memory stores
+- [`packages/cron-tools`](packages/cron-tools): durable recurring jobs
+- [`packages/delegate-tools`](packages/delegate-tools): bounded nested-agent delegation
+- [`packages/skills-tools`](packages/skills-tools): read/write/remove `SKILL.md` files in user or project scope
+- [`packages/autoresearch-tools`](packages/autoresearch-tools): Karpathy-style autoresearch loops
+- [`packages/evolution-tools`](packages/evolution-tools): bounded skill-evolution workflows
+- [`packages/pokemon-tools`](packages/pokemon-tools): local `pokemon-agent` integration
+- [`packages/autoresearch-av`](packages/autoresearch-av): standalone AV baseline runner used by autoresearch tooling
+- [`packages/extension-sdk`](packages/extension-sdk): helper surface for extension/package authoring
+- [`packages/zed`](packages/zed): Zed editor integration assets
+
+## Scope And Loading
+
+Codi currently uses both user and project package scopes.
+
+User scope:
+
+- configured in `~/.pi/agent/settings.json`
+- intended for packages you want available from any directory
+
+Project scope:
+
+- configured in [`.pi/settings.json`](/Users/ever/Documents/GitHub/Codi%20/.pi/settings.json)
+- only loaded when running inside this checkout
+
+Current project-scoped packages in this repo:
+
+- `autoresearch-tools`
+- `evolution-tools`
+
+Typical user-scoped packages in this setup include things like `pokemon-tools`, memory/search helpers, and other cross-repo tools.
+
+## Main Workflow
+
+For day-to-day use, the center of gravity is the interactive coding agent in [`packages/coding-agent`](packages/coding-agent).
+
+That app currently supports:
+
+- startup resource discovery for `AGENTS.md`, skills, prompts, extensions, and themes
+- slash commands for sessions, resources, runtime ops, packages, queue/mailbox, workflows, and model management
+- package installation and management from inside interactive mode
+- extension-driven UI surfaces and custom tools
+- local session files with tree navigation and branch/fork flows
+
+The custom packages in this repo are meant to extend that app without modifying every workflow directly in the core runtime.
 
 ## Development
 
+Install dependencies:
+
 ```bash
-npm install          # Install all dependencies
-npm run build        # Build all packages
-npm run check        # Lint, format, and type check
-./test.sh            # Run tests (skips LLM-dependent tests without API keys)
-./pi-test.sh         # Run pi from sources (must be run from repo root)
+npm install
 ```
 
-> **Note:** `npm run check` requires `npm run build` to be run first. The web-ui package uses `tsc` which needs compiled `.d.ts` files from dependencies.
+Useful repo commands:
+
+```bash
+npm run build
+npm run check
+npm run test
+```
+
+Source-driven local launch helpers:
+
+```bash
+./pi-test.sh
+./test.sh
+```
+
+## Documentation Pointers
+
+- [`AGENTS.md`](AGENTS.md): repo-specific development rules
+- [`CONTRIBUTING.md`](CONTRIBUTING.md): contribution flow
+- [`packages/coding-agent/README.md`](packages/coding-agent/README.md): main app behavior and CLI usage
+- package READMEs under [`packages`](packages): current tool/package surfaces
 
 ## License
 
