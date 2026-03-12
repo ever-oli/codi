@@ -62,6 +62,8 @@ export interface InteractiveEventHandlerContext {
 	recordAction: (action: string) => void;
 	recordFileAccess: (filePath: string) => void;
 	recordDiscovery: (text: string) => void;
+	setVerificationReport: (report: Array<{ criteria: string; passed: boolean }>, show?: boolean) => void;
+	setHitlPause: (reason: string | undefined) => void;
 }
 
 export async function handleInteractiveAgentEvent(

@@ -2444,6 +2444,12 @@ export class InteractiveMode {
 				recordDiscovery: (text) => {
 					this.footer.recordDiscovery(text);
 				},
+				setVerificationReport: (report, show) => {
+					this.footer.setVerificationReport(report, show);
+				},
+				setHitlPause: (reason) => {
+					this.footer.setHitlPause(reason);
+				},
 			},
 			event,
 		);

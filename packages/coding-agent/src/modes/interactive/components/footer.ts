@@ -70,6 +70,12 @@ export class FooterComponent implements Component {
 	private touchedFiles: string[] = [];
 	// Discovery treasures (#40)
 	private discoveries: Array<{ text: string; time: number }> = [];
+	// Verification report (#50)
+	private verificationReport: Array<{ criteria: string; passed: boolean }> = [];
+	private showVerificationReport = false;
+	// HITL pause state (#13)
+	private hitlPauseReason: string | undefined;
+	private hitlPending = false;
 
 	constructor(
 		private session: AgentSession,
@@ -131,6 +137,18 @@ export class FooterComponent implements Component {
 	recordDiscovery(text: string): void {
 		this.discoveries.push({ text, time: Date.now() });
 		if (this.discoveries.length > 3) this.discoveries.shift();
+	}
+
+	/** Set verification report for display (#50). */
+	setVerificationReport(report: Array<{ criteria: string; passed: boolean }>, show: boolean = true): void {
+		this.verificationReport = report;
+		this.showVerificationReport = show;
+	}
+
+	/** Set HITL pause state (#13). */
+	setHitlPause(reason: string | undefined): void {
+		this.hitlPauseReason = reason;
+		this.hitlPending = reason !== undefined;
 	}
 
 	/**
@@ -379,6 +397,39 @@ export class FooterComponent implements Component {
 
 		if (activityParts.length > 0) {
 			lines.push(truncateToWidth(activityParts.join("  "), width, theme.fg("dim", "...")));
+		}
+
+		// Action queue (#21) - show pending tasks
+		if (workflow?.taskGraph) {
+			const pendingTasks = workflow.taskGraph.taskOrder
+				.filter((id) => {
+					const t = workflow.taskGraph.tasks[id];
+					return t && t.status !== "done" && t.status !== "waived";
+				})
+				.slice(0, 4);
+			if (pendingTasks.length > 0) {
+				const queueLine = pendingTasks
+					.map((id) => {
+						const t = workflow.taskGraph.tasks[id];
+						const statusIcon = t?.status === "in_progress" ? "▶" : t?.status === "blocked" ? "⏸" : "○";
+						return `${statusIcon} ${t?.goal?.slice(0, 30) ?? id}`;
+					})
+					.join("  ");
+				lines.push(theme.fg("dim", truncateToWidth(`Queue: ${queueLine}`, width, "...")));
+			}
+		}
+
+		// Verification report (#50)
+		if (this.showVerificationReport && this.verificationReport.length > 0) {
+			const reportLine = this.verificationReport
+				.map((r) => (r.passed ? theme.fg("success", `✓ ${r.criteria}`) : theme.fg("error", `✗ ${r.criteria}`)))
+				.join("  ");
+			lines.push(truncateToWidth(reportLine, width, theme.fg("dim", "...")));
+		}
+
+		// HITL pause indicator (#13)
+		if (this.hitlPending && this.hitlPauseReason) {
+			lines.push(theme.fg("warning", `⏸ Awaiting approval: ${this.hitlPauseReason}`));
 		}
 
 		// Add extension statuses on a single line, sorted by key alphabetically
