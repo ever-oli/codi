@@ -6,6 +6,7 @@ import type { AgentTool } from "@mariozechner/pi-agent-core";
 import { type Static, Type } from "@sinclair/typebox";
 import { spawn } from "child_process";
 import { getShellConfig, getShellEnv, killProcessTree } from "../../utils/shell.js";
+import { redactSecrets } from "./redact.js";
 import { DEFAULT_MAX_BYTES, DEFAULT_MAX_LINES, formatSize, type TruncationResult, truncateTail } from "./truncate.js";
 
 /**
@@ -256,6 +257,8 @@ export function createBashTool(cwd: string, options?: BashToolOptions): AgentToo
 
 						// Apply tail truncation
 						const truncation = truncateTail(fullOutput);
+						// Redact secrets before sending to LLM context
+						truncation.content = redactSecrets(truncation.content);
 						let outputText = truncation.content || "(no output)";
 
 						// Build details with truncation info
@@ -297,7 +300,7 @@ export function createBashTool(cwd: string, options?: BashToolOptions): AgentToo
 
 						// Combine all buffered chunks for error output
 						const fullBuffer = Buffer.concat(chunks);
-						let output = fullBuffer.toString("utf-8");
+						let output = redactSecrets(fullBuffer.toString("utf-8"));
 
 						if (err.message === "aborted") {
 							if (output) output += "\n\n";

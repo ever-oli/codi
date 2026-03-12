@@ -137,10 +137,11 @@ To share extensions via npm or git as pi packages, see [packages.md](packages.md
 
 | Package | Purpose |
 |---------|---------|
-| `@mariozechner/pi-coding-agent` | Extension types (`ExtensionAPI`, `ExtensionContext`, events) |
-| `@sinclair/typebox` | Schema definitions for tool parameters |
-| `@mariozechner/pi-ai` | AI utilities (`StringEnum` for Google-compatible enums) |
-| `@mariozechner/pi-tui` | TUI components for custom rendering |
+| `@mariozechner/pi-extension-sdk` | Recommended common import surface for extension and tool package authoring (`defineExtension`, `defineTool`, `Type`, `StringEnum`, common TUI helpers) |
+| `@mariozechner/pi-coding-agent` | Full extension/runtime API for advanced integrations and lower-level types |
+| `@sinclair/typebox` | Schema definitions for tool parameters if you do not use the SDK re-export |
+| `@mariozechner/pi-ai` | AI utilities if you need APIs beyond the SDK re-export |
+| `@mariozechner/pi-tui` | TUI components for custom rendering if you need APIs beyond the SDK re-export |
 
 npm dependencies work too. Add a `package.json` next to your extension (or in a parent directory), run `npm install`, and imports from `node_modules/` are resolved automatically.
 

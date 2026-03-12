@@ -742,6 +742,27 @@ async function generateModels() {
 		});
 	}
 
+	// Add missing Gemini 3.1 Flash Lite Preview until models.dev includes it.
+	if (!allModels.some((m) => m.provider === "google" && m.id === "gemini-3.1-flash-lite-preview")) {
+		allModels.push({
+			id: "gemini-3.1-flash-lite-preview",
+			name: "Gemini 3.1 Flash Lite Preview",
+			api: "google-generative-ai",
+			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
+			provider: "google",
+			reasoning: true,
+			input: ["text", "image"],
+			cost: {
+				input: 0,
+				output: 0,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 1048576,
+			maxTokens: 65536,
+		});
+	}
+
 	// Add missing gpt models
 	if (!allModels.some(m => m.provider === "openai" && m.id === "gpt-5-chat-latest")) {
 		allModels.push({
@@ -1337,8 +1358,12 @@ async function generateModels() {
 			api: "azure-openai-responses",
 			provider: "azure-openai-responses",
 			baseUrl: "",
-		}));
+	}));
 	allModels.push(...azureOpenAiModels);
+
+	for (const model of allModels) {
+		model.supportsXhigh = detectXhighSupport(model);
+	}
 
 	// Group by provider and deduplicate by model ID
 	const providers: Record<string, Record<string, Model<any>>> = {};
@@ -1387,6 +1412,7 @@ export const MODELS = {
 `;
 			}
 			output += `\t\t\treasoning: ${model.reasoning},\n`;
+			output += `\t\t\tsupportsXhigh: ${model.supportsXhigh === true},\n`;
 			output += `\t\t\tinput: [${model.input.map(i => `"${i}"`).join(", ")}],\n`;
 			output += `\t\t\tcost: {\n`;
 			output += `\t\t\t\tinput: ${model.cost.input},\n`;
@@ -1420,6 +1446,14 @@ export const MODELS = {
 	for (const [provider, models] of Object.entries(providers)) {
 		console.log(`  ${provider}: ${Object.keys(models).length} models`);
 	}
+}
+
+function detectXhighSupport(model: Model<Api>): boolean {
+	if (model.id.includes("gpt-5.2") || model.id.includes("gpt-5.3")) {
+		return true;
+	}
+
+	return model.api === "anthropic-messages" && (model.id.includes("opus-4-6") || model.id.includes("opus-4.6"));
 }
 
 // Run the generator

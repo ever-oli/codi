@@ -1,0 +1,26 @@
+{
+	"name": "@mariozechner/pi-image-tools",
+	"version": "0.57.1",
+	"description": "Pi package providing image generation tools",
+	"type": "module",
+	"keywords": ["pi-package"],
+	"files": ["extensions", "README.md", "CHANGELOG.md"],
+	"license": "MIT",
+	"author": "Mario Zechner",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/badlogic/pi-mono.git",
+		"directory": "packages/image-tools"
+	},
+	"pi": {
+		"extensions": ["./extensions"]
+	},
+	"dependencies": {
+		"@mariozechner/pi-extension-sdk": "^0.57.1"
+	},
+	"peerDependencies": {
+		"@mariozechner/pi-ai": "*",
+		"@mariozechner/pi-coding-agent": "*",
+		"@sinclair/typebox": "*"
+	}
+}

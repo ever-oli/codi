@@ -381,8 +381,3 @@ export class AgentInterface extends LitElement {
 		`;
 	}
 }
-
-// Register custom element with guard
-if (!customElements.get("agent-interface")) {
-	customElements.define("agent-interface", AgentInterface);
-}

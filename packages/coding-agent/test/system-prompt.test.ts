@@ -76,4 +76,37 @@ describe("buildSystemPrompt", () => {
 			expect(prompt.match(/- Use dynamic_tool for summaries\./g)).toHaveLength(1);
 		});
 	});
+
+	describe("skill and memory nudges", () => {
+		test("includes memory guideline when memory tool is available", () => {
+			const prompt = buildSystemPrompt({
+				selectedTools: ["read", "bash", "memory"],
+				contextFiles: [],
+				skills: [],
+			});
+
+			expect(prompt).toContain("Use memory proactively");
+		});
+
+		test("includes skill creation nudge when skills tool is available", () => {
+			const prompt = buildSystemPrompt({
+				selectedTools: ["read", "bash", "skills"],
+				contextFiles: [],
+				skills: [],
+			});
+
+			expect(prompt).toContain("consider saving the approach as a skill");
+		});
+
+		test("omits memory/skill nudges when tools are not available", () => {
+			const prompt = buildSystemPrompt({
+				selectedTools: ["read", "bash", "edit"],
+				contextFiles: [],
+				skills: [],
+			});
+
+			expect(prompt).not.toContain("Use memory proactively");
+			expect(prompt).not.toContain("consider saving the approach as a skill");
+		});
+	});
 });

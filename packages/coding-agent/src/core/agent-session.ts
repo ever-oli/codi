@@ -43,43 +43,64 @@ import {
 import { DEFAULT_THINKING_LEVEL } from "./defaults.js";
 import { exportSessionToHtml, type ToolHtmlRenderer } from "./export-html/index.js";
 import { createToolHtmlRenderer } from "./export-html/tool-renderer.js";
-import {
-	type ContextUsage,
-	type ExtensionCommandContextActions,
-	type ExtensionErrorListener,
+import type {
+	ContextUsage,
+	ExtensionCommandContextActions,
+	ExtensionErrorListener,
 	ExtensionRunner,
-	type ExtensionUIContext,
-	type InputSource,
-	type MessageEndEvent,
-	type MessageStartEvent,
-	type MessageUpdateEvent,
-	type SessionBeforeCompactResult,
-	type SessionBeforeForkResult,
-	type SessionBeforeSwitchResult,
-	type SessionBeforeTreeResult,
-	type ShutdownHandler,
-	type ToolDefinition,
-	type ToolExecutionEndEvent,
-	type ToolExecutionStartEvent,
-	type ToolExecutionUpdateEvent,
-	type ToolInfo,
-	type TreePreparation,
-	type TurnEndEvent,
-	type TurnStartEvent,
-	wrapRegisteredTools,
-	wrapToolsWithExtensions,
+	ExtensionUIContext,
+	InputSource,
+	MessageEndEvent,
+	MessageStartEvent,
+	MessageUpdateEvent,
+	SessionBeforeCompactResult,
+	SessionBeforeForkResult,
+	SessionBeforeSwitchResult,
+	SessionBeforeTreeResult,
+	ShutdownHandler,
+	ToolDefinition,
+	ToolExecutionEndEvent,
+	ToolExecutionStartEvent,
+	ToolExecutionUpdateEvent,
+	ToolInfo,
+	TreePreparation,
+	TurnEndEvent,
+	TurnStartEvent,
 } from "./extensions/index.js";
 import type { BashExecutionMessage, CustomMessage } from "./messages.js";
 import type { ModelRegistry } from "./model-registry.js";
 import { expandPromptTemplate, type PromptTemplate } from "./prompt-templates.js";
 import type { ResourceExtensionPaths, ResourceLoader } from "./resource-loader.js";
+import { buildSessionRuntime } from "./runtime/runtime-builder.js";
+import { buildToolRegistryState } from "./runtime/tool-registry-builder.js";
 import type { BranchSummaryEntry, CompactionEntry, SessionManager } from "./session-manager.js";
 import { getLatestCompactionEntry } from "./session-manager.js";
+import {
+	buildAgentSystemPrompt,
+	buildWorkflowControlMessage,
+	buildWorkflowPromptAppendix,
+} from "./session-prompt-helpers.js";
 import type { SettingsManager } from "./settings-manager.js";
 import { BUILTIN_SLASH_COMMANDS, type SlashCommandInfo, type SlashCommandLocation } from "./slash-commands.js";
-import { buildSystemPrompt } from "./system-prompt.js";
 import type { BashOperations } from "./tools/bash.js";
-import { createAllTools } from "./tools/index.js";
+import type { WorkflowArtifact } from "./workflow/artifacts.js";
+import { StaticContextEngine } from "./workflow/context-engine.js";
+import type { RunEvidence, VerificationStatus } from "./workflow/evidence.js";
+import type { MemoryRecord } from "./workflow/memory-store.js";
+import {
+	getActiveTaskCompletionState,
+	SessionOrchestrator,
+	type WorkflowPhase,
+	type WorkflowSessionSnapshot,
+} from "./workflow/session-orchestrator.js";
+import type { CreateTaskNodeInput, TaskGraph, TaskStatus, UpdateTaskNodeInput } from "./workflow/task-graph.js";
+import { WorkflowController } from "./workflow/workflow-controller.js";
+import type { WorkspaceState } from "./workflow/workspace-state.js";
+import {
+	createWorkspaceStateAfterArtifact,
+	createWorkspaceStateFromCommand,
+	isVerificationCommand,
+} from "./workflow/workspace-sync.js";
 
 // ============================================================================
 // Skill Block Parsing
@@ -274,6 +295,9 @@ export class AgentSession {
 
 	// Base system prompt (without extension appends) - used to apply fresh appends each turn
 	private _baseSystemPrompt = "";
+	private _workflowSession: SessionOrchestrator;
+	private readonly _workflowController: WorkflowController;
+	private readonly _workflowContextEngine = new StaticContextEngine();
 
 	constructor(config: AgentSessionConfig) {
 		this.agent = config.agent;
@@ -287,6 +311,18 @@ export class AgentSession {
 		this._extensionRunnerRef = config.extensionRunnerRef;
 		this._initialActiveToolNames = config.initialActiveToolNames;
 		this._baseToolsOverride = config.baseToolsOverride;
+		this._workflowSession = this._restoreWorkflowSession(this.agent.state.messages);
+		this._workflowController = new WorkflowController({
+			getSession: () => this._workflowSession,
+			persistCurrentSession: () => this._persistWorkflowSnapshot(),
+			replaceSnapshot: (snapshot) => this.replaceWorkflowSnapshot(snapshot),
+			appendArtifactEntry: (artifact) => {
+				this.sessionManager.appendWorkflowArtifact(artifact);
+			},
+			appendVerificationEntry: (record) => {
+				this.sessionManager.appendWorkflowVerification(record);
+			},
+		});
 
 		// Always subscribe to agent events for internal handling
 		// (session persistence, extensions, auto-compaction, retry logic)
@@ -717,9 +753,114 @@ export class AgentSession {
 		return this._scopedModels;
 	}
 
+	/** Current persisted workflow snapshot for plan/verify experiments. */
+	get workflow(): WorkflowSessionSnapshot {
+		return this._workflowSession.snapshot();
+	}
+
+	/** Explicit workflow mutation surface for plan/verify integration. */
+	get workflowController(): WorkflowController {
+		return this._workflowController;
+	}
+
 	/** Update scoped models for cycling */
 	setScopedModels(scopedModels: Array<{ model: Model<any>; thinkingLevel: ThinkingLevel }>): void {
 		this._scopedModels = scopedModels;
+	}
+
+	private _restoreWorkflowSession(messages: AgentMessage[]): SessionOrchestrator {
+		const savedWorkflow = this.sessionManager.getWorkflowSnapshot();
+		if (savedWorkflow) {
+			return SessionOrchestrator.fromSnapshot(savedWorkflow);
+		}
+
+		return SessionOrchestrator.create({
+			cwd: this.sessionManager.getCwd(),
+			goal: this._deriveWorkflowGoal(messages),
+		});
+	}
+
+	private _deriveWorkflowGoal(messages: AgentMessage[]): string {
+		const lastUserMessage = messages
+			.slice()
+			.reverse()
+			.find((message) => message.role === "user");
+
+		if (lastUserMessage && "content" in lastUserMessage) {
+			const extracted = this._extractUserMessageText(lastUserMessage.content);
+			if (extracted.trim().length > 0) {
+				return extracted.trim();
+			}
+		}
+
+		const sessionName = this.sessionManager.getSessionName();
+		if (sessionName) {
+			return sessionName;
+		}
+
+		return `Work in ${this.sessionManager.getCwd()}`;
+	}
+
+	private _persistWorkflowSnapshot(): WorkflowSessionSnapshot {
+		const snapshot = this._workflowSession.snapshot();
+		this.sessionManager.appendWorkflowSnapshot(snapshot);
+		return snapshot;
+	}
+
+	private _reloadWorkflowSession(messages: AgentMessage[]): WorkflowSessionSnapshot {
+		this._workflowSession = this._restoreWorkflowSession(messages);
+		return this._workflowSession.snapshot();
+	}
+
+	replaceWorkflowSnapshot(snapshot: WorkflowSessionSnapshot): WorkflowSessionSnapshot {
+		this._workflowSession = SessionOrchestrator.fromSnapshot(snapshot);
+		return this._persistWorkflowSnapshot();
+	}
+
+	transitionWorkflow(nextPhase: WorkflowPhase, reason: string): WorkflowSessionSnapshot {
+		return this._workflowController.transition(nextPhase, reason);
+	}
+
+	replaceWorkflowTaskGraph(taskGraph: TaskGraph): WorkflowSessionSnapshot {
+		return this._workflowController.replaceTaskGraph(taskGraph);
+	}
+
+	upsertWorkflowTask(task: CreateTaskNodeInput): WorkflowSessionSnapshot {
+		return this._workflowController.upsertTask(task);
+	}
+
+	updateWorkflowTask(taskId: string, updates: UpdateTaskNodeInput): WorkflowSessionSnapshot {
+		return this._workflowController.updateTask(taskId, updates);
+	}
+
+	updateWorkflowTaskStatus(taskId: string, status: TaskStatus): WorkflowSessionSnapshot {
+		return this._workflowController.updateTaskStatus(taskId, status);
+	}
+
+	setWorkflowActiveTask(taskId: string | undefined): WorkflowSessionSnapshot {
+		return this._workflowController.setActiveTask(taskId);
+	}
+
+	replaceWorkflowWorkspaceState(workspace: WorkspaceState): WorkflowSessionSnapshot {
+		return this._workflowController.replaceWorkspaceState(workspace);
+	}
+
+	recordWorkflowArtifact(
+		artifact: Omit<WorkflowArtifact, "recordedAt"> & { recordedAt?: string },
+	): WorkflowSessionSnapshot {
+		return this._workflowController.recordArtifact(artifact);
+	}
+
+	recordWorkflowVerification(
+		taskId: string,
+		status: VerificationStatus,
+		evidence: RunEvidence,
+	): WorkflowSessionSnapshot {
+		return this._workflowController.recordVerification(taskId, status, evidence);
+	}
+
+	rememberWorkflow(record: MemoryRecord): WorkflowSessionSnapshot {
+		return this._workflowController.remember(record);
 	}
 
 	/** File-based prompt templates */
@@ -752,38 +893,150 @@ export class AgentSession {
 	}
 
 	private _rebuildSystemPrompt(toolNames: string[]): string {
-		const validToolNames = toolNames.filter((name) => this._toolRegistry.has(name));
-		const toolSnippets: Record<string, string> = {};
-		const promptGuidelines: string[] = [];
-		for (const name of validToolNames) {
-			const snippet = this._toolPromptSnippets.get(name);
-			if (snippet) {
-				toolSnippets[name] = snippet;
-			}
+		return buildAgentSystemPrompt({
+			cwd: this._cwd,
+			toolNames,
+			toolRegistry: this._toolRegistry,
+			toolPromptSnippets: this._toolPromptSnippets,
+			toolPromptGuidelines: this._toolPromptGuidelines,
+			resourceLoader: this._resourceLoader,
+		});
+	}
 
-			const toolGuidelines = this._toolPromptGuidelines.get(name);
-			if (toolGuidelines) {
-				promptGuidelines.push(...toolGuidelines);
-			}
+	private _buildWorkflowPromptAppendix(): string | undefined {
+		return buildWorkflowPromptAppendix({
+			workflow: this._workflowSession.snapshot(),
+			workflowContextEngine: this._workflowContextEngine,
+		});
+	}
+
+	private _buildWorkflowControlMessage(workflow: WorkflowSessionSnapshot): AgentMessage | undefined {
+		return buildWorkflowControlMessage({
+			workflow,
+			workflowContextEngine: this._workflowContextEngine,
+		});
+	}
+
+	private _preflightWorkflowTurn(): void {
+		const workflow = this._workflowSession.snapshot();
+		const activeTaskCompletion = getActiveTaskCompletionState(workflow);
+		if (workflow.currentPhase === "execute" && !activeTaskCompletion.task) {
+			this.transitionWorkflow("plan", "Auto-returned to plan because execute had no active task.");
+			this.recordWorkflowArtifact({
+				id: `workflow-decision-${Date.now()}`,
+				type: "decision",
+				label: "Auto-returned to plan",
+				producer: "workflow:preflight",
+				metadata: {
+					reason: "execute_without_active_task",
+				},
+			});
+			return;
+		}
+		if (workflow.currentPhase === "summarize" && !activeTaskCompletion.completionReady) {
+			this.transitionWorkflow("verify", "Auto-returned to verify because summarize lacked completion-ready work.");
+			this.recordWorkflowArtifact({
+				id: `workflow-decision-${Date.now()}`,
+				type: "decision",
+				label: "Auto-returned to verify",
+				producer: "workflow:preflight",
+				metadata: {
+					reason: "summarize_without_completion_ready_task",
+				},
+			});
+		}
+	}
+
+	private _buildSystemPromptForTurn(): string {
+		const workflowAppendix = this._buildWorkflowPromptAppendix();
+		if (!workflowAppendix) {
+			return this._baseSystemPrompt;
+		}
+		return `${this._baseSystemPrompt}\n\n${workflowAppendix}`;
+	}
+
+	private _getActiveWorkflowTaskId(): string | undefined {
+		return this._workflowSession.snapshot().taskGraph.activeTaskId;
+	}
+
+	private _isVerificationCommand(command: string): boolean {
+		return isVerificationCommand(command);
+	}
+
+	private _recordWorkflowVerificationForCommand(command: string, result: BashResult): void {
+		const activeTaskId = this._getActiveWorkflowTaskId();
+		if (!activeTaskId || !this._isVerificationCommand(command)) {
+			return;
 		}
 
-		const loaderSystemPrompt = this._resourceLoader.getSystemPrompt();
-		const loaderAppendSystemPrompt = this._resourceLoader.getAppendSystemPrompt();
-		const appendSystemPrompt =
-			loaderAppendSystemPrompt.length > 0 ? loaderAppendSystemPrompt.join("\n\n") : undefined;
-		const loadedSkills = this._resourceLoader.getSkills().skills;
-		const loadedContextFiles = this._resourceLoader.getAgentsFiles().agentsFiles;
-
-		return buildSystemPrompt({
-			cwd: this._cwd,
-			skills: loadedSkills,
-			contextFiles: loadedContextFiles,
-			customPrompt: loaderSystemPrompt,
-			appendSystemPrompt,
-			selectedTools: validToolNames,
-			toolSnippets,
-			promptGuidelines,
+		this.recordWorkflowVerification(activeTaskId, result.exitCode === 0 ? "passed" : "failed", {
+			tests: [
+				{
+					command,
+					passed: result.exitCode === 0,
+					details: result.cancelled
+						? "Command was cancelled before completion."
+						: result.truncated
+							? "Output truncated; see full command output in session history."
+							: undefined,
+				},
+			],
+			commands: [
+				{
+					command,
+					validated: result.exitCode === 0,
+					details: result.cancelled ? "Command cancelled." : undefined,
+				},
+			],
+			diffSummary:
+				result.exitCode === 0 ? "Verification command completed successfully." : "Verification command failed.",
 		});
+
+		this.recordWorkflowArtifact({
+			id: `verification-${Date.now()}`,
+			type: "verification",
+			label: command,
+			producer: "bash",
+			metadata: {
+				exitCode: result.exitCode ?? -1,
+				cancelled: result.cancelled,
+				truncated: result.truncated,
+			},
+		});
+	}
+
+	private _recordWorkflowArtifactForCompaction(result: CompactionResult): void {
+		this.recordWorkflowArtifact({
+			id: `compaction-summary-${Date.now()}`,
+			type: "summary",
+			label: "Compaction summary",
+			producer: "compaction",
+			metadata: {
+				tokensBefore: result.tokensBefore,
+				hasDetails: result.details !== undefined,
+			},
+		});
+		this._refreshWorkflowWorkspaceStateAfterArtifact();
+	}
+
+	private _refreshWorkflowWorkspaceStateFromCommand(command: string, result: BashResult): void {
+		this.replaceWorkflowWorkspaceState(
+			createWorkspaceStateFromCommand({
+				cwd: this._cwd,
+				workflow: this._workflowSession.snapshot(),
+				command,
+				result,
+			}),
+		);
+	}
+
+	private _refreshWorkflowWorkspaceStateAfterArtifact(): void {
+		this.replaceWorkflowWorkspaceState(
+			createWorkspaceStateAfterArtifact({
+				cwd: this._cwd,
+				workflow: this._workflowSession.snapshot(),
+			}),
+		);
 	}
 
 	// =========================================================================
@@ -887,8 +1140,14 @@ export class AgentSession {
 			await this._checkCompaction(lastAssistant, false);
 		}
 
+		this._preflightWorkflowTurn();
+
 		// Build messages array (custom message if any, then user message)
 		const messages: AgentMessage[] = [];
+		const workflowControlMessage = this._buildWorkflowControlMessage(this._workflowSession.snapshot());
+		if (workflowControlMessage) {
+			messages.push(workflowControlMessage);
+		}
 
 		// Add user message
 		const userContent: (TextContent | ImageContent)[] = [{ type: "text", text: expandedText }];
@@ -908,11 +1167,12 @@ export class AgentSession {
 		this._pendingNextTurnMessages = [];
 
 		// Emit before_agent_start extension event
+		const systemPromptForTurn = this._buildSystemPromptForTurn();
 		if (this._extensionRunner) {
 			const result = await this._extensionRunner.emitBeforeAgentStart(
 				expandedText,
 				currentImages,
-				this._baseSystemPrompt,
+				systemPromptForTurn,
 			);
 			// Add all custom messages from extensions
 			if (result?.messages) {
@@ -931,9 +1191,11 @@ export class AgentSession {
 			if (result?.systemPrompt) {
 				this.agent.setSystemPrompt(result.systemPrompt);
 			} else {
-				// Ensure we're using the base prompt (in case previous turn had modifications)
-				this.agent.setSystemPrompt(this._baseSystemPrompt);
+				// Ensure we're using the current turn prompt (in case previous turn had modifications)
+				this.agent.setSystemPrompt(systemPromptForTurn);
 			}
+		} else {
+			this.agent.setSystemPrompt(systemPromptForTurn);
 		}
 
 		await this.agent.prompt(messages);
@@ -1254,6 +1516,11 @@ export class AgentSession {
 		this._steeringMessages = [];
 		this._followUpMessages = [];
 		this._pendingNextTurnMessages = [];
+		this._workflowSession = SessionOrchestrator.create({
+			cwd: this.sessionManager.getCwd(),
+			goal: this._deriveWorkflowGoal([]),
+		});
+		this._persistWorkflowSnapshot();
 
 		this.sessionManager.appendThinkingLevelChange(this.thinkingLevel);
 
@@ -1263,6 +1530,11 @@ export class AgentSession {
 			// Sync agent state with session manager after setup
 			const sessionContext = this.sessionManager.buildSessionContext();
 			this.agent.replaceMessages(sessionContext.messages);
+			this._workflowSession = SessionOrchestrator.create({
+				cwd: this.sessionManager.getCwd(),
+				goal: this._deriveWorkflowGoal(sessionContext.messages),
+			});
+			this._persistWorkflowSnapshot();
 		}
 
 		this._reconnectToAgent();
@@ -1620,12 +1892,14 @@ export class AgentSession {
 				});
 			}
 
-			return {
+			const compactionResult = {
 				summary,
 				firstKeptEntryId,
 				tokensBefore,
 				details,
 			};
+			this._recordWorkflowArtifactForCompaction(compactionResult);
+			return compactionResult;
 		} finally {
 			this._compactionAbortController = undefined;
 			this._reconnectToAgent();
@@ -1825,6 +2099,7 @@ export class AgentSession {
 				tokensBefore,
 				details,
 			};
+			this._recordWorkflowArtifactForCompaction(result);
 			this._emit({ type: "auto_compaction_end", result, aborted: false, willRetry });
 
 			if (willRetry) {
@@ -2069,65 +2344,22 @@ export class AgentSession {
 	}
 
 	private _refreshToolRegistry(options?: { activeToolNames?: string[]; includeAllExtensionTools?: boolean }): void {
-		const previousRegistryNames = new Set(this._toolRegistry.keys());
-		const previousActiveToolNames = this.getActiveToolNames();
+		const nextState = buildToolRegistryState({
+			baseToolRegistry: this._baseToolRegistry,
+			extensionRunner: this._extensionRunner,
+			customTools: this._customTools,
+			previousRegistryNames: this._toolRegistry.keys(),
+			previousActiveToolNames: this.getActiveToolNames(),
+			activeToolNames: options?.activeToolNames,
+			includeAllExtensionTools: options?.includeAllExtensionTools,
+			normalizePromptSnippet: (snippet) => this._normalizePromptSnippet(snippet),
+			normalizePromptGuidelines: (guidelines) => this._normalizePromptGuidelines(guidelines),
+		});
 
-		const registeredTools = this._extensionRunner?.getAllRegisteredTools() ?? [];
-		const allCustomTools = [
-			...registeredTools,
-			...this._customTools.map((def) => ({ definition: def, extensionPath: "<sdk>" })),
-		];
-		this._toolPromptSnippets = new Map(
-			allCustomTools
-				.map((registeredTool) => {
-					const snippet = this._normalizePromptSnippet(
-						registeredTool.definition.promptSnippet ?? registeredTool.definition.description,
-					);
-					return snippet ? ([registeredTool.definition.name, snippet] as const) : undefined;
-				})
-				.filter((entry): entry is readonly [string, string] => entry !== undefined),
-		);
-		this._toolPromptGuidelines = new Map(
-			allCustomTools
-				.map((registeredTool) => {
-					const guidelines = this._normalizePromptGuidelines(registeredTool.definition.promptGuidelines);
-					return guidelines.length > 0 ? ([registeredTool.definition.name, guidelines] as const) : undefined;
-				})
-				.filter((entry): entry is readonly [string, string[]] => entry !== undefined),
-		);
-		const wrappedExtensionTools = this._extensionRunner
-			? wrapRegisteredTools(allCustomTools, this._extensionRunner)
-			: [];
-
-		const toolRegistry = new Map(this._baseToolRegistry);
-		for (const tool of wrappedExtensionTools as AgentTool[]) {
-			toolRegistry.set(tool.name, tool);
-		}
-
-		if (this._extensionRunner) {
-			const wrappedAllTools = wrapToolsWithExtensions(Array.from(toolRegistry.values()), this._extensionRunner);
-			this._toolRegistry = new Map(wrappedAllTools.map((tool) => [tool.name, tool]));
-		} else {
-			this._toolRegistry = toolRegistry;
-		}
-
-		const nextActiveToolNames = options?.activeToolNames
-			? [...options.activeToolNames]
-			: [...previousActiveToolNames];
-
-		if (options?.includeAllExtensionTools) {
-			for (const tool of wrappedExtensionTools) {
-				nextActiveToolNames.push(tool.name);
-			}
-		} else if (!options?.activeToolNames) {
-			for (const toolName of this._toolRegistry.keys()) {
-				if (!previousRegistryNames.has(toolName)) {
-					nextActiveToolNames.push(toolName);
-				}
-			}
-		}
-
-		this.setActiveToolsByName([...new Set(nextActiveToolNames)]);
+		this._toolPromptSnippets = nextState.toolPromptSnippets;
+		this._toolPromptGuidelines = nextState.toolPromptGuidelines;
+		this._toolRegistry = nextState.toolRegistry;
+		this.setActiveToolsByName(nextState.activeToolNames);
 	}
 
 	private _buildRuntime(options: {
@@ -2135,36 +2367,19 @@ export class AgentSession {
 		flagValues?: Map<string, boolean | string>;
 		includeAllExtensionTools?: boolean;
 	}): void {
-		const autoResizeImages = this.settingsManager.getImageAutoResize();
-		const shellCommandPrefix = this.settingsManager.getShellCommandPrefix();
-		const baseTools = this._baseToolsOverride
-			? this._baseToolsOverride
-			: createAllTools(this._cwd, {
-					read: { autoResizeImages },
-					bash: { commandPrefix: shellCommandPrefix },
-				});
-
-		this._baseToolRegistry = new Map(Object.entries(baseTools).map(([name, tool]) => [name, tool as AgentTool]));
-
-		const extensionsResult = this._resourceLoader.getExtensions();
-		if (options.flagValues) {
-			for (const [name, value] of options.flagValues) {
-				extensionsResult.runtime.flagValues.set(name, value);
-			}
-		}
-
-		const hasExtensions = extensionsResult.extensions.length > 0;
-		const hasCustomTools = this._customTools.length > 0;
-		this._extensionRunner =
-			hasExtensions || hasCustomTools
-				? new ExtensionRunner(
-						extensionsResult.extensions,
-						extensionsResult.runtime,
-						this._cwd,
-						this.sessionManager,
-						this._modelRegistry,
-					)
-				: undefined;
+		const runtime = buildSessionRuntime({
+			cwd: this._cwd,
+			autoResizeImages: this.settingsManager.getImageAutoResize(),
+			shellCommandPrefix: this.settingsManager.getShellCommandPrefix(),
+			baseToolsOverride: this._baseToolsOverride,
+			resourceLoader: this._resourceLoader,
+			customTools: this._customTools,
+			sessionManager: this.sessionManager,
+			modelRegistry: this._modelRegistry,
+			flagValues: options.flagValues,
+		});
+		this._baseToolRegistry = runtime.baseToolRegistry;
+		this._extensionRunner = runtime.extensionRunner;
 		if (this._extensionRunnerRef) {
 			this._extensionRunnerRef.current = this._extensionRunner;
 		}
@@ -2173,10 +2388,7 @@ export class AgentSession {
 			this._applyExtensionBindings(this._extensionRunner);
 		}
 
-		const defaultActiveToolNames = this._baseToolsOverride
-			? Object.keys(this._baseToolsOverride)
-			: ["read", "bash", "edit", "write"];
-		const baseActiveToolNames = options.activeToolNames ?? defaultActiveToolNames;
+		const baseActiveToolNames = options.activeToolNames ?? runtime.defaultActiveToolNames;
 		this._refreshToolRegistry({
 			activeToolNames: baseActiveToolNames,
 			includeAllExtensionTools: options.includeAllExtensionTools,
@@ -2413,6 +2625,9 @@ export class AgentSession {
 			// Save to session
 			this.sessionManager.appendMessage(bashMessage);
 		}
+
+		this._recordWorkflowVerificationForCommand(command, result);
+		this._refreshWorkflowWorkspaceStateFromCommand(command, result);
 	}
 
 	/**
@@ -2501,6 +2716,7 @@ export class AgentSession {
 		// Emit session event to custom tools
 
 		this.agent.replaceMessages(sessionContext.messages);
+		this._reloadWorkflowSession(sessionContext.messages);
 
 		// Restore model if saved
 		if (sessionContext.model) {
@@ -2600,6 +2816,7 @@ export class AgentSession {
 
 		if (!skipConversationRestore) {
 			this.agent.replaceMessages(sessionContext.messages);
+			this._reloadWorkflowSession(sessionContext.messages);
 		}
 
 		return { selectedText, cancelled: false };
@@ -2784,6 +3001,7 @@ export class AgentSession {
 		// Update agent state
 		const sessionContext = this.sessionManager.buildSessionContext();
 		this.agent.replaceMessages(sessionContext.messages);
+		this._reloadWorkflowSession(sessionContext.messages);
 
 		// Emit session_tree event
 		if (this._extensionRunner) {

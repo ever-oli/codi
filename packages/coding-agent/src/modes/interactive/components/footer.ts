@@ -327,7 +327,8 @@ export class FooterComponent implements Component {
 
 		// Show last response latency
 		if (this.lastResponseMs !== undefined) {
-			const latencyStr = this.lastResponseMs < 1000 ? `${this.lastResponseMs}ms` : `${(this.lastResponseMs / 1000).toFixed(1)}s`;
+			const latencyStr =
+				this.lastResponseMs < 1000 ? `${this.lastResponseMs}ms` : `${(this.lastResponseMs / 1000).toFixed(1)}s`;
 			statsParts.push(theme.fg("dim", `⏱${latencyStr}`));
 		}
 

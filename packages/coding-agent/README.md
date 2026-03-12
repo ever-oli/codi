@@ -115,7 +115,7 @@ See [docs/providers.md](docs/providers.md) for detailed setup instructions.
 
 The interface from top to bottom:
 
-- **Startup header** - Shows shortcuts (`/hotkeys` for all), loaded AGENTS.md files, prompt templates, skills, and extensions
+- **Startup header** - Shows compact shortcuts plus a startup resource summary (`/resources` for the full loaded AGENTS.md, prompts, skills, extensions, and themes listing)
 - **Messages** - Your messages, assistant responses, tool calls and results, notifications, errors, and extension UI
 - **Editor** - Where you type; border color indicates thinking level
 - **Footer** - Working directory, session name, total token/cache usage, cost, context usage, current model
@@ -148,8 +148,18 @@ Type `/` in the editor to trigger commands. [Extensions](#extensions) can regist
 | `/new` | Start a new session |
 | `/name <name>` | Set session display name |
 | `/session` | Show session info (path, tokens, cost) |
+| `/workflow` | Show workflow summary (phase, task, verification, completion) |
 | `/tree` | Jump to any point in the session and continue from there |
 | `/fork` | Create a new session from the current branch |
+| `/resources [summary\|issues\|full]` | Show startup resources in summary mode, diagnostics-only mode, or full detail |
+| `/events [filters]` | Inspect runtime/session events (supports `tail` and `prune`) |
+| `/queue ...` | Inspect and retry durable outbound queue messages |
+| `/lanes ...` | Inspect/tune named-lane concurrency limits |
+| `/packages ...` | Install/update/remove/manage packages from inside interactive mode |
+| `/mailbox ...` | Inspect inbox/outbox threads and ack/retry delegation envelopes |
+| `/heartbeat ...` | Inspect and control core heartbeat + cron jobs |
+| `/models roles ...` | Show/set role-based model profile (`main`, `task`, `compact`, `quick`) |
+| `/ops ...` | Unified runtime dashboard and umbrella for runtime subcommands |
 | `/compact [prompt]` | Manually compact context, optional custom instructions |
 | `/copy` | Copy last assistant message to clipboard |
 | `/export [file]` | Export session to HTML file |
@@ -319,7 +329,7 @@ Place in `~/.pi/agent/extensions/`, `.pi/extensions/`, or a [pi package](#pi-pac
 
 ### Themes
 
-Built-in: `dark`, `light`. Themes hot-reload: modify the active theme file and pi immediately applies changes.
+Built-in: `dark`, `light`, `aura`, `charcoal-monochrome-dark`, `charcoal-monochrome-light`, `eink`. Themes hot-reload: modify the active custom theme file and pi immediately applies changes.
 
 Place in `~/.pi/agent/themes/`, `.pi/themes/`, or a [pi package](#pi-packages) to share with others. See [docs/themes.md](docs/themes.md).
 
@@ -367,6 +377,8 @@ Without a `pi` manifest, pi auto-discovers from conventional directories (`exten
 
 See [docs/packages.md](docs/packages.md).
 
+For the current Pi-native roadmap for official capability packages, see [docs/tool-packages.md](docs/tool-packages.md).
+
 ---
 
 ## Programmatic Usage
@@ -396,6 +408,8 @@ pi --mode rpc
 ```
 
 See [docs/rpc.md](docs/rpc.md) for the protocol.
+
+For Zed today, use [`pi-acp`](https://github.com/svkozak/pi-acp) as the current ACP bridge, or the thin wrapper package in [`packages/zed`](../zed/README.md) if you want a Pi-owned command surface around it.
 
 ---
 
@@ -496,7 +510,7 @@ Combine `--no-*` with explicit flags to load exactly what you need, ignoring set
 |--------|-------------|
 | `--system-prompt <text>` | Replace default prompt (context files and skills still appended) |
 | `--append-system-prompt <text>` | Append to system prompt |
-| `--verbose` | Force verbose startup |
+| `--verbose` | Force verbose startup header and full resource listing |
 | `-h`, `--help` | Show help |
 | `-v`, `--version` | Show version |
 

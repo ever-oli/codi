@@ -3,6 +3,16 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 import lockfile from "proper-lockfile";
 import { CONFIG_DIR_NAME, getAgentDir } from "../config.js";
+import {
+	DEFAULT_LANE_POLICIES,
+	DEFAULT_RUNTIME_FEATURE_FLAGS,
+	type LaneName,
+	type LanePolicies,
+	type ModelRoleName,
+	type RoleModelProfile,
+	type RuntimeFeatureFlagName,
+	type RuntimeFeatureFlags,
+} from "./runtime/types.js";
 
 export interface CompactionSettings {
 	enabled?: boolean; // default: true
@@ -12,6 +22,7 @@ export interface CompactionSettings {
 
 export interface BranchSummarySettings {
 	reserveTokens?: number; // default: 16384 (tokens reserved for prompt + LLM response)
+	skipPrompt?: boolean; // default: false - when true, skips "Summarize branch?" prompt and defaults to no summary
 }
 
 export interface RetrySettings {
@@ -43,6 +54,13 @@ export interface MarkdownSettings {
 }
 
 export type TransportSetting = Transport;
+export type StartupDensity = "auto" | "compact" | "verbose";
+
+export interface RuntimeSettings {
+	featureFlags?: Partial<RuntimeFeatureFlags>;
+	laneConcurrency?: Partial<Record<LaneName, number>>;
+	modelRoles?: RoleModelProfile;
+}
 
 /**
  * Package source for npm/git packages.
@@ -74,6 +92,7 @@ export interface Settings {
 	hideThinkingBlock?: boolean;
 	shellPath?: string; // Custom shell path (e.g., for Cygwin users on Windows)
 	quietStartup?: boolean;
+	startupDensity?: StartupDensity;
 	shellCommandPrefix?: string; // Prefix prepended to every bash command (e.g., "shopt -s expand_aliases" for alias support)
 	collapseChangelog?: boolean; // Show condensed changelog after update (use /changelog for full)
 	packages?: PackageSource[]; // Array of npm/git package sources (string or object with filtering)
@@ -91,6 +110,7 @@ export interface Settings {
 	autocompleteMaxVisible?: number; // Max visible items in autocomplete dropdown (default: 5)
 	showHardwareCursor?: boolean; // Show terminal cursor while still positioning it for IME
 	markdown?: MarkdownSettings;
+	runtime?: RuntimeSettings;
 }
 
 /** Deep merge settings: project/overrides take precedence, nested objects merge recursively */
@@ -607,10 +627,15 @@ export class SettingsManager {
 		};
 	}
 
-	getBranchSummarySettings(): { reserveTokens: number } {
+	getBranchSummarySettings(): { reserveTokens: number; skipPrompt: boolean } {
 		return {
 			reserveTokens: this.settings.branchSummary?.reserveTokens ?? 16384,
+			skipPrompt: this.settings.branchSummary?.skipPrompt ?? false,
 		};
+	}
+
+	getBranchSummarySkipPrompt(): boolean {
+		return this.settings.branchSummary?.skipPrompt ?? false;
 	}
 
 	getRetryEnabled(): boolean {
@@ -656,13 +681,34 @@ export class SettingsManager {
 	}
 
 	getQuietStartup(): boolean {
-		return this.settings.quietStartup ?? false;
+		return this.getStartupDensity() === "compact";
+	}
+
+	getStartupDensity(): StartupDensity {
+		const configured = this.settings.startupDensity;
+		if (configured === "auto" || configured === "compact" || configured === "verbose") {
+			return configured;
+		}
+		if (this.settings.quietStartup === true) {
+			return "compact";
+		}
+		if (this.settings.quietStartup === false) {
+			return "verbose";
+		}
+		return "auto";
+	}
+
+	setStartupDensity(density: StartupDensity): void {
+		this.globalSettings.startupDensity = density;
+		this.markModified("startupDensity");
+		// Deprecated compatibility field for older versions.
+		this.globalSettings.quietStartup = density === "compact";
+		this.markModified("quietStartup");
+		this.save();
 	}
 
 	setQuietStartup(quiet: boolean): void {
-		this.globalSettings.quietStartup = quiet;
-		this.markModified("quietStartup");
-		this.save();
+		this.setStartupDensity(quiet ? "compact" : "verbose");
 	}
 
 	getShellCommandPrefix(): string | undefined {
@@ -892,5 +938,80 @@ export class SettingsManager {
 
 	getCodeBlockIndent(): string {
 		return this.settings.markdown?.codeBlockIndent ?? "  ";
+	}
+
+	getRuntimeFeatureFlags(): RuntimeFeatureFlags {
+		return {
+			...DEFAULT_RUNTIME_FEATURE_FLAGS,
+			...(this.settings.runtime?.featureFlags ?? {}),
+		};
+	}
+
+	isRuntimeFeatureEnabled(flag: RuntimeFeatureFlagName): boolean {
+		return this.getRuntimeFeatureFlags()[flag];
+	}
+
+	setRuntimeFeatureFlag(flag: RuntimeFeatureFlagName, enabled: boolean): void {
+		if (!this.globalSettings.runtime) {
+			this.globalSettings.runtime = {};
+		}
+		if (!this.globalSettings.runtime.featureFlags) {
+			this.globalSettings.runtime.featureFlags = {};
+		}
+		this.globalSettings.runtime.featureFlags[flag] = enabled;
+		this.markModified("runtime", "featureFlags");
+		this.save();
+	}
+
+	getLanePolicies(): LanePolicies {
+		const laneConcurrency = this.settings.runtime?.laneConcurrency ?? {};
+		const policies: LanePolicies = {
+			...DEFAULT_LANE_POLICIES,
+		};
+		for (const lane of Object.keys(policies) as LaneName[]) {
+			const configured = laneConcurrency[lane];
+			if (typeof configured === "number" && Number.isFinite(configured)) {
+				policies[lane] = {
+					...policies[lane],
+					concurrency: Math.max(1, Math.floor(configured)),
+				};
+			}
+		}
+		return policies;
+	}
+
+	setLaneConcurrency(lane: LaneName, concurrency: number): void {
+		if (!this.globalSettings.runtime) {
+			this.globalSettings.runtime = {};
+		}
+		if (!this.globalSettings.runtime.laneConcurrency) {
+			this.globalSettings.runtime.laneConcurrency = {};
+		}
+		this.globalSettings.runtime.laneConcurrency[lane] = Math.max(1, Math.floor(concurrency));
+		this.markModified("runtime", "laneConcurrency");
+		this.save();
+	}
+
+	getRoleModelProfile(): RoleModelProfile {
+		return {
+			...(this.settings.runtime?.modelRoles ?? {}),
+		};
+	}
+
+	setRoleModel(role: ModelRoleName, modelRef: string | undefined): void {
+		if (!this.globalSettings.runtime) {
+			this.globalSettings.runtime = {};
+		}
+		if (!this.globalSettings.runtime.modelRoles) {
+			this.globalSettings.runtime.modelRoles = {};
+		}
+		const trimmed = modelRef?.trim();
+		if (!trimmed) {
+			delete this.globalSettings.runtime.modelRoles[role];
+		} else {
+			this.globalSettings.runtime.modelRoles[role] = trimmed;
+		}
+		this.markModified("runtime", "modelRoles");
+		this.save();
 	}
 }

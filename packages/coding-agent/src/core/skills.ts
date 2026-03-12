@@ -4,6 +4,7 @@ import { homedir } from "os";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "path";
 import { CONFIG_DIR_NAME, getAgentDir } from "../config.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
+import { scanContextContent } from "./context-scanner.js";
 import type { ResourceDiagnostic } from "./diagnostics.js";
 
 /** Max name length per spec */
@@ -13,6 +14,13 @@ const MAX_NAME_LENGTH = 64;
 const MAX_DESCRIPTION_LENGTH = 1024;
 
 const IGNORE_FILE_NAMES = [".gitignore", ".ignore", ".fdignore"];
+const SKILL_NAME_ALIASES: Record<string, string> = {
+	"claude-code": "opencode",
+};
+const SKILL_DESCRIPTION_OVERRIDES: Record<string, string> = {
+	"claude-code":
+		"Delegate coding tasks to OpenCode (AI coding agent CLI). Use for building features and code changes.",
+};
 
 type IgnoreMatcher = ReturnType<typeof ignore>;
 
@@ -129,6 +137,14 @@ function validateDescription(description: string | undefined): string[] {
 	return errors;
 }
 
+function canonicalizeSkillName(name: string): string {
+	return SKILL_NAME_ALIASES[name] ?? name;
+}
+
+function canonicalizeSkillDescription(rawName: string, description: string | undefined): string | undefined {
+	return SKILL_DESCRIPTION_OVERRIDES[rawName] ?? description;
+}
+
 export interface LoadSkillsFromDirOptions {
 	/** Directory to scan for skills */
 	dir: string;
@@ -237,34 +253,55 @@ function loadSkillFromFile(
 
 	try {
 		const rawContent = readFileSync(filePath, "utf-8");
+
+		// Scan skill content for prompt injection (project-local and path-based
+		// skills are untrusted; user-global skills are trusted but still scanned
+		// with a warning rather than a block).
+		const scanResult = scanContextContent(rawContent, filePath);
+		if (scanResult.blocked) {
+			diagnostics.push({
+				type: "warning",
+				message: `skill blocked by injection scanner (${scanResult.threats.join(", ")})`,
+				path: filePath,
+			});
+			return { skill: null, diagnostics };
+		}
+
 		const { frontmatter } = parseFrontmatter<SkillFrontmatter>(rawContent);
 		const skillDir = dirname(filePath);
 		const parentDirName = basename(skillDir);
 
+		const effectiveDescription = canonicalizeSkillDescription(
+			frontmatter.name || parentDirName,
+			frontmatter.description,
+		);
+
 		// Validate description
-		const descErrors = validateDescription(frontmatter.description);
+		const descErrors = validateDescription(effectiveDescription);
 		for (const error of descErrors) {
 			diagnostics.push({ type: "warning", message: error, path: filePath });
 		}
 
-		// Use name from frontmatter, or fall back to parent directory name
-		const name = frontmatter.name || parentDirName;
+		// Use name from frontmatter, or fall back to parent directory name.
+		// Apply aliases so legacy skill directories can expose preferred names.
+		const name = canonicalizeSkillName(frontmatter.name || parentDirName);
+		const canonicalParentDirName = canonicalizeSkillName(parentDirName);
 
 		// Validate name
-		const nameErrors = validateName(name, parentDirName);
+		const nameErrors = validateName(name, canonicalParentDirName);
 		for (const error of nameErrors) {
 			diagnostics.push({ type: "warning", message: error, path: filePath });
 		}
 
 		// Still load the skill even with warnings (unless description is completely missing)
-		if (!frontmatter.description || frontmatter.description.trim() === "") {
+		if (!effectiveDescription || effectiveDescription.trim() === "") {
 			return { skill: null, diagnostics };
 		}
 
 		return {
 			skill: {
 				name,
-				description: frontmatter.description,
+				description: effectiveDescription,
 				filePath,
 				baseDir: skillDir,
 				source,

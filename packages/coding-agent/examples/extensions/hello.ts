@@ -2,24 +2,23 @@
  * Hello Tool - Minimal custom tool example
  */
 
-import { Type } from "@mariozechner/pi-ai";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { defineExtension, defineTool, Type, textToolResult } from "@mariozechner/pi-extension-sdk";
 
-export default function (pi: ExtensionAPI) {
-	pi.registerTool({
-		name: "hello",
-		label: "Hello",
-		description: "A simple greeting tool",
-		parameters: Type.Object({
-			name: Type.String({ description: "Name to greet" }),
+const HELLO_PARAMS = Type.Object({
+	name: Type.String({ description: "Name to greet" }),
+});
+
+export default defineExtension((pi) => {
+	pi.registerTool(
+		defineTool({
+			name: "hello",
+			label: "Hello",
+			description: "A simple greeting tool",
+			parameters: HELLO_PARAMS,
+
+			async execute(_toolCallId, params) {
+				return textToolResult(`Hello, ${params.name}!`, { greeted: params.name });
+			},
 		}),
-
-		async execute(_toolCallId, params, _signal, _onUpdate, _ctx) {
-			const { name } = params as { name: string };
-			return {
-				content: [{ type: "text", text: `Hello, ${name}!` }],
-				details: { greeted: name },
-			};
-		},
-	});
-}
+	);
+});

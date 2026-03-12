@@ -1,0 +1,24 @@
+{
+	"name": "@mariozechner/pi-extension-sdk",
+	"version": "0.57.1",
+	"description": "Narrow SDK for building Pi extensions and tool packages",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"files": ["src", "README.md", "CHANGELOG.md"],
+	"keywords": ["pi", "extensions", "sdk"],
+	"license": "MIT",
+	"author": "Mario Zechner",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/badlogic/pi-mono.git",
+		"directory": "packages/extension-sdk"
+	},
+	"peerDependencies": {
+		"@mariozechner/pi-ai": "*",
+		"@mariozechner/pi-coding-agent": "*",
+		"@mariozechner/pi-tui": "*",
+		"@sinclair/typebox": "*"
+	}
+}

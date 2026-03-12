@@ -15,7 +15,6 @@ import { listModels } from "./cli/list-models.js";
 import { selectSession } from "./cli/session-picker.js";
 import { APP_NAME, getAgentDir, getModelsPath, VERSION } from "./config.js";
 import { AuthStorage } from "./core/auth-storage.js";
-import { DEFAULT_THINKING_LEVEL } from "./core/defaults.js";
 import { exportFromFile } from "./core/export-html/index.js";
 import type { LoadExtensionsResult } from "./core/extensions/index.js";
 import { KeybindingsManager } from "./core/keybindings.js";
@@ -23,6 +22,7 @@ import { ModelRegistry } from "./core/model-registry.js";
 import { resolveCliModel, resolveModelScope, type ScopedModel } from "./core/model-resolver.js";
 import { DefaultPackageManager } from "./core/package-manager.js";
 import { DefaultResourceLoader } from "./core/resource-loader.js";
+import { RuntimeServices } from "./core/runtime/runtime-services.js";
 import { type CreateAgentSessionOptions, createAgentSession } from "./core/sdk.js";
 import { SessionManager } from "./core/session-manager.js";
 import { SettingsManager } from "./core/settings-manager.js";
@@ -488,12 +488,13 @@ function buildSessionOptions(
 		options.thinkingLevel = parsed.thinking;
 	}
 
-	// Scoped models for Ctrl+P cycling - fill in default thinking level for models without explicit level
+	// Scoped models for Ctrl+P cycling
+	// Keep thinking level undefined when not explicitly set in the model pattern.
+	// Undefined means "inherit current session thinking level" during cycling.
 	if (scopedModels.length > 0) {
-		const defaultThinkingLevel = settingsManager.getDefaultThinkingLevel() ?? DEFAULT_THINKING_LEVEL;
 		options.scopedModels = scopedModels.map((sm) => ({
 			model: sm.model,
-			thinkingLevel: sm.thinkingLevel ?? defaultThinkingLevel,
+			thinkingLevel: sm.thinkingLevel,
 		}));
 	}
 
@@ -718,12 +719,19 @@ export async function main(args: string[]) {
 	}
 
 	const { session, modelFallbackMessage } = await createAgentSession(sessionOptions);
+	const runtimeServices = new RuntimeServices({
+		agentDir,
+		settingsManager,
+		modelRegistry,
+	});
+	runtimeServices.start();
 
 	if (!isInteractive && !session.model) {
 		console.error(chalk.red("No models available."));
 		console.error(chalk.yellow("\nSet an API key environment variable:"));
 		console.error("  ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, etc.");
 		console.error(chalk.yellow(`\nOr create ${getModelsPath()}`));
+		runtimeServices.stop();
 		process.exit(1);
 	}
 
@@ -744,6 +752,7 @@ export async function main(args: string[]) {
 
 	if (mode === "rpc") {
 		await runRpcMode(session);
+		runtimeServices.stop();
 	} else if (isInteractive) {
 		if (scopedModels.length > 0 && (parsed.verbose || !settingsManager.getQuietStartup())) {
 			const modelList = scopedModels
@@ -756,15 +765,16 @@ export async function main(args: string[]) {
 		}
 
 		printTimings();
-		const mode = new InteractiveMode(session, {
+		const interactiveMode = new InteractiveMode(session, {
 			migratedProviders,
 			modelFallbackMessage,
 			initialMessage,
 			initialImages,
 			initialMessages: parsed.messages,
 			verbose: parsed.verbose,
+			runtimeServices,
 		});
-		await mode.run();
+		await interactiveMode.run();
 	} else {
 		await runPrintMode(session, {
 			mode,
@@ -772,6 +782,7 @@ export async function main(args: string[]) {
 			initialMessage,
 			initialImages,
 		});
+		runtimeServices.stop();
 		stopThemeWatcher();
 		if (process.stdout.writableLength > 0) {
 			await new Promise<void>((resolve) => process.stdout.once("drain", resolve));

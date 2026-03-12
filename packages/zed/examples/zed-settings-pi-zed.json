@@ -1,0 +1,10 @@
+{
+  "agent_servers": {
+    "pi": {
+      "type": "custom",
+      "command": "pi-zed",
+      "args": [],
+      "env": {}
+    }
+  }
+}

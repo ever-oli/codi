@@ -2,6 +2,36 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added an internal plan-first workflow scaffold under `src/core/workflow/`, including typed task graph, workspace state, verification, artifact, memory, and session-orchestrator building blocks for future plan/verify integration inside Pi.
+- Added `@mariozechner/pi-extension-sdk`, a narrow official package for building Pi extensions and installable tool packages without depending directly on the full `pi-coding-agent` import surface.
+- Added read-only workflow visibility to the interactive coding-agent UI. Session restore now shows the current workflow phase/task in status text, and `/session` includes workflow goal, phase, task, transition, verification, and artifact counts.
+- Added an explicit internal workflow mutation layer via `WorkflowController`, with `AgentSession` helpers for updating task graphs, selecting active tasks, advancing phases, and recording verification/artifact state while keeping workflow snapshot persistence automatic.
+- Added minimal internal workflow commands to the interactive UI: `/phase` to inspect/advance workflow phase, and `/task` to list/add/select/update workflow tasks.
+- Added `/plan` to inspect current workflow plan state, enter the planning phase explicitly, and update the persisted workflow goal from the interactive UI.
+- Added `/verify` for explicit manual verification records on the active workflow task, and expanded `/task` with task inspection plus acceptance-criteria and note mutation commands.
+- Added `/resources` to print the full startup resource inventory on demand without forcing verbose startup for every session.
+- Added built-in `aura`, `charcoal-monochrome-dark`, `charcoal-monochrome-light`, and `eink` themes for the interactive agent UI.
+- Added dedicated session entry types for workflow artifact and verification records so plan/verify events are persisted explicitly in session history in addition to workflow snapshots.
+- Added `/plan split` to deterministically derive a small workflow task graph from the current goal inside Pi without introducing a separate planner subsystem.
+- Added richer workflow inspection in `/task show`, `/task list`, and `/session`, including active-task verification, completion readiness, acceptance-criteria counts, notes, and recent workspace evidence.
+- Added bounded task execution contracts and relevant-file context selection to the workflow runtime so each turn carries an explicit scoped contract derived from the active task and workspace state.
+- Changed prompt assembly so each coding-agent turn now includes a minimal workflow context appendix derived from the current persisted workflow goal, phase, status, and active task details.
+- Changed workflow prompt threading so each phase now adds phase-specific runtime guidance, and the workflow appendix now includes recent changed files and latest verification signal when available.
+- Changed coding-agent runtime bookkeeping so verification-like bash commands now auto-record workflow verification/artifact evidence for the active task, and compaction now records a workflow summary artifact automatically.
+- Changed workflow workspace state bookkeeping so existing command/compaction flows now refresh git branch/head/status, changed files, recent command results, test summaries, and artifact ids for the persisted workflow workspace snapshot.
+- Changed `/session` to expose workflow workspace details including changed-file count, git branch, workspace refresh time, last command result, and latest verification record.
+
+### Changed
+
+- Changed workflow phase guidance so intake, plan, execute, verify, and summarize now materially shape per-turn runtime instructions instead of acting as a light prompt bias.
+- Changed workflow completion semantics so active work is only completion-ready when the task is marked `done` and the latest verification for that task is `passed` or `waived`.
+- Changed `/plan start` so it can explicitly re-enter the planning phase from later workflow phases without opening up arbitrary backward phase jumps.
+- Changed workflow task scheduling so dependency-satisfied pending tasks are promoted automatically when prior work completes, and workflow preflight now redirects invalid execute/summarize turns back to plan or verify when necessary.
+- Changed interactive startup UI to use a compact shortcut header and compact resource summary by default, with verbose mode preserving the full startup listing.
+- Changed built-in theme handling to load all shipped theme JSON files automatically, and detect light/dark export defaults from theme colors instead of only the literal `light` theme name.
+
 ### Fixed
 
 - Fixed IME hardware cursor positioning in the custom extension editor (`ctx.ui.editor()` / extension editor dialog) by propagating focus to the internal `Editor`, preventing the terminal cursor from getting stuck at the bottom-right during composition.

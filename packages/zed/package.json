@@ -1,0 +1,30 @@
+{
+	"name": "@mariozechner/pi-zed",
+	"version": "0.57.1",
+	"description": "Thin Zed integration wrapper for Pi built on top of pi-acp",
+	"type": "module",
+	"bin": {
+		"pi-zed": "./bin/pi-zed.js"
+	},
+	"files": ["bin", "examples", "README.md", "CHANGELOG.md"],
+	"scripts": {
+		"prepublishOnly": "shx chmod +x bin/pi-zed.js"
+	},
+	"dependencies": {
+		"pi-acp": "^0.0.21"
+	},
+	"devDependencies": {
+		"shx": "^0.4.0"
+	},
+	"keywords": ["pi", "zed", "acp"],
+	"license": "MIT",
+	"author": "Mario Zechner",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/badlogic/pi-mono.git",
+		"directory": "packages/zed"
+	},
+	"engines": {
+		"node": ">=20.0.0"
+	}
+}

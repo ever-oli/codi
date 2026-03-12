@@ -1,0 +1,25 @@
+{
+	"name": "@mariozechner/pi-delegate-tools",
+	"version": "0.57.1",
+	"description": "Pi package providing a subprocess-based delegate tool",
+	"type": "module",
+	"keywords": ["pi-package"],
+	"files": ["extensions", "README.md", "CHANGELOG.md"],
+	"license": "MIT",
+	"author": "Mario Zechner",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/badlogic/pi-mono.git",
+		"directory": "packages/delegate-tools"
+	},
+	"pi": {
+		"extensions": ["./extensions"]
+	},
+	"dependencies": {
+		"@mariozechner/pi-extension-sdk": "^0.57.1"
+	},
+	"peerDependencies": {
+		"@mariozechner/pi-coding-agent": "*",
+		"@sinclair/typebox": "*"
+	}
+}

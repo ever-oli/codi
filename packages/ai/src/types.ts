@@ -296,6 +296,8 @@ export interface Model<TApi extends Api> {
 	provider: Provider;
 	baseUrl: string;
 	reasoning: boolean;
+	/** Whether the model supports the extra-high reasoning level used by some providers. */
+	supportsXhigh?: boolean;
 	input: ("text" | "image")[];
 	cost: {
 		input: number; // $/million tokens

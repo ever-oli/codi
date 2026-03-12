@@ -6,6 +6,7 @@ import { access as fsAccess, readFile as fsReadFile } from "fs/promises";
 import { formatDimensionNote, resizeImage } from "../../utils/image-resize.js";
 import { detectSupportedImageMimeTypeFromFile } from "../../utils/mime.js";
 import { resolveReadPath } from "./path-utils.js";
+import { redactSecrets } from "./redact.js";
 import { DEFAULT_MAX_BYTES, DEFAULT_MAX_LINES, formatSize, type TruncationResult, truncateHead } from "./truncate.js";
 
 const readSchema = Type.Object({
@@ -186,6 +187,9 @@ export function createReadTool(cwd: string, options?: ReadToolOptions): AgentToo
 									// No truncation, no user limit exceeded
 									outputText = truncation.content;
 								}
+
+								// Redact secrets before sending to LLM context
+								outputText = redactSecrets(outputText);
 
 								content = [{ type: "text", text: outputText }];
 							}

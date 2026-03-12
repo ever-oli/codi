@@ -2,6 +2,7 @@ import { Container } from "@mariozechner/pi-tui";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { InteractiveMode } from "../src/modes/interactive/interactive-mode.js";
 import { initTheme } from "../src/modes/interactive/theme/theme.js";
+import { createRuntimeHarness } from "./runtime-test-utils.js";
 
 function renderLastLine(container: Container, width = 120): string {
 	const last = container.children[container.children.length - 1];
@@ -158,8 +159,8 @@ describe("InteractiveMode.showLoadedResources", () => {
 
 		(InteractiveMode as any).prototype.showLoadedResources.call(fakeThis, {
 			extensionPaths: ["/tmp/ext/index.ts"],
-			force: false,
-			showDiagnosticsWhenQuiet: true,
+			listingMode: "none",
+			showDiagnostics: true,
 		});
 
 		expect(fakeThis.chatContainer.children).toHaveLength(0);
@@ -173,12 +174,76 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		(InteractiveMode as any).prototype.showLoadedResources.call(fakeThis, {
-			force: false,
-			showDiagnosticsWhenQuiet: true,
+			issuesOnly: true,
+			showDiagnostics: true,
 		});
 
 		const output = renderAll(fakeThis.chatContainer);
 		expect(output).toContain("[Skill conflicts]");
 		expect(output).not.toContain("[Skills]");
+	});
+});
+
+describe("InteractiveMode delegated runtime surfaces", () => {
+	beforeAll(() => {
+		initTheme("dark");
+	});
+
+	test("formats delegated task events without dumping raw JSON", () => {
+		const fakeThis: any = {};
+		const line = (InteractiveMode as any).prototype.formatRuntimeEventLine.call(fakeThis, {
+			id: "event-1",
+			type: "delegated_task.running",
+			severity: "info",
+			source: "runtime.delegated-tasks",
+			lane: "delegate",
+			createdAt: 1_000,
+			payload: {
+				delegatedTaskId: "delegated-task-1234",
+				assignee: "session-b",
+				status: "running",
+				goal: "Inspect repo",
+				summary: "Delivered to delegated worker.",
+			},
+		});
+
+		expect(line).toContain("delegated_task.running");
+		expect(line).toContain("task=delegate");
+		expect(line).toContain("assignee=session-b");
+		expect(line).toContain('goal="Inspect repo"');
+		expect(line).not.toContain('{"delegatedTaskId"');
+	});
+
+	test("renders delegated status command output for active tasks", async () => {
+		const runtime = createRuntimeHarness("interactive-delegated");
+		try {
+			const task = runtime.delegatedTasks.create({
+				threadId: "thread-1",
+				parentSessionId: "session-a",
+				owner: "session-a",
+				assignee: "session-b",
+				goal: "Run checks",
+			});
+			runtime.delegatedTasks.markRunning(task.delegatedTaskId, "Started");
+
+			const renderRuntimePanel = vi.fn();
+			const fakeThis: any = {
+				session: { sessionId: "session-a" },
+				getRuntimeOrWarn: vi.fn(() => runtime),
+				renderRuntimePanel,
+				showWarning: vi.fn(),
+				showStatus: vi.fn(),
+				formatDelegatedTaskLine: (InteractiveMode as any).prototype.formatDelegatedTaskLine,
+			};
+
+			await (InteractiveMode as any).prototype.handleDelegatedCommand.call(fakeThis, "/delegated");
+
+			expect(renderRuntimePanel).toHaveBeenCalledTimes(1);
+			const [, lines] = renderRuntimePanel.mock.calls[0];
+			expect(lines.join("\n")).toContain("Run checks");
+			expect(lines.join("\n")).toContain("[running]");
+		} finally {
+			runtime.cleanup();
+		}
 	});
 });

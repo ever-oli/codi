@@ -11,7 +11,6 @@ import {
 	readFileSync,
 	readSync,
 	statSync,
-	writeFileSync,
 } from "fs";
 import { readdir, readFile, stat } from "fs/promises";
 import { join, resolve } from "path";
@@ -23,8 +22,13 @@ import {
 	createCompactionSummaryMessage,
 	createCustomMessage,
 } from "./messages.js";
+import { buildSessionIndex, persistSessionEntry, rewriteSessionFile } from "./session-manager-store.js";
+import type { WorkflowArtifact } from "./workflow/artifacts.js";
+import type { VerificationRecord } from "./workflow/evidence.js";
+import type { WorkflowSessionSnapshot } from "./workflow/session-orchestrator.js";
 
 export const CURRENT_SESSION_VERSION = 3;
+export const WORKFLOW_SESSION_CUSTOM_TYPE = "pi.workflow.session";
 
 export interface SessionHeader {
 	type: "session";
@@ -112,6 +116,16 @@ export interface SessionInfoEntry extends SessionEntryBase {
 	name?: string;
 }
 
+export interface WorkflowArtifactEntry extends SessionEntryBase {
+	type: "workflow_artifact";
+	artifact: WorkflowArtifact;
+}
+
+export interface WorkflowVerificationEntry extends SessionEntryBase {
+	type: "workflow_verification";
+	record: VerificationRecord;
+}
+
 /**
  * Custom message entry for extensions to inject messages into LLM context.
  * Use customType to identify your extension's entries.
@@ -142,7 +156,9 @@ export type SessionEntry =
 	| CustomEntry
 	| CustomMessageEntry
 	| LabelEntry
-	| SessionInfoEntry;
+	| SessionInfoEntry
+	| WorkflowArtifactEntry
+	| WorkflowVerificationEntry;
 
 /** Raw file entry (includes header) */
 export type FileEntry = SessionHeader | SessionEntry;
@@ -192,6 +208,7 @@ export type ReadonlySessionManager = Pick<
 	| "getEntries"
 	| "getTree"
 	| "getSessionName"
+	| "getWorkflowSnapshot"
 >;
 
 /** Generate a unique short ID (8 hex chars, collision-checked) */
@@ -745,27 +762,17 @@ export class SessionManager {
 	}
 
 	private _buildIndex(): void {
-		this.byId.clear();
-		this.labelsById.clear();
-		this.leafId = null;
-		for (const entry of this.fileEntries) {
-			if (entry.type === "session") continue;
-			this.byId.set(entry.id, entry);
-			this.leafId = entry.id;
-			if (entry.type === "label") {
-				if (entry.label) {
-					this.labelsById.set(entry.targetId, entry.label);
-				} else {
-					this.labelsById.delete(entry.targetId);
-				}
-			}
-		}
+		const index = buildSessionIndex(this.fileEntries);
+		this.byId = index.byId;
+		this.labelsById = index.labelsById;
+		this.leafId = index.leafId;
 	}
 
 	private _rewriteFile(): void {
-		if (!this.persist || !this.sessionFile) return;
-		const content = `${this.fileEntries.map((e) => JSON.stringify(e)).join("\n")}\n`;
-		writeFileSync(this.sessionFile, content);
+		rewriteSessionFile(this.fileEntries, {
+			persist: this.persist,
+			sessionFile: this.sessionFile,
+		});
 	}
 
 	isPersisted(): boolean {
@@ -789,23 +796,12 @@ export class SessionManager {
 	}
 
 	_persist(entry: SessionEntry): void {
-		if (!this.persist || !this.sessionFile) return;
-
-		const hasAssistant = this.fileEntries.some((e) => e.type === "message" && e.message.role === "assistant");
-		if (!hasAssistant) {
-			// Mark as not flushed so when assistant arrives, all entries get written
-			this.flushed = false;
-			return;
-		}
-
-		if (!this.flushed) {
-			for (const e of this.fileEntries) {
-				appendFileSync(this.sessionFile, `${JSON.stringify(e)}\n`);
-			}
-			this.flushed = true;
-		} else {
-			appendFileSync(this.sessionFile, `${JSON.stringify(entry)}\n`);
-		}
+		this.flushed = persistSessionEntry(entry, {
+			fileEntries: this.fileEntries,
+			persist: this.persist,
+			sessionFile: this.sessionFile,
+			flushed: this.flushed,
+		});
 	}
 
 	private _appendEntry(entry: SessionEntry): void {
@@ -884,8 +880,8 @@ export class SessionManager {
 	}
 
 	/** Append a custom entry (for extensions) as child of current leaf, then advance leaf. Returns entry id. */
-	appendCustomEntry(customType: string, data?: unknown): string {
-		const entry: CustomEntry = {
+	appendCustomEntry<T = unknown>(customType: string, data?: T): string {
+		const entry: CustomEntry<T> = {
 			type: "custom",
 			customType,
 			data,
@@ -895,6 +891,61 @@ export class SessionManager {
 		};
 		this._appendEntry(entry);
 		return entry.id;
+	}
+
+	getLatestCustomEntry<T = unknown>(customType: string, fromId?: string): CustomEntry<T> | undefined {
+		const branch = this.getBranch(fromId);
+		for (let i = branch.length - 1; i >= 0; i -= 1) {
+			const entry = branch[i];
+			if (entry.type === "custom" && entry.customType === customType) {
+				return entry as CustomEntry<T>;
+			}
+		}
+		return undefined;
+	}
+
+	appendWorkflowSnapshot(snapshot: WorkflowSessionSnapshot): string {
+		return this.appendCustomEntry(WORKFLOW_SESSION_CUSTOM_TYPE, snapshot);
+	}
+
+	getWorkflowSnapshot(fromId?: string): WorkflowSessionSnapshot | undefined {
+		return this.getLatestCustomEntry<WorkflowSessionSnapshot>(WORKFLOW_SESSION_CUSTOM_TYPE, fromId)?.data;
+	}
+
+	appendWorkflowArtifact(artifact: WorkflowArtifact): string {
+		const entry: WorkflowArtifactEntry = {
+			type: "workflow_artifact",
+			artifact,
+			id: generateId(this.byId),
+			parentId: this.leafId,
+			timestamp: new Date().toISOString(),
+		};
+		this._appendEntry(entry);
+		return entry.id;
+	}
+
+	appendWorkflowVerification(record: VerificationRecord): string {
+		const entry: WorkflowVerificationEntry = {
+			type: "workflow_verification",
+			record,
+			id: generateId(this.byId),
+			parentId: this.leafId,
+			timestamp: new Date().toISOString(),
+		};
+		this._appendEntry(entry);
+		return entry.id;
+	}
+
+	getWorkflowArtifactEntries(fromId?: string): WorkflowArtifactEntry[] {
+		return this.getBranch(fromId).filter(
+			(entry): entry is WorkflowArtifactEntry => entry.type === "workflow_artifact",
+		);
+	}
+
+	getWorkflowVerificationEntries(fromId?: string): WorkflowVerificationEntry[] {
+		return this.getBranch(fromId).filter(
+			(entry): entry is WorkflowVerificationEntry => entry.type === "workflow_verification",
+		);
 	}
 
 	/** Append a session info entry (e.g., display name). Returns entry id. */

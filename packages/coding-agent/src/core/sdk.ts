@@ -54,7 +54,7 @@ export interface CreateAgentSessionOptions {
 	/** Thinking level. Default: from settings, else 'medium' (clamped to model capabilities) */
 	thinkingLevel?: ThinkingLevel;
 	/** Models available for cycling (Ctrl+P in interactive mode) */
-	scopedModels?: Array<{ model: Model<any>; thinkingLevel: ThinkingLevel }>;
+	scopedModels?: Array<{ model: Model<any>; thinkingLevel?: ThinkingLevel }>;
 
 	/** Built-in tools to use. Default: codingTools [read, bash, edit, write] */
 	tools?: Tool[];
@@ -349,7 +349,10 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		sessionManager,
 		settingsManager,
 		cwd,
-		scopedModels: options.scopedModels,
+		scopedModels: options.scopedModels?.map((scoped) => ({
+			model: scoped.model,
+			thinkingLevel: scoped.thinkingLevel ?? DEFAULT_THINKING_LEVEL,
+		})),
 		resourceLoader,
 		customTools: options.customTools,
 		modelRegistry,

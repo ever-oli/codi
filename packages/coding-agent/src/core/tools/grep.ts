@@ -6,6 +6,7 @@ import { readFileSync, statSync } from "fs";
 import path from "path";
 import { ensureTool } from "../../utils/tools-manager.js";
 import { resolveToCwd } from "./path-utils.js";
+import { redactSecrets } from "./redact.js";
 import {
 	DEFAULT_MAX_BYTES,
 	formatSize,
@@ -297,7 +298,7 @@ export function createGrepTool(cwd: string, options?: GrepToolOptions): AgentToo
 							const rawOutput = outputLines.join("\n");
 							const truncation = truncateHead(rawOutput, { maxLines: Number.MAX_SAFE_INTEGER });
 
-							let output = truncation.content;
+							let output = redactSecrets(truncation.content);
 							const details: GrepToolDetails = {};
 
 							// Build notices

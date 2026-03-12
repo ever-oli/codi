@@ -172,6 +172,18 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions = {}): strin
 	addGuideline("Be concise in your responses");
 	addGuideline("Show file paths clearly when working with files");
 
+	// Skill creation nudge — only when memory and skills tools are available
+	const hasMemory = tools.includes("memory");
+	const hasSkills = tools.includes("skills");
+	if (hasMemory) {
+		addGuideline("Use memory proactively for durable facts worth carrying across sessions.");
+	}
+	if (hasSkills) {
+		addGuideline(
+			"After completing a complex task (5+ tool calls), fixing a tricky error, or discovering a non-obvious workflow, consider saving the approach as a skill so you can reuse it next time.",
+		);
+	}
+
 	const guidelines = guidelinesList.map((g) => `- ${g}`).join("\n");
 
 	let prompt = `You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.

@@ -12,6 +12,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.33,
@@ -29,6 +30,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.06,
@@ -46,6 +48,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.035,
@@ -63,6 +66,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -80,6 +84,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.8,
@@ -97,6 +102,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.2,
@@ -114,6 +120,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.2,
@@ -131,6 +138,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.8,
@@ -148,6 +156,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -165,6 +174,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -182,6 +192,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -199,6 +210,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -216,6 +228,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -233,6 +246,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -250,6 +264,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -267,6 +282,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -284,6 +300,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -301,6 +318,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -318,6 +336,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -335,6 +354,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -352,6 +372,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -369,6 +390,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -386,6 +408,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 3,
@@ -403,6 +426,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.5,
@@ -420,6 +444,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1.35,
@@ -437,6 +462,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.58,
@@ -454,6 +480,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.62,
@@ -471,6 +498,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -488,6 +516,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -505,6 +534,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -522,6 +552,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -539,6 +570,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -556,6 +588,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -573,6 +606,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -590,6 +624,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -607,6 +642,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -624,6 +660,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -641,6 +678,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -658,6 +696,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -675,6 +714,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.12,
@@ -692,6 +732,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.04,
@@ -709,6 +750,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.72,
@@ -726,6 +768,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.22,
@@ -743,6 +786,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.16,
@@ -760,6 +804,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.1,
@@ -777,6 +822,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -794,6 +840,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.72,
@@ -811,6 +858,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.72,
@@ -828,6 +876,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.24,
@@ -845,6 +894,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.17,
@@ -862,6 +912,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -879,6 +930,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -889,6 +941,24 @@ export const MODELS = {
 			contextWindow: 204800,
 			maxTokens: 131072,
 		} satisfies Model<"bedrock-converse-stream">,
+		"mistral.devstral-2-123b": {
+			id: "mistral.devstral-2-123b",
+			name: "Devstral 2 135B",
+			api: "bedrock-converse-stream",
+			provider: "amazon-bedrock",
+			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
+			reasoning: false,
+			supportsXhigh: false,
+			input: ["text"],
+			cost: {
+				input: 0.4,
+				output: 2,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 256000,
+			maxTokens: 8192,
+		} satisfies Model<"bedrock-converse-stream">,
 		"mistral.ministral-3-14b-instruct": {
 			id: "mistral.ministral-3-14b-instruct",
 			name: "Ministral 14B 3.0",
@@ -896,6 +966,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.2,
@@ -913,6 +984,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -930,6 +1002,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.5,
@@ -947,6 +1020,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.04,
@@ -964,6 +1038,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -981,6 +1056,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -998,6 +1074,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -1015,6 +1092,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -1032,6 +1110,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.06,
@@ -1049,6 +1128,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -1066,6 +1146,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.07,
@@ -1083,6 +1164,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -1100,6 +1182,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.07,
@@ -1117,6 +1200,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.22,
@@ -1134,6 +1218,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -1151,6 +1236,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -1168,6 +1254,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.22,
@@ -1185,6 +1272,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.14,
@@ -1202,6 +1290,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -1219,6 +1308,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -1236,6 +1326,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -1253,6 +1344,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -1270,6 +1362,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -1287,6 +1380,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -1304,6 +1398,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1321,6 +1416,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1338,6 +1434,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1355,6 +1452,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2.5,
@@ -1372,6 +1470,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -1389,6 +1488,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -1406,6 +1506,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.07,
@@ -1425,6 +1526,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.8,
@@ -1442,6 +1544,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.8,
@@ -1459,6 +1562,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1476,6 +1580,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1493,6 +1598,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1510,6 +1616,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1527,6 +1634,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -1544,6 +1652,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -1561,6 +1670,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1578,6 +1688,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -1595,6 +1706,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -1612,6 +1724,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -1629,6 +1742,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -1646,6 +1760,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -1663,6 +1778,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -1680,6 +1796,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -1697,6 +1814,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -1714,6 +1832,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -1731,6 +1850,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1748,6 +1868,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1765,6 +1886,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1782,6 +1904,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1799,6 +1922,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1818,6 +1942,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1.5,
@@ -1835,6 +1960,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 30,
@@ -1852,6 +1978,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -1869,6 +1996,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -1886,6 +2014,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -1903,6 +2032,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -1920,6 +2050,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -1937,6 +2068,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -1954,6 +2086,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -1971,6 +2104,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -1988,6 +2122,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -2005,6 +2140,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -2022,6 +2158,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -2039,6 +2176,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -2056,6 +2194,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -2073,6 +2212,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.05,
@@ -2090,6 +2230,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -2107,6 +2248,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -2124,6 +2266,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -2141,6 +2284,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -2158,6 +2302,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -2175,6 +2320,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -2192,6 +2338,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -2209,6 +2356,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -2226,6 +2374,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -2243,6 +2392,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 21,
@@ -2260,6 +2410,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -2277,6 +2428,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -2287,6 +2439,42 @@ export const MODELS = {
 			contextWindow: 128000,
 			maxTokens: 32000,
 		} satisfies Model<"azure-openai-responses">,
+		"gpt-5.4": {
+			id: "gpt-5.4",
+			name: "GPT-5.4",
+			api: "azure-openai-responses",
+			provider: "azure-openai-responses",
+			baseUrl: "",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 2.5,
+				output: 15,
+				cacheRead: 0.25,
+				cacheWrite: 0,
+			},
+			contextWindow: 1050000,
+			maxTokens: 128000,
+		} satisfies Model<"azure-openai-responses">,
+		"gpt-5.4-pro": {
+			id: "gpt-5.4-pro",
+			name: "GPT-5.4 Pro",
+			api: "azure-openai-responses",
+			provider: "azure-openai-responses",
+			baseUrl: "",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 30,
+				output: 180,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 1050000,
+			maxTokens: 128000,
+		} satisfies Model<"azure-openai-responses">,
 		"o1": {
 			id: "o1",
 			name: "o1",
@@ -2294,6 +2482,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -2311,6 +2500,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 150,
@@ -2328,6 +2518,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -2345,6 +2536,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -2362,6 +2554,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1.1,
@@ -2379,6 +2572,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 20,
@@ -2396,6 +2590,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.1,
@@ -2413,6 +2608,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -2432,6 +2628,7 @@ export const MODELS = {
 			provider: "cerebras",
 			baseUrl: "https://api.cerebras.ai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.25,
@@ -2449,6 +2646,7 @@ export const MODELS = {
 			provider: "cerebras",
 			baseUrl: "https://api.cerebras.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.1,
@@ -2466,6 +2664,7 @@ export const MODELS = {
 			provider: "cerebras",
 			baseUrl: "https://api.cerebras.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -2483,6 +2682,7 @@ export const MODELS = {
 			provider: "cerebras",
 			baseUrl: "https://api.cerebras.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2.25,
@@ -2503,6 +2703,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2521,6 +2722,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2539,6 +2741,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2557,6 +2760,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2575,6 +2779,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2593,6 +2798,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2612,6 +2818,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2631,6 +2838,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2650,6 +2858,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2669,6 +2878,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2688,6 +2898,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2707,6 +2918,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2725,6 +2937,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2743,6 +2956,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2761,6 +2975,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2779,6 +2994,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2797,6 +3013,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2815,6 +3032,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2833,6 +3051,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2840,7 +3059,7 @@ export const MODELS = {
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 128000,
+			contextWindow: 264000,
 			maxTokens: 64000,
 		} satisfies Model<"openai-responses">,
 		"gpt-5.2-codex": {
@@ -2851,6 +3070,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -2858,7 +3078,45 @@ export const MODELS = {
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 272000,
+			contextWindow: 400000,
+			maxTokens: 128000,
+		} satisfies Model<"openai-responses">,
+		"gpt-5.3-codex": {
+			id: "gpt-5.3-codex",
+			name: "GPT-5.3-Codex",
+			api: "openai-responses",
+			provider: "github-copilot",
+			baseUrl: "https://api.individual.githubcopilot.com",
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
+			reasoning: true,
+			supportsXhigh: true,
+			input: ["text", "image"],
+			cost: {
+				input: 0,
+				output: 0,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 400000,
+			maxTokens: 128000,
+		} satisfies Model<"openai-responses">,
+		"gpt-5.4": {
+			id: "gpt-5.4",
+			name: "GPT-5.4",
+			api: "openai-responses",
+			provider: "github-copilot",
+			baseUrl: "https://api.individual.githubcopilot.com",
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 0,
+				output: 0,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 400000,
 			maxTokens: 128000,
 		} satisfies Model<"openai-responses">,
 		"grok-code-fast-1": {
@@ -2870,6 +3128,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -2889,6 +3148,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.075,
@@ -2906,6 +3166,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.0375,
@@ -2923,6 +3184,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -2940,6 +3202,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -2957,6 +3220,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.075,
@@ -2974,6 +3238,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -2991,6 +3256,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -3008,6 +3274,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -3025,6 +3292,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -3042,6 +3310,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -3059,6 +3328,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -3076,6 +3346,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -3093,6 +3364,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -3110,6 +3382,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -3127,6 +3400,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -3144,6 +3418,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -3161,6 +3436,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -3171,6 +3447,24 @@ export const MODELS = {
 			contextWindow: 1000000,
 			maxTokens: 64000,
 		} satisfies Model<"google-generative-ai">,
+		"gemini-3.1-flash-lite-preview": {
+			id: "gemini-3.1-flash-lite-preview",
+			name: "Gemini 3.1 Flash Lite Preview",
+			api: "google-generative-ai",
+			provider: "google",
+			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 0.5,
+				output: 3,
+				cacheRead: 0.05,
+				cacheWrite: 0,
+			},
+			contextWindow: 1048576,
+			maxTokens: 65536,
+		} satisfies Model<"google-generative-ai">,
 		"gemini-3.1-pro-preview": {
 			id: "gemini-3.1-pro-preview",
 			name: "Gemini 3.1 Pro Preview",
@@ -3178,6 +3472,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -3195,6 +3490,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -3212,6 +3508,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -3229,6 +3526,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -3246,6 +3544,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -3263,6 +3562,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.5,
@@ -3282,6 +3582,7 @@ export const MODELS = {
 			provider: "google-antigravity",
 			baseUrl: "https://daily-cloudcode-pa.sandbox.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -3299,6 +3600,7 @@ export const MODELS = {
 			provider: "google-antigravity",
 			baseUrl: "https://daily-cloudcode-pa.sandbox.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -3316,6 +3618,7 @@ export const MODELS = {
 			provider: "google-antigravity",
 			baseUrl: "https://daily-cloudcode-pa.sandbox.googleapis.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -3333,6 +3636,7 @@ export const MODELS = {
 			provider: "google-antigravity",
 			baseUrl: "https://daily-cloudcode-pa.sandbox.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -3350,6 +3654,7 @@ export const MODELS = {
 			provider: "google-antigravity",
 			baseUrl: "https://daily-cloudcode-pa.sandbox.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -3367,6 +3672,7 @@ export const MODELS = {
 			provider: "google-antigravity",
 			baseUrl: "https://daily-cloudcode-pa.sandbox.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -3384,6 +3690,7 @@ export const MODELS = {
 			provider: "google-antigravity",
 			baseUrl: "https://daily-cloudcode-pa.sandbox.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -3401,6 +3708,7 @@ export const MODELS = {
 			provider: "google-antigravity",
 			baseUrl: "https://daily-cloudcode-pa.sandbox.googleapis.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.09,
@@ -3420,6 +3728,7 @@ export const MODELS = {
 			provider: "google-gemini-cli",
 			baseUrl: "https://cloudcode-pa.googleapis.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -3437,6 +3746,7 @@ export const MODELS = {
 			provider: "google-gemini-cli",
 			baseUrl: "https://cloudcode-pa.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -3454,6 +3764,7 @@ export const MODELS = {
 			provider: "google-gemini-cli",
 			baseUrl: "https://cloudcode-pa.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -3471,6 +3782,7 @@ export const MODELS = {
 			provider: "google-gemini-cli",
 			baseUrl: "https://cloudcode-pa.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -3488,6 +3800,7 @@ export const MODELS = {
 			provider: "google-gemini-cli",
 			baseUrl: "https://cloudcode-pa.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -3505,6 +3818,7 @@ export const MODELS = {
 			provider: "google-gemini-cli",
 			baseUrl: "https://cloudcode-pa.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -3524,6 +3838,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.075,
@@ -3541,6 +3856,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.0375,
@@ -3558,6 +3874,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -3575,6 +3892,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -3592,6 +3910,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.075,
@@ -3609,6 +3928,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -3626,6 +3946,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -3643,6 +3964,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -3660,6 +3982,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -3677,6 +4000,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -3694,6 +4018,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -3711,6 +4036,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -3730,6 +4056,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.75,
@@ -3747,6 +4074,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.2,
@@ -3764,6 +4092,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.05,
@@ -3781,6 +4110,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.59,
@@ -3798,6 +4128,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.59,
@@ -3815,6 +4146,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.05,
@@ -3832,6 +4164,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -3849,6 +4182,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.11,
@@ -3866,6 +4200,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.79,
@@ -3883,6 +4218,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -3900,6 +4236,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -3917,6 +4254,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -3934,6 +4272,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.075,
@@ -3951,6 +4290,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.29,
@@ -3968,6 +4308,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.29,
@@ -3988,6 +4329,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -4006,6 +4348,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -4024,6 +4367,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -4042,6 +4386,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2,
@@ -4060,6 +4405,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.2,
@@ -4078,6 +4424,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.25,
@@ -4096,6 +4443,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -4114,6 +4462,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -4132,6 +4481,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.1,
@@ -4150,6 +4500,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 3,
@@ -4168,6 +4519,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.28,
@@ -4186,6 +4538,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -4204,6 +4557,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -4222,6 +4576,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -4240,6 +4595,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -4258,6 +4614,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -4276,6 +4633,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -4294,6 +4652,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -4313,6 +4672,7 @@ export const MODELS = {
 			provider: "kimi-coding",
 			baseUrl: "https://api.kimi.com/coding",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -4330,6 +4690,7 @@ export const MODELS = {
 			provider: "kimi-coding",
 			baseUrl: "https://api.kimi.com/coding",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -4349,6 +4710,7 @@ export const MODELS = {
 			provider: "minimax",
 			baseUrl: "https://api.minimax.io/anthropic",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -4366,6 +4728,7 @@ export const MODELS = {
 			provider: "minimax",
 			baseUrl: "https://api.minimax.io/anthropic",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -4383,6 +4746,7 @@ export const MODELS = {
 			provider: "minimax",
 			baseUrl: "https://api.minimax.io/anthropic",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -4400,6 +4764,7 @@ export const MODELS = {
 			provider: "minimax",
 			baseUrl: "https://api.minimax.io/anthropic",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -4419,6 +4784,7 @@ export const MODELS = {
 			provider: "minimax-cn",
 			baseUrl: "https://api.minimaxi.com/anthropic",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -4436,6 +4802,7 @@ export const MODELS = {
 			provider: "minimax-cn",
 			baseUrl: "https://api.minimaxi.com/anthropic",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -4453,6 +4820,7 @@ export const MODELS = {
 			provider: "minimax-cn",
 			baseUrl: "https://api.minimaxi.com/anthropic",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -4470,6 +4838,7 @@ export const MODELS = {
 			provider: "minimax-cn",
 			baseUrl: "https://api.minimaxi.com/anthropic",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -4484,11 +4853,12 @@ export const MODELS = {
 	"mistral": {
 		"codestral-latest": {
 			id: "codestral-latest",
-			name: "Codestral",
+			name: "Codestral (latest)",
 			api: "openai-completions",
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -4506,6 +4876,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.4,
@@ -4523,6 +4894,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.4,
@@ -4535,11 +4907,12 @@ export const MODELS = {
 		} satisfies Model<"openai-completions">,
 		"devstral-medium-latest": {
 			id: "devstral-medium-latest",
-			name: "Devstral 2",
+			name: "Devstral 2 (latest)",
 			api: "openai-completions",
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.4,
@@ -4557,6 +4930,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.1,
@@ -4574,6 +4948,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.1,
@@ -4591,6 +4966,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -4603,11 +4979,12 @@ export const MODELS = {
 		} satisfies Model<"openai-completions">,
 		"magistral-medium-latest": {
 			id: "magistral-medium-latest",
-			name: "Magistral Medium",
+			name: "Magistral Medium (latest)",
 			api: "openai-completions",
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2,
@@ -4625,6 +5002,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.5,
@@ -4637,11 +5015,12 @@ export const MODELS = {
 		} satisfies Model<"openai-completions">,
 		"ministral-3b-latest": {
 			id: "ministral-3b-latest",
-			name: "Ministral 3B",
+			name: "Ministral 3B (latest)",
 			api: "openai-completions",
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.04,
@@ -4654,11 +5033,12 @@ export const MODELS = {
 		} satisfies Model<"openai-completions">,
 		"ministral-8b-latest": {
 			id: "ministral-8b-latest",
-			name: "Ministral 8B",
+			name: "Ministral 8B (latest)",
 			api: "openai-completions",
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.1,
@@ -4676,6 +5056,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2,
@@ -4693,6 +5074,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -4705,11 +5087,12 @@ export const MODELS = {
 		} satisfies Model<"openai-completions">,
 		"mistral-large-latest": {
 			id: "mistral-large-latest",
-			name: "Mistral Large",
+			name: "Mistral Large (latest)",
 			api: "openai-completions",
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -4727,6 +5110,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -4744,6 +5128,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -4756,11 +5141,12 @@ export const MODELS = {
 		} satisfies Model<"openai-completions">,
 		"mistral-medium-latest": {
 			id: "mistral-medium-latest",
-			name: "Mistral Medium",
+			name: "Mistral Medium (latest)",
 			api: "openai-completions",
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -4778,6 +5164,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -4795,6 +5182,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -4807,11 +5195,12 @@ export const MODELS = {
 		} satisfies Model<"openai-completions">,
 		"mistral-small-latest": {
 			id: "mistral-small-latest",
-			name: "Mistral Small",
+			name: "Mistral Small (latest)",
 			api: "openai-completions",
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -4829,6 +5218,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.25,
@@ -4846,6 +5236,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2,
@@ -4863,6 +5254,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.7,
@@ -4880,6 +5272,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -4892,11 +5285,12 @@ export const MODELS = {
 		} satisfies Model<"openai-completions">,
 		"pixtral-large-latest": {
 			id: "pixtral-large-latest",
-			name: "Pixtral Large",
+			name: "Pixtral Large (latest)",
 			api: "openai-completions",
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -4916,6 +5310,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1.5,
@@ -4933,6 +5328,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 30,
@@ -4950,6 +5346,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -4967,6 +5364,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -4984,6 +5382,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -5001,6 +5400,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -5018,6 +5418,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -5035,6 +5436,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -5052,6 +5454,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -5069,6 +5472,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -5086,6 +5490,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -5103,6 +5508,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -5120,6 +5526,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -5137,6 +5544,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -5154,6 +5562,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -5171,6 +5580,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.05,
@@ -5188,6 +5598,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -5205,6 +5616,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -5222,6 +5634,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -5239,6 +5652,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -5256,6 +5670,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -5273,6 +5688,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -5290,6 +5706,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -5307,6 +5724,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -5324,6 +5742,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -5341,6 +5760,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 21,
@@ -5358,6 +5778,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -5375,6 +5796,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -5385,6 +5807,42 @@ export const MODELS = {
 			contextWindow: 128000,
 			maxTokens: 32000,
 		} satisfies Model<"openai-responses">,
+		"gpt-5.4": {
+			id: "gpt-5.4",
+			name: "GPT-5.4",
+			api: "openai-responses",
+			provider: "openai",
+			baseUrl: "https://api.openai.com/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 2.5,
+				output: 15,
+				cacheRead: 0.25,
+				cacheWrite: 0,
+			},
+			contextWindow: 1050000,
+			maxTokens: 128000,
+		} satisfies Model<"openai-responses">,
+		"gpt-5.4-pro": {
+			id: "gpt-5.4-pro",
+			name: "GPT-5.4 Pro",
+			api: "openai-responses",
+			provider: "openai",
+			baseUrl: "https://api.openai.com/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 30,
+				output: 180,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 1050000,
+			maxTokens: 128000,
+		} satisfies Model<"openai-responses">,
 		"o1": {
 			id: "o1",
 			name: "o1",
@@ -5392,6 +5850,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -5409,6 +5868,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 150,
@@ -5426,6 +5886,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -5443,6 +5904,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -5460,6 +5922,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1.1,
@@ -5477,6 +5940,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 20,
@@ -5494,6 +5958,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.1,
@@ -5511,6 +5976,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -5530,6 +5996,7 @@ export const MODELS = {
 			provider: "openai-codex",
 			baseUrl: "https://chatgpt.com/backend-api",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -5547,6 +6014,7 @@ export const MODELS = {
 			provider: "openai-codex",
 			baseUrl: "https://chatgpt.com/backend-api",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -5564,6 +6032,7 @@ export const MODELS = {
 			provider: "openai-codex",
 			baseUrl: "https://chatgpt.com/backend-api",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -5581,6 +6050,7 @@ export const MODELS = {
 			provider: "openai-codex",
 			baseUrl: "https://chatgpt.com/backend-api",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -5598,6 +6068,7 @@ export const MODELS = {
 			provider: "openai-codex",
 			baseUrl: "https://chatgpt.com/backend-api",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -5615,6 +6086,7 @@ export const MODELS = {
 			provider: "openai-codex",
 			baseUrl: "https://chatgpt.com/backend-api",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -5632,6 +6104,7 @@ export const MODELS = {
 			provider: "openai-codex",
 			baseUrl: "https://chatgpt.com/backend-api",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -5651,6 +6124,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -5668,6 +6142,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.8,
@@ -5685,6 +6160,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -5702,6 +6178,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -5719,6 +6196,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -5736,6 +6214,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -5753,6 +6232,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -5770,6 +6250,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -5787,6 +6268,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -5804,6 +6286,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -5821,6 +6304,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -5838,6 +6322,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -5855,6 +6340,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -5872,6 +6358,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -5889,6 +6376,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -5906,6 +6394,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.07,
@@ -5923,6 +6412,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.07,
@@ -5940,6 +6430,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -5957,6 +6448,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.07,
@@ -5974,6 +6466,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.07,
@@ -5991,6 +6484,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -6008,6 +6502,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -6025,6 +6520,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -6042,6 +6538,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -6059,6 +6556,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -6069,6 +6567,60 @@ export const MODELS = {
 			contextWindow: 400000,
 			maxTokens: 128000,
 		} satisfies Model<"openai-responses">,
+		"gpt-5.3-codex-spark": {
+			id: "gpt-5.3-codex-spark",
+			name: "GPT-5.3 Codex Spark",
+			api: "openai-responses",
+			provider: "opencode",
+			baseUrl: "https://opencode.ai/zen/v1",
+			reasoning: true,
+			supportsXhigh: true,
+			input: ["text"],
+			cost: {
+				input: 1.75,
+				output: 14,
+				cacheRead: 0.175,
+				cacheWrite: 0,
+			},
+			contextWindow: 128000,
+			maxTokens: 128000,
+		} satisfies Model<"openai-responses">,
+		"gpt-5.4": {
+			id: "gpt-5.4",
+			name: "GPT-5.4",
+			api: "openai-responses",
+			provider: "opencode",
+			baseUrl: "https://opencode.ai/zen/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 2.5,
+				output: 15,
+				cacheRead: 0.25,
+				cacheWrite: 0,
+			},
+			contextWindow: 1050000,
+			maxTokens: 128000,
+		} satisfies Model<"openai-responses">,
+		"gpt-5.4-pro": {
+			id: "gpt-5.4-pro",
+			name: "GPT-5.4 Pro",
+			api: "openai-responses",
+			provider: "opencode",
+			baseUrl: "https://opencode.ai/zen/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 30,
+				output: 180,
+				cacheRead: 30,
+				cacheWrite: 0,
+			},
+			contextWindow: 1050000,
+			maxTokens: 128000,
+		} satisfies Model<"openai-responses">,
 		"kimi-k2.5": {
 			id: "kimi-k2.5",
 			name: "Kimi K2.5",
@@ -6076,11 +6628,30 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
 				output: 3,
 				cacheRead: 0.08,
+				cacheWrite: 0,
+			},
+			contextWindow: 262144,
+			maxTokens: 65536,
+		} satisfies Model<"openai-completions">,
+		"mimo-v2-flash-free": {
+			id: "mimo-v2-flash-free",
+			name: "MiMo V2 Flash Free",
+			api: "openai-completions",
+			provider: "opencode",
+			baseUrl: "https://opencode.ai/zen/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text"],
+			cost: {
+				input: 0,
+				output: 0,
+				cacheRead: 0,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
@@ -6093,6 +6664,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -6110,6 +6682,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -6127,6 +6700,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -6137,13 +6711,14 @@ export const MODELS = {
 			contextWindow: 204800,
 			maxTokens: 131072,
 		} satisfies Model<"anthropic-messages">,
-		"trinity-large-preview-free": {
-			id: "trinity-large-preview-free",
-			name: "Trinity Large Preview",
+		"nemotron-3-super-free": {
+			id: "nemotron-3-super-free",
+			name: "Nemotron 3 Super Free",
 			api: "openai-completions",
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
-			reasoning: false,
+			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -6151,8 +6726,8 @@ export const MODELS = {
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 131072,
-			maxTokens: 131072,
+			contextWindow: 1000000,
+			maxTokens: 128000,
 		} satisfies Model<"openai-completions">,
 	},
 	"opencode-go": {
@@ -6163,6 +6738,7 @@ export const MODELS = {
 			provider: "opencode-go",
 			baseUrl: "https://opencode.ai/zen/go/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -6180,6 +6756,7 @@ export const MODELS = {
 			provider: "opencode-go",
 			baseUrl: "https://opencode.ai/zen/go/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -6197,6 +6774,7 @@ export const MODELS = {
 			provider: "opencode-go",
 			baseUrl: "https://opencode.ai/zen/go",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -6216,6 +6794,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2,
@@ -6233,6 +6812,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.09,
@@ -6250,6 +6830,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.19999999999999998,
@@ -6267,6 +6848,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -6284,6 +6866,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.06,
@@ -6301,6 +6884,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.035,
@@ -6318,6 +6902,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -6335,6 +6920,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.7999999999999999,
@@ -6352,6 +6938,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -6369,6 +6956,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.7999999999999999,
@@ -6386,6 +6974,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 6,
@@ -6403,6 +6992,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -6420,6 +7010,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -6437,6 +7028,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -6454,6 +7046,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -6471,6 +7064,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -6488,6 +7082,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -6505,6 +7100,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -6522,6 +7118,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -6529,7 +7126,7 @@ export const MODELS = {
 				cacheRead: 0.3,
 				cacheWrite: 3.75,
 			},
-			contextWindow: 1000000,
+			contextWindow: 200000,
 			maxTokens: 64000,
 		} satisfies Model<"openai-completions">,
 		"anthropic/claude-sonnet-4.5": {
@@ -6539,6 +7136,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -6556,6 +7154,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -6573,6 +7172,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -6583,6 +7183,24 @@ export const MODELS = {
 			contextWindow: 131000,
 			maxTokens: 4096,
 		} satisfies Model<"openai-completions">,
+		"arcee-ai/trinity-mini": {
+			id: "arcee-ai/trinity-mini",
+			name: "Arcee AI: Trinity Mini",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text"],
+			cost: {
+				input: 0.045,
+				output: 0.15,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 131072,
+			maxTokens: 131072,
+		} satisfies Model<"openai-completions">,
 		"arcee-ai/trinity-mini:free": {
 			id: "arcee-ai/trinity-mini:free",
 			name: "Arcee AI: Trinity Mini (free)",
@@ -6590,6 +7208,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -6607,6 +7226,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.75,
@@ -6624,6 +7244,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -6641,6 +7262,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.07,
@@ -6658,6 +7280,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.14,
@@ -6675,6 +7298,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -6692,6 +7316,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.075,
@@ -6702,6 +7327,24 @@ export const MODELS = {
 			contextWindow: 262144,
 			maxTokens: 32768,
 		} satisfies Model<"openai-completions">,
+		"bytedance-seed/seed-2.0-lite": {
+			id: "bytedance-seed/seed-2.0-lite",
+			name: "ByteDance Seed: Seed-2.0-Lite",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 0.25,
+				output: 2,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 262144,
+			maxTokens: 131072,
+		} satisfies Model<"openai-completions">,
 		"bytedance-seed/seed-2.0-mini": {
 			id: "bytedance-seed/seed-2.0-mini",
 			name: "ByteDance Seed: Seed-2.0-Mini",
@@ -6709,6 +7352,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.09999999999999999,
@@ -6726,6 +7370,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -6743,6 +7388,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2.5,
@@ -6760,6 +7406,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.32,
@@ -6777,6 +7424,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.19999999999999998,
@@ -6794,6 +7442,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -6811,6 +7460,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.7,
@@ -6828,6 +7478,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.44999999999999996,
@@ -6845,28 +7496,12 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.21,
 				output: 0.7899999999999999,
 				cacheRead: 0.1300000002,
-				cacheWrite: 0,
-			},
-			contextWindow: 163840,
-			maxTokens: 4096,
-		} satisfies Model<"openai-completions">,
-		"deepseek/deepseek-v3.1-terminus:exacto": {
-			id: "deepseek/deepseek-v3.1-terminus:exacto",
-			name: "DeepSeek: DeepSeek V3.1 Terminus (exacto)",
-			api: "openai-completions",
-			provider: "openrouter",
-			baseUrl: "https://openrouter.ai/api/v1",
-			reasoning: true,
-			input: ["text"],
-			cost: {
-				input: 0.21,
-				output: 0.7899999999999999,
-				cacheRead: 0.16799999999999998,
 				cacheWrite: 0,
 			},
 			contextWindow: 163840,
@@ -6879,15 +7514,16 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.25,
-				output: 0.39999999999999997,
-				cacheRead: 0,
+				input: 0.26,
+				output: 0.38,
+				cacheRead: 0.13,
 				cacheWrite: 0,
 			},
 			contextWindow: 163840,
-			maxTokens: 65536,
+			maxTokens: 4096,
 		} satisfies Model<"openai-completions">,
 		"deepseek/deepseek-v3.2-exp": {
 			id: "deepseek/deepseek-v3.2-exp",
@@ -6896,6 +7532,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.27,
@@ -6913,6 +7550,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -6930,6 +7568,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.09999999999999999,
@@ -6947,6 +7586,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.075,
@@ -6964,6 +7604,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -6981,6 +7622,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.09999999999999999,
@@ -6998,6 +7640,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.09999999999999999,
@@ -7015,6 +7658,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -7032,6 +7676,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -7049,6 +7694,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -7066,6 +7712,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -7083,12 +7730,31 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
 				output: 12,
 				cacheRead: 0.19999999999999998,
 				cacheWrite: 0.375,
+			},
+			contextWindow: 1048576,
+			maxTokens: 65536,
+		} satisfies Model<"openai-completions">,
+		"google/gemini-3.1-flash-lite-preview": {
+			id: "google/gemini-3.1-flash-lite-preview",
+			name: "Google: Gemini 3.1 Flash Lite Preview",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 0.25,
+				output: 1.5,
+				cacheRead: 0.024999999999999998,
+				cacheWrite: 0.08333333333333334,
 			},
 			contextWindow: 1048576,
 			maxTokens: 65536,
@@ -7100,6 +7766,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -7117,6 +7784,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -7134,11 +7802,12 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
-				input: 0.04,
-				output: 0.15,
-				cacheRead: 0.02,
+				input: 0.03,
+				output: 0.11,
+				cacheRead: 0.015,
 				cacheWrite: 0,
 			},
 			contextWindow: 128000,
@@ -7151,6 +7820,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -7168,15 +7838,34 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.25,
-				output: 1,
-				cacheRead: 0,
+				output: 0.75,
+				cacheRead: 0.024999999999999998,
 				cacheWrite: 0,
 			},
 			contextWindow: 128000,
-			maxTokens: 16384,
+			maxTokens: 32000,
+		} satisfies Model<"openai-completions">,
+		"inception/mercury-2": {
+			id: "inception/mercury-2",
+			name: "Inception: Mercury 2",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text"],
+			cost: {
+				input: 0.25,
+				output: 0.75,
+				cacheRead: 0.024999999999999998,
+				cacheWrite: 0,
+			},
+			contextWindow: 128000,
+			maxTokens: 50000,
 		} satisfies Model<"openai-completions">,
 		"inception/mercury-coder": {
 			id: "inception/mercury-coder",
@@ -7185,15 +7874,16 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.25,
-				output: 1,
-				cacheRead: 0,
+				output: 0.75,
+				cacheRead: 0.024999999999999998,
 				cacheWrite: 0,
 			},
 			contextWindow: 128000,
-			maxTokens: 16384,
+			maxTokens: 32000,
 		} satisfies Model<"openai-completions">,
 		"kwaipilot/kat-coder-pro": {
 			id: "kwaipilot/kat-coder-pro",
@@ -7202,6 +7892,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.207,
@@ -7219,6 +7910,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.19999999999999998,
@@ -7236,6 +7928,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.03,
@@ -7253,6 +7946,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 4,
@@ -7270,6 +7964,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.39999999999999997,
@@ -7287,6 +7982,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.02,
@@ -7304,6 +8000,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.09999999999999999,
@@ -7321,6 +8018,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -7338,6 +8036,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -7355,6 +8054,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.08,
@@ -7372,6 +8072,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.39999999999999997,
@@ -7389,6 +8090,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.255,
@@ -7406,11 +8108,12 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.27,
 				output: 0.95,
-				cacheRead: 0.0299999997,
+				cacheRead: 0.0290000007,
 				cacheWrite: 0,
 			},
 			contextWindow: 196608,
@@ -7423,15 +8126,16 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.295,
-				output: 1.2,
-				cacheRead: 0.03,
+				input: 0.27,
+				output: 0.95,
+				cacheRead: 0.0299999997,
 				cacheWrite: 0,
 			},
 			contextWindow: 196608,
-			maxTokens: 196608,
+			maxTokens: 4096,
 		} satisfies Model<"openai-completions">,
 		"mistralai/codestral-2508": {
 			id: "mistralai/codestral-2508",
@@ -7440,6 +8144,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -7457,6 +8162,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.39999999999999997,
@@ -7474,6 +8180,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.39999999999999997,
@@ -7491,6 +8198,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.09999999999999999,
@@ -7508,6 +8216,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.19999999999999998,
@@ -7525,6 +8234,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.09999999999999999,
@@ -7542,6 +8252,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -7559,6 +8270,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2,
@@ -7576,6 +8288,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2,
@@ -7593,6 +8306,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2,
@@ -7610,6 +8324,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -7627,6 +8342,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.39999999999999997,
@@ -7644,6 +8360,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.39999999999999997,
@@ -7661,6 +8378,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.02,
@@ -7678,6 +8396,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.19999999999999998,
@@ -7695,6 +8414,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.049999999999999996,
@@ -7712,6 +8432,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -7729,6 +8450,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.06,
@@ -7746,6 +8468,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.09999999999999999,
@@ -7763,6 +8486,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2,
@@ -7780,6 +8504,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.54,
@@ -7797,6 +8522,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -7814,6 +8540,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.09999999999999999,
@@ -7831,6 +8558,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.55,
@@ -7848,6 +8576,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.39999999999999997,
@@ -7858,23 +8587,6 @@ export const MODELS = {
 			contextWindow: 131072,
 			maxTokens: 4096,
 		} satisfies Model<"openai-completions">,
-		"moonshotai/kimi-k2-0905:exacto": {
-			id: "moonshotai/kimi-k2-0905:exacto",
-			name: "MoonshotAI: Kimi K2 0905 (exacto)",
-			api: "openai-completions",
-			provider: "openrouter",
-			baseUrl: "https://openrouter.ai/api/v1",
-			reasoning: false,
-			input: ["text"],
-			cost: {
-				input: 0.6,
-				output: 2.5,
-				cacheRead: 0,
-				cacheWrite: 0,
-			},
-			contextWindow: 262144,
-			maxTokens: 4096,
-		} satisfies Model<"openai-completions">,
 		"moonshotai/kimi-k2-thinking": {
 			id: "moonshotai/kimi-k2-thinking",
 			name: "MoonshotAI: Kimi K2 Thinking",
@@ -7882,6 +8594,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.47,
@@ -7899,6 +8612,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.44999999999999996,
@@ -7916,6 +8630,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.27,
@@ -7933,6 +8648,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1.2,
@@ -7950,6 +8666,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.09999999999999999,
@@ -7967,6 +8684,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.049999999999999996,
@@ -7984,6 +8702,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -7994,6 +8713,24 @@ export const MODELS = {
 			contextWindow: 256000,
 			maxTokens: 4096,
 		} satisfies Model<"openai-completions">,
+		"nvidia/nemotron-3-super-120b-a12b:free": {
+			id: "nvidia/nemotron-3-super-120b-a12b:free",
+			name: "NVIDIA: Nemotron 3 Super (free)",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text"],
+			cost: {
+				input: 0,
+				output: 0,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 262144,
+			maxTokens: 262144,
+		} satisfies Model<"openai-completions">,
 		"nvidia/nemotron-nano-12b-v2-vl:free": {
 			id: "nvidia/nemotron-nano-12b-v2-vl:free",
 			name: "NVIDIA: Nemotron Nano 12B 2 VL (free)",
@@ -8001,6 +8738,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -8018,6 +8756,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.04,
@@ -8035,6 +8774,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -8052,6 +8792,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.5,
@@ -8069,6 +8810,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -8086,6 +8828,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 3,
@@ -8103,6 +8846,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 30,
@@ -8120,6 +8864,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 30,
@@ -8137,6 +8882,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 10,
@@ -8154,6 +8900,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -8171,6 +8918,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 10,
@@ -8188,6 +8936,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -8205,6 +8954,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.39999999999999997,
@@ -8222,6 +8972,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.09999999999999999,
@@ -8239,6 +8990,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -8256,6 +9008,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -8273,6 +9026,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -8290,6 +9044,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -8307,6 +9062,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2.5,
@@ -8324,6 +9080,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -8341,6 +9098,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -8358,6 +9116,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 6,
@@ -8375,6 +9134,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -8392,6 +9152,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -8409,6 +9170,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -8426,6 +9188,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -8443,6 +9206,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -8460,6 +9224,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.049999999999999996,
@@ -8477,6 +9242,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -8494,6 +9260,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -8511,6 +9278,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -8528,6 +9296,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -8545,6 +9314,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -8562,6 +9332,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -8579,6 +9350,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -8596,6 +9368,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -8613,6 +9386,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -8630,6 +9404,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 21,
@@ -8640,6 +9415,24 @@ export const MODELS = {
 			contextWindow: 400000,
 			maxTokens: 128000,
 		} satisfies Model<"openai-completions">,
+		"openai/gpt-5.3-chat": {
+			id: "openai/gpt-5.3-chat",
+			name: "OpenAI: GPT-5.3 Chat",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: false,
+			supportsXhigh: true,
+			input: ["text", "image"],
+			cost: {
+				input: 1.75,
+				output: 14,
+				cacheRead: 0.175,
+				cacheWrite: 0,
+			},
+			contextWindow: 128000,
+			maxTokens: 16384,
+		} satisfies Model<"openai-completions">,
 		"openai/gpt-5.3-codex": {
 			id: "openai/gpt-5.3-codex",
 			name: "OpenAI: GPT-5.3-Codex",
@@ -8647,6 +9440,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -8657,6 +9451,42 @@ export const MODELS = {
 			contextWindow: 400000,
 			maxTokens: 128000,
 		} satisfies Model<"openai-completions">,
+		"openai/gpt-5.4": {
+			id: "openai/gpt-5.4",
+			name: "OpenAI: GPT-5.4",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 2.5,
+				output: 15,
+				cacheRead: 0.25,
+				cacheWrite: 0,
+			},
+			contextWindow: 1050000,
+			maxTokens: 128000,
+		} satisfies Model<"openai-completions">,
+		"openai/gpt-5.4-pro": {
+			id: "openai/gpt-5.4-pro",
+			name: "OpenAI: GPT-5.4 Pro",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 30,
+				output: 180,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 1050000,
+			maxTokens: 128000,
+		} satisfies Model<"openai-completions">,
 		"openai/gpt-oss-120b": {
 			id: "openai/gpt-oss-120b",
 			name: "OpenAI: gpt-oss-120b",
@@ -8664,23 +9494,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			input: ["text"],
-			cost: {
-				input: 0.039,
-				output: 0.19,
-				cacheRead: 0,
-				cacheWrite: 0,
-			},
-			contextWindow: 131072,
-			maxTokens: 4096,
-		} satisfies Model<"openai-completions">,
-		"openai/gpt-oss-120b:exacto": {
-			id: "openai/gpt-oss-120b:exacto",
-			name: "OpenAI: gpt-oss-120b (exacto)",
-			api: "openai-completions",
-			provider: "openrouter",
-			baseUrl: "https://openrouter.ai/api/v1",
-			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.039,
@@ -8698,6 +9512,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -8715,6 +9530,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.03,
@@ -8732,6 +9548,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -8749,6 +9566,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.075,
@@ -8766,6 +9584,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -8783,6 +9602,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -8800,6 +9620,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -8817,6 +9638,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1.1,
@@ -8834,6 +9656,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1.1,
@@ -8851,6 +9674,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 20,
@@ -8868,6 +9692,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.1,
@@ -8885,6 +9710,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -8902,6 +9728,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.1,
@@ -8919,6 +9746,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: -1000000,
@@ -8936,6 +9764,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -8946,6 +9775,42 @@ export const MODELS = {
 			contextWindow: 200000,
 			maxTokens: 4096,
 		} satisfies Model<"openai-completions">,
+		"openrouter/healer-alpha": {
+			id: "openrouter/healer-alpha",
+			name: "Healer Alpha",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 0,
+				output: 0,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 262144,
+			maxTokens: 32000,
+		} satisfies Model<"openai-completions">,
+		"openrouter/hunter-alpha": {
+			id: "openrouter/hunter-alpha",
+			name: "Hunter Alpha",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text"],
+			cost: {
+				input: 0,
+				output: 0,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 1048576,
+			maxTokens: 32000,
+		} satisfies Model<"openai-completions">,
 		"prime-intellect/intellect-3": {
 			id: "prime-intellect/intellect-3",
 			name: "Prime Intellect: INTELLECT-3",
@@ -8953,6 +9818,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.19999999999999998,
@@ -8970,6 +9836,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.12,
@@ -8987,6 +9854,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.04,
@@ -9004,11 +9872,12 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 1.5999999999999999,
-				output: 6.3999999999999995,
-				cacheRead: 0.32,
+				input: 1.04,
+				output: 4.16,
+				cacheRead: 0.20800000000000002,
 				cacheWrite: 0,
 			},
 			contextWindow: 32768,
@@ -9021,6 +9890,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.39999999999999997,
@@ -9038,10 +9908,11 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.39999999999999997,
-				output: 1.2,
+				input: 0.26,
+				output: 0.78,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
@@ -9055,10 +9926,11 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.39999999999999997,
-				output: 1.2,
+				input: 0.26,
+				output: 0.78,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
@@ -9072,11 +9944,12 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.049999999999999996,
-				output: 0.19999999999999998,
-				cacheRead: 0.01,
+				input: 0.0325,
+				output: 0.13,
+				cacheRead: 0.006500000000000001,
 				cacheWrite: 0,
 			},
 			contextWindow: 131072,
@@ -9089,6 +9962,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.7999999999999999,
@@ -9106,6 +9980,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.06,
@@ -9123,6 +9998,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.45499999999999996,
@@ -9140,6 +10016,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.071,
@@ -9157,15 +10034,16 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0,
-				output: 0,
-				cacheRead: 0,
+				input: 0.11,
+				output: 0.6,
+				cacheRead: 0.055,
 				cacheWrite: 0,
 			},
-			contextWindow: 131072,
-			maxTokens: 4096,
+			contextWindow: 262144,
+			maxTokens: 262144,
 		} satisfies Model<"openai-completions">,
 		"qwen/qwen3-30b-a3b": {
 			id: "qwen/qwen3-30b-a3b",
@@ -9174,6 +10052,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.08,
@@ -9191,6 +10070,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.09,
@@ -9208,6 +10088,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.051,
@@ -9225,6 +10106,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.08,
@@ -9242,6 +10124,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -9259,6 +10142,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.049999999999999996,
@@ -9276,6 +10160,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.22,
@@ -9293,6 +10178,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.07,
@@ -9310,11 +10196,12 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.3,
-				output: 1.5,
-				cacheRead: 0.06,
+				input: 0.195,
+				output: 0.975,
+				cacheRead: 0.039,
 				cacheWrite: 0,
 			},
 			contextWindow: 1000000,
@@ -9327,6 +10214,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.12,
@@ -9344,31 +10232,15 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 1,
-				output: 5,
-				cacheRead: 0.19999999999999998,
+				input: 0.65,
+				output: 3.25,
+				cacheRead: 0.13,
 				cacheWrite: 0,
 			},
 			contextWindow: 1000000,
-			maxTokens: 65536,
-		} satisfies Model<"openai-completions">,
-		"qwen/qwen3-coder:exacto": {
-			id: "qwen/qwen3-coder:exacto",
-			name: "Qwen: Qwen3 Coder 480B A35B (exacto)",
-			api: "openai-completions",
-			provider: "openrouter",
-			baseUrl: "https://openrouter.ai/api/v1",
-			reasoning: false,
-			input: ["text"],
-			cost: {
-				input: 0.22,
-				output: 1.7999999999999998,
-				cacheRead: 0.022,
-				cacheWrite: 0,
-			},
-			contextWindow: 262144,
 			maxTokens: 65536,
 		} satisfies Model<"openai-completions">,
 		"qwen/qwen3-coder:free": {
@@ -9378,6 +10250,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -9395,6 +10268,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1.2,
@@ -9412,10 +10286,11 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 1.2,
-				output: 6,
+				input: 0.78,
+				output: 3.9,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
@@ -9429,6 +10304,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.09,
@@ -9436,7 +10312,7 @@ export const MODELS = {
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 262144,
+			contextWindow: 131072,
 			maxTokens: 4096,
 		} satisfies Model<"openai-completions">,
 		"qwen/qwen3-next-80b-a3b-instruct:free": {
@@ -9446,6 +10322,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -9463,15 +10340,16 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.15,
-				output: 1.2,
+				input: 0.0975,
+				output: 0.78,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 128000,
-			maxTokens: 4096,
+			contextWindow: 131072,
+			maxTokens: 32768,
 		} satisfies Model<"openai-completions">,
 		"qwen/qwen3-vl-235b-a22b-instruct": {
 			id: "qwen/qwen3-vl-235b-a22b-instruct",
@@ -9480,6 +10358,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.19999999999999998,
@@ -9497,10 +10376,11 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
-				input: 0,
-				output: 0,
+				input: 0.26,
+				output: 2.6,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
@@ -9514,6 +10394,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.13,
@@ -9531,10 +10412,11 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
-				input: 0,
-				output: 0,
+				input: 0.13,
+				output: 1.56,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
@@ -9548,6 +10430,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.10400000000000001,
@@ -9565,6 +10448,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.08,
@@ -9582,6 +10466,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.117,
@@ -9599,11 +10484,12 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
-				input: 0.3,
-				output: 2.4,
-				cacheRead: 0.3,
+				input: 0.26,
+				output: 2.08,
+				cacheRead: 0,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
@@ -9616,11 +10502,12 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
-				input: 0.27,
-				output: 2.16,
-				cacheRead: 0.27,
+				input: 0.195,
+				output: 1.56,
+				cacheRead: 0,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
@@ -9633,11 +10520,12 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
-				input: 0.22499999999999998,
-				output: 1.7999999999999998,
-				cacheRead: 0.22499999999999998,
+				input: 0.1625,
+				output: 1.3,
+				cacheRead: 0,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
@@ -9650,15 +10538,34 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
-				input: 0.55,
-				output: 3.5,
-				cacheRead: 0.55,
+				input: 0.39,
+				output: 2.34,
+				cacheRead: 0,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
 			maxTokens: 65536,
+		} satisfies Model<"openai-completions">,
+		"qwen/qwen3.5-9b": {
+			id: "qwen/qwen3.5-9b",
+			name: "Qwen: Qwen3.5-9B",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 0.09999999999999999,
+				output: 0.15,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 262144,
+			maxTokens: 4096,
 		} satisfies Model<"openai-completions">,
 		"qwen/qwen3.5-flash-02-23": {
 			id: "qwen/qwen3.5-flash-02-23",
@@ -9667,6 +10574,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.09999999999999999,
@@ -9684,10 +10592,11 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
-				input: 0.39999999999999997,
-				output: 2.4,
+				input: 0.26,
+				output: 1.56,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
@@ -9701,6 +10610,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -9718,6 +10628,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -9735,6 +10646,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1.48,
@@ -9752,15 +10664,16 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.65,
-				output: 0.75,
+				input: 0.85,
+				output: 0.85,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 32768,
-			maxTokens: 32768,
+			contextWindow: 131072,
+			maxTokens: 16384,
 		} satisfies Model<"openai-completions">,
 		"stepfun/step-3.5-flash": {
 			id: "stepfun/step-3.5-flash",
@@ -9769,6 +10682,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.09999999999999999,
@@ -9786,6 +10700,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -9803,6 +10718,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.16999999999999998,
@@ -9820,6 +10736,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.39999999999999997,
@@ -9837,6 +10754,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.25,
@@ -9854,6 +10772,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -9871,6 +10790,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 3,
@@ -9888,6 +10808,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 3,
@@ -9905,6 +10826,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -9922,6 +10844,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -9939,6 +10862,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -9956,6 +10880,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.19999999999999998,
@@ -9973,6 +10898,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.19999999999999998,
@@ -9983,6 +10909,24 @@ export const MODELS = {
 			contextWindow: 2000000,
 			maxTokens: 30000,
 		} satisfies Model<"openai-completions">,
+		"x-ai/grok-4.20-beta": {
+			id: "x-ai/grok-4.20-beta",
+			name: "xAI: Grok 4.20 Beta",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 2,
+				output: 6,
+				cacheRead: 0.19999999999999998,
+				cacheWrite: 0,
+			},
+			contextWindow: 2000000,
+			maxTokens: 4096,
+		} satisfies Model<"openai-completions">,
 		"x-ai/grok-code-fast-1": {
 			id: "x-ai/grok-code-fast-1",
 			name: "xAI: Grok Code Fast 1",
@@ -9990,6 +10934,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.19999999999999998,
@@ -10007,6 +10952,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.09,
@@ -10024,6 +10970,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.09999999999999999,
@@ -10041,15 +10988,16 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.55,
-				output: 2,
-				cacheRead: 0,
+				input: 0.6,
+				output: 2.2,
+				cacheRead: 0.11,
 				cacheWrite: 0,
 			},
-			contextWindow: 131000,
-			maxTokens: 131000,
+			contextWindow: 131072,
+			maxTokens: 98304,
 		} satisfies Model<"openai-completions">,
 		"z-ai/glm-4.5-air": {
 			id: "z-ai/glm-4.5-air",
@@ -10058,6 +11006,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.13,
@@ -10075,6 +11024,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -10092,6 +11042,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -10109,32 +11060,16 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.35,
-				output: 1.71,
+				input: 0.39,
+				output: 1.9,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 202752,
-			maxTokens: 131072,
-		} satisfies Model<"openai-completions">,
-		"z-ai/glm-4.6:exacto": {
-			id: "z-ai/glm-4.6:exacto",
-			name: "Z.ai: GLM 4.6 (exacto)",
-			api: "openai-completions",
-			provider: "openrouter",
-			baseUrl: "https://openrouter.ai/api/v1",
-			reasoning: true,
-			input: ["text"],
-			cost: {
-				input: 0.44,
-				output: 1.76,
-				cacheRead: 0.11,
-				cacheWrite: 0,
-			},
 			contextWindow: 204800,
-			maxTokens: 131072,
+			maxTokens: 204800,
 		} satisfies Model<"openai-completions">,
 		"z-ai/glm-4.6v": {
 			id: "z-ai/glm-4.6v",
@@ -10143,6 +11078,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -10160,11 +11096,12 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.3,
-				output: 1.4,
-				cacheRead: 0.15,
+				input: 0.38,
+				output: 1.9800000000000002,
+				cacheRead: 0.19,
 				cacheWrite: 0,
 			},
 			contextWindow: 202752,
@@ -10177,6 +11114,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.06,
@@ -10194,15 +11132,16 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.7999999999999999,
-				output: 2.56,
-				cacheRead: 0.16,
+				input: 0.72,
+				output: 2.3,
+				cacheRead: 0,
 				cacheWrite: 0,
 			},
 			contextWindow: 202752,
-			maxTokens: 4096,
+			maxTokens: 131072,
 		} satisfies Model<"openai-completions">,
 	},
 	"vercel-ai-gateway": {
@@ -10213,6 +11152,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.06,
@@ -10230,6 +11170,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.071,
@@ -10247,6 +11188,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.08,
@@ -10264,15 +11206,16 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.09999999999999999,
-				output: 0.3,
+				input: 0.29,
+				output: 0.59,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 40960,
-			maxTokens: 16384,
+			contextWindow: 131072,
+			maxTokens: 40960,
 		} satisfies Model<"anthropic-messages">,
 		"alibaba/qwen3-235b-a22b-thinking": {
 			id: "alibaba/qwen3-235b-a22b-thinking",
@@ -10281,6 +11224,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -10298,6 +11242,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.39999999999999997,
@@ -10315,15 +11260,16 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.07,
-				output: 0.27,
+				input: 0.15,
+				output: 0.6,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 160000,
-			maxTokens: 32768,
+			contextWindow: 262144,
+			maxTokens: 8192,
 		} satisfies Model<"anthropic-messages">,
 		"alibaba/qwen3-coder-next": {
 			id: "alibaba/qwen3-coder-next",
@@ -10331,7 +11277,8 @@ export const MODELS = {
 			api: "anthropic-messages",
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
-			reasoning: true,
+			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.5,
@@ -10349,6 +11296,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -10359,6 +11307,24 @@ export const MODELS = {
 			contextWindow: 1000000,
 			maxTokens: 65536,
 		} satisfies Model<"anthropic-messages">,
+		"alibaba/qwen3-max": {
+			id: "alibaba/qwen3-max",
+			name: "Qwen3 Max",
+			api: "anthropic-messages",
+			provider: "vercel-ai-gateway",
+			baseUrl: "https://ai-gateway.vercel.sh",
+			reasoning: false,
+			supportsXhigh: false,
+			input: ["text"],
+			cost: {
+				input: 1.2,
+				output: 6,
+				cacheRead: 0.24,
+				cacheWrite: 0,
+			},
+			contextWindow: 262144,
+			maxTokens: 32768,
+		} satisfies Model<"anthropic-messages">,
 		"alibaba/qwen3-max-preview": {
 			id: "alibaba/qwen3-max-preview",
 			name: "Qwen3 Max Preview",
@@ -10366,6 +11332,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1.2,
@@ -10383,6 +11350,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1.2,
@@ -10400,6 +11368,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.22,
@@ -10417,6 +11386,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.09999999999999999,
@@ -10434,6 +11404,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.39999999999999997,
@@ -10451,6 +11422,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -10468,6 +11440,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.7999999999999999,
@@ -10485,6 +11458,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -10502,12 +11476,13 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
 				output: 15,
-				cacheRead: 0,
-				cacheWrite: 0,
+				cacheRead: 0.3,
+				cacheWrite: 3.75,
 			},
 			contextWindow: 200000,
 			maxTokens: 8192,
@@ -10519,6 +11494,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -10536,6 +11512,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -10553,6 +11530,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -10570,6 +11548,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -10587,6 +11566,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -10604,6 +11584,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -10621,6 +11602,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -10638,6 +11620,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -10655,6 +11638,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -10672,6 +11656,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.25,
@@ -10689,6 +11674,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.25,
@@ -10706,6 +11692,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2.5,
@@ -10716,6 +11703,24 @@ export const MODELS = {
 			contextWindow: 256000,
 			maxTokens: 8000,
 		} satisfies Model<"anthropic-messages">,
+		"deepseek/deepseek-r1": {
+			id: "deepseek/deepseek-r1",
+			name: "DeepSeek-R1",
+			api: "anthropic-messages",
+			provider: "vercel-ai-gateway",
+			baseUrl: "https://ai-gateway.vercel.sh",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text"],
+			cost: {
+				input: 1.35,
+				output: 5.4,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 128000,
+			maxTokens: 8192,
+		} satisfies Model<"anthropic-messages">,
 		"deepseek/deepseek-v3": {
 			id: "deepseek/deepseek-v3",
 			name: "DeepSeek V3 0324",
@@ -10723,6 +11728,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.77,
@@ -10740,15 +11746,16 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.21,
-				output: 0.7899999999999999,
+				input: 0.5,
+				output: 1.5,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
 			contextWindow: 163840,
-			maxTokens: 128000,
+			maxTokens: 16384,
 		} satisfies Model<"anthropic-messages">,
 		"deepseek/deepseek-v3.1-terminus": {
 			id: "deepseek/deepseek-v3.1-terminus",
@@ -10757,6 +11764,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.27,
@@ -10774,6 +11782,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.26,
@@ -10791,6 +11800,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.28,
@@ -10801,6 +11811,42 @@ export const MODELS = {
 			contextWindow: 128000,
 			maxTokens: 64000,
 		} satisfies Model<"anthropic-messages">,
+		"google/gemini-2.0-flash": {
+			id: "google/gemini-2.0-flash",
+			name: "Gemini 2.0 Flash",
+			api: "anthropic-messages",
+			provider: "vercel-ai-gateway",
+			baseUrl: "https://ai-gateway.vercel.sh",
+			reasoning: false,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 0.15,
+				output: 0.6,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 1048576,
+			maxTokens: 8192,
+		} satisfies Model<"anthropic-messages">,
+		"google/gemini-2.0-flash-lite": {
+			id: "google/gemini-2.0-flash-lite",
+			name: "Gemini 2.0 Flash Lite",
+			api: "anthropic-messages",
+			provider: "vercel-ai-gateway",
+			baseUrl: "https://ai-gateway.vercel.sh",
+			reasoning: false,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 0.075,
+				output: 0.3,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 1048576,
+			maxTokens: 8192,
+		} satisfies Model<"anthropic-messages">,
 		"google/gemini-2.5-flash": {
 			id: "google/gemini-2.5-flash",
 			name: "Gemini 2.5 Flash",
@@ -10808,11 +11854,12 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			input: ["text"],
+			supportsXhigh: false,
+			input: ["text", "image"],
 			cost: {
 				input: 0.3,
 				output: 2.5,
-				cacheRead: 0,
+				cacheRead: 0.03,
 				cacheWrite: 0,
 			},
 			contextWindow: 1000000,
@@ -10825,6 +11872,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.09999999999999999,
@@ -10842,6 +11890,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.09999999999999999,
@@ -10859,6 +11908,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -10876,11 +11926,12 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			input: ["text"],
+			supportsXhigh: false,
+			input: ["text", "image"],
 			cost: {
 				input: 1.25,
 				output: 10,
-				cacheRead: 0,
+				cacheRead: 0.125,
 				cacheWrite: 0,
 			},
 			contextWindow: 1048576,
@@ -10893,6 +11944,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -10901,7 +11953,7 @@ export const MODELS = {
 				cacheWrite: 0,
 			},
 			contextWindow: 1000000,
-			maxTokens: 64000,
+			maxTokens: 65000,
 		} satisfies Model<"anthropic-messages">,
 		"google/gemini-3-pro-preview": {
 			id: "google/gemini-3-pro-preview",
@@ -10910,6 +11962,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -10919,6 +11972,24 @@ export const MODELS = {
 			},
 			contextWindow: 1000000,
 			maxTokens: 64000,
+		} satisfies Model<"anthropic-messages">,
+		"google/gemini-3.1-flash-lite-preview": {
+			id: "google/gemini-3.1-flash-lite-preview",
+			name: "Gemini 3.1 Flash Lite Preview",
+			api: "anthropic-messages",
+			provider: "vercel-ai-gateway",
+			baseUrl: "https://ai-gateway.vercel.sh",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 0.25,
+				output: 1.5,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 1000000,
+			maxTokens: 65000,
 		} satisfies Model<"anthropic-messages">,
 		"google/gemini-3.1-pro-preview": {
 			id: "google/gemini-3.1-pro-preview",
@@ -10927,6 +11998,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -10937,6 +12009,24 @@ export const MODELS = {
 			contextWindow: 1000000,
 			maxTokens: 64000,
 		} satisfies Model<"anthropic-messages">,
+		"inception/mercury-2": {
+			id: "inception/mercury-2",
+			name: "Mercury 2",
+			api: "anthropic-messages",
+			provider: "vercel-ai-gateway",
+			baseUrl: "https://ai-gateway.vercel.sh",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text"],
+			cost: {
+				input: 0.25,
+				output: 0.75,
+				cacheRead: 0.024999999999999998,
+				cacheWrite: 0,
+			},
+			contextWindow: 128000,
+			maxTokens: 128000,
+		} satisfies Model<"anthropic-messages">,
 		"inception/mercury-coder-small": {
 			id: "inception/mercury-coder-small",
 			name: "Mercury Coder Small Beta",
@@ -10944,6 +12034,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.25,
@@ -10961,6 +12052,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -10969,7 +12061,7 @@ export const MODELS = {
 				cacheWrite: 0,
 			},
 			contextWindow: 128000,
-			maxTokens: 8192,
+			maxTokens: 100000,
 		} satisfies Model<"anthropic-messages">,
 		"meituan/longcat-flash-thinking": {
 			id: "meituan/longcat-flash-thinking",
@@ -10978,6 +12070,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -10995,15 +12088,16 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.39999999999999997,
-				output: 0.39999999999999997,
+				input: 0.72,
+				output: 0.72,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 131072,
-			maxTokens: 16384,
+			contextWindow: 128000,
+			maxTokens: 8192,
 		} satisfies Model<"anthropic-messages">,
 		"meta/llama-3.1-8b": {
 			id: "meta/llama-3.1-8b",
@@ -11012,14 +12106,15 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.03,
-				output: 0.049999999999999996,
+				input: 0.09999999999999999,
+				output: 0.09999999999999999,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 131072,
+			contextWindow: 128000,
 			maxTokens: 16384,
 		} satisfies Model<"anthropic-messages">,
 		"meta/llama-3.2-11b": {
@@ -11029,6 +12124,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.16,
@@ -11046,6 +12142,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.72,
@@ -11063,6 +12160,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.72,
@@ -11080,14 +12178,15 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
-				input: 0.15,
-				output: 0.6,
+				input: 0.24,
+				output: 0.9700000000000001,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 131072,
+			contextWindow: 128000,
 			maxTokens: 8192,
 		} satisfies Model<"anthropic-messages">,
 		"meta/llama-4-scout": {
@@ -11097,14 +12196,15 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
-				input: 0.08,
-				output: 0.3,
+				input: 0.16999999999999998,
+				output: 0.66,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 131072,
+			contextWindow: 128000,
 			maxTokens: 8192,
 		} satisfies Model<"anthropic-messages">,
 		"minimax/minimax-m2": {
@@ -11114,6 +12214,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -11131,12 +12232,13 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
 				output: 1.2,
-				cacheRead: 0.15,
-				cacheWrite: 0,
+				cacheRead: 0.03,
+				cacheWrite: 0.375,
 			},
 			contextWindow: 204800,
 			maxTokens: 131072,
@@ -11148,6 +12250,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -11165,6 +12268,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -11175,6 +12279,24 @@ export const MODELS = {
 			contextWindow: 204800,
 			maxTokens: 131000,
 		} satisfies Model<"anthropic-messages">,
+		"minimax/minimax-m2.5-highspeed": {
+			id: "minimax/minimax-m2.5-highspeed",
+			name: "MiniMax M2.5 High Speed",
+			api: "anthropic-messages",
+			provider: "vercel-ai-gateway",
+			baseUrl: "https://ai-gateway.vercel.sh",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text"],
+			cost: {
+				input: 0.6,
+				output: 2.4,
+				cacheRead: 0.03,
+				cacheWrite: 0.375,
+			},
+			contextWindow: 4096,
+			maxTokens: 4096,
+		} satisfies Model<"anthropic-messages">,
 		"mistral/codestral": {
 			id: "mistral/codestral",
 			name: "Mistral Codestral",
@@ -11182,6 +12304,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -11199,6 +12322,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -11216,6 +12340,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.09999999999999999,
@@ -11233,6 +12358,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -11250,6 +12376,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.04,
@@ -11267,6 +12394,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.09999999999999999,
@@ -11284,6 +12412,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.39999999999999997,
@@ -11301,6 +12430,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.09999999999999999,
@@ -11318,6 +12448,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -11335,6 +12466,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -11352,14 +12484,33 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.5,
-				output: 2,
+				input: 0.6,
+				output: 2.5,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
 			contextWindow: 131072,
+			maxTokens: 16384,
+		} satisfies Model<"anthropic-messages">,
+		"moonshotai/kimi-k2-0905": {
+			id: "moonshotai/kimi-k2-0905",
+			name: "Kimi K2 0905",
+			api: "anthropic-messages",
+			provider: "vercel-ai-gateway",
+			baseUrl: "https://ai-gateway.vercel.sh",
+			reasoning: false,
+			supportsXhigh: false,
+			input: ["text"],
+			cost: {
+				input: 0.6,
+				output: 2.5,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 256000,
 			maxTokens: 16384,
 		} satisfies Model<"anthropic-messages">,
 		"moonshotai/kimi-k2-thinking": {
@@ -11369,15 +12520,16 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.47,
-				output: 2,
-				cacheRead: 0.14100000000000001,
+				input: 0.6,
+				output: 2.5,
+				cacheRead: 0.15,
 				cacheWrite: 0,
 			},
-			contextWindow: 216144,
-			maxTokens: 216144,
+			contextWindow: 262114,
+			maxTokens: 262114,
 		} satisfies Model<"anthropic-messages">,
 		"moonshotai/kimi-k2-thinking-turbo": {
 			id: "moonshotai/kimi-k2-thinking-turbo",
@@ -11386,6 +12538,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1.15,
@@ -11403,6 +12556,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2.4,
@@ -11420,15 +12574,16 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
-				input: 0.5,
-				output: 2.8,
-				cacheRead: 0,
+				input: 0.6,
+				output: 3,
+				cacheRead: 0.09999999999999999,
 				cacheWrite: 0,
 			},
-			contextWindow: 256000,
-			maxTokens: 256000,
+			contextWindow: 262114,
+			maxTokens: 262114,
 		} satisfies Model<"anthropic-messages">,
 		"nvidia/nemotron-nano-12b-v2-vl": {
 			id: "nvidia/nemotron-nano-12b-v2-vl",
@@ -11437,6 +12592,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.19999999999999998,
@@ -11454,32 +12610,16 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.04,
-				output: 0.16,
+				input: 0.06,
+				output: 0.22999999999999998,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
 			contextWindow: 131072,
 			maxTokens: 131072,
-		} satisfies Model<"anthropic-messages">,
-		"openai/codex-mini": {
-			id: "openai/codex-mini",
-			name: "Codex Mini",
-			api: "anthropic-messages",
-			provider: "vercel-ai-gateway",
-			baseUrl: "https://ai-gateway.vercel.sh",
-			reasoning: true,
-			input: ["text", "image"],
-			cost: {
-				input: 1.5,
-				output: 6,
-				cacheRead: 0.375,
-				cacheWrite: 0,
-			},
-			contextWindow: 200000,
-			maxTokens: 100000,
 		} satisfies Model<"anthropic-messages">,
 		"openai/gpt-4-turbo": {
 			id: "openai/gpt-4-turbo",
@@ -11488,6 +12628,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -11505,6 +12646,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -11522,6 +12664,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.39999999999999997,
@@ -11539,11 +12682,12 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.09999999999999999,
 				output: 0.39999999999999997,
-				cacheRead: 0.03,
+				cacheRead: 0.024999999999999998,
 				cacheWrite: 0,
 			},
 			contextWindow: 1047576,
@@ -11556,6 +12700,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -11573,6 +12718,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -11590,11 +12736,12 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
 				output: 10,
-				cacheRead: 0.13,
+				cacheRead: 0.125,
 				cacheWrite: 0,
 			},
 			contextWindow: 400000,
@@ -11607,6 +12754,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -11624,11 +12772,12 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			input: ["text", "image"],
+			supportsXhigh: false,
+			input: ["text"],
 			cost: {
 				input: 1.25,
 				output: 10,
-				cacheRead: 0.13,
+				cacheRead: 0.125,
 				cacheWrite: 0,
 			},
 			contextWindow: 400000,
@@ -11641,11 +12790,12 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
 				output: 2,
-				cacheRead: 0.03,
+				cacheRead: 0.024999999999999998,
 				cacheWrite: 0,
 			},
 			contextWindow: 400000,
@@ -11658,11 +12808,12 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.049999999999999996,
 				output: 0.39999999999999997,
-				cacheRead: 0.01,
+				cacheRead: 0.005,
 				cacheWrite: 0,
 			},
 			contextWindow: 400000,
@@ -11675,6 +12826,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -11692,11 +12844,12 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
 				output: 10,
-				cacheRead: 0.13,
+				cacheRead: 0.125,
 				cacheWrite: 0,
 			},
 			contextWindow: 400000,
@@ -11709,6 +12862,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -11726,6 +12880,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -11743,11 +12898,12 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
 				output: 10,
-				cacheRead: 0.13,
+				cacheRead: 0.125,
 				cacheWrite: 0,
 			},
 			contextWindow: 128000,
@@ -11760,11 +12916,12 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
 				output: 10,
-				cacheRead: 0.13,
+				cacheRead: 0.125,
 				cacheWrite: 0,
 			},
 			contextWindow: 400000,
@@ -11777,11 +12934,12 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
 				output: 14,
-				cacheRead: 0.18,
+				cacheRead: 0.175,
 				cacheWrite: 0,
 			},
 			contextWindow: 400000,
@@ -11794,6 +12952,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -11811,6 +12970,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -11828,6 +12988,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 21,
@@ -11838,6 +12999,24 @@ export const MODELS = {
 			contextWindow: 400000,
 			maxTokens: 128000,
 		} satisfies Model<"anthropic-messages">,
+		"openai/gpt-5.3-chat": {
+			id: "openai/gpt-5.3-chat",
+			name: "GPT-5.3 Chat",
+			api: "anthropic-messages",
+			provider: "vercel-ai-gateway",
+			baseUrl: "https://ai-gateway.vercel.sh",
+			reasoning: true,
+			supportsXhigh: true,
+			input: ["text", "image"],
+			cost: {
+				input: 1.75,
+				output: 14,
+				cacheRead: 0.175,
+				cacheWrite: 0,
+			},
+			contextWindow: 128000,
+			maxTokens: 16384,
+		} satisfies Model<"anthropic-messages">,
 		"openai/gpt-5.3-codex": {
 			id: "openai/gpt-5.3-codex",
 			name: "GPT 5.3 Codex",
@@ -11845,6 +13024,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: true,
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -11855,22 +13035,41 @@ export const MODELS = {
 			contextWindow: 400000,
 			maxTokens: 128000,
 		} satisfies Model<"anthropic-messages">,
-		"openai/gpt-oss-120b": {
-			id: "openai/gpt-oss-120b",
-			name: "gpt-oss-120b",
+		"openai/gpt-5.4": {
+			id: "openai/gpt-5.4",
+			name: "GPT 5.4",
 			api: "anthropic-messages",
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			input: ["text"],
+			supportsXhigh: false,
+			input: ["text", "image"],
 			cost: {
-				input: 0.09999999999999999,
-				output: 0.5,
+				input: 2.5,
+				output: 15,
+				cacheRead: 0.25,
+				cacheWrite: 0,
+			},
+			contextWindow: 1050000,
+			maxTokens: 128000,
+		} satisfies Model<"anthropic-messages">,
+		"openai/gpt-5.4-pro": {
+			id: "openai/gpt-5.4-pro",
+			name: "GPT 5.4 Pro",
+			api: "anthropic-messages",
+			provider: "vercel-ai-gateway",
+			baseUrl: "https://ai-gateway.vercel.sh",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 30,
+				output: 180,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 131072,
-			maxTokens: 131072,
+			contextWindow: 1050000,
+			maxTokens: 128000,
 		} satisfies Model<"anthropic-messages">,
 		"openai/gpt-oss-20b": {
 			id: "openai/gpt-oss-20b",
@@ -11879,6 +13078,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.07,
@@ -11896,6 +13096,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.075,
@@ -11913,6 +13114,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -11930,6 +13132,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -11947,6 +13150,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -11964,6 +13168,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1.1,
@@ -11981,6 +13186,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 20,
@@ -11998,6 +13204,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1.1,
@@ -12015,6 +13222,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -12032,6 +13240,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -12049,6 +13258,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.19999999999999998,
@@ -12066,6 +13276,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -12083,6 +13294,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -12100,6 +13312,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -12117,6 +13330,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 3,
@@ -12134,6 +13348,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 5,
@@ -12151,6 +13366,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -12168,6 +13384,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -12185,11 +13402,12 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 3,
 				output: 15,
-				cacheRead: 0,
+				cacheRead: 0.75,
 				cacheWrite: 0,
 			},
 			contextWindow: 256000,
@@ -12202,6 +13420,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.19999999999999998,
@@ -12219,6 +13438,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.19999999999999998,
@@ -12236,6 +13456,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.19999999999999998,
@@ -12253,6 +13474,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.19999999999999998,
@@ -12270,6 +13492,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.19999999999999998,
@@ -12287,11 +13510,12 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.09,
-				output: 0.29,
-				cacheRead: 0,
+				input: 0.09999999999999999,
+				output: 0.3,
+				cacheRead: 0.02,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
@@ -12304,15 +13528,16 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
 				output: 2.2,
-				cacheRead: 0,
+				cacheRead: 0.11,
 				cacheWrite: 0,
 			},
-			contextWindow: 131072,
-			maxTokens: 131072,
+			contextWindow: 128000,
+			maxTokens: 96000,
 		} satisfies Model<"anthropic-messages">,
 		"zai/glm-4.5-air": {
 			id: "zai/glm-4.5-air",
@@ -12321,6 +13546,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.19999999999999998,
@@ -12337,16 +13563,17 @@ export const MODELS = {
 			api: "anthropic-messages",
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
-			reasoning: true,
+			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
 				output: 1.7999999999999998,
-				cacheRead: 0,
+				cacheRead: 0.11,
 				cacheWrite: 0,
 			},
-			contextWindow: 65536,
-			maxTokens: 16384,
+			contextWindow: 66000,
+			maxTokens: 16000,
 		} satisfies Model<"anthropic-messages">,
 		"zai/glm-4.6": {
 			id: "zai/glm-4.6",
@@ -12355,6 +13582,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.44999999999999996,
@@ -12372,6 +13600,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -12389,6 +13618,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -12406,15 +13636,34 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
-				input: 0.43,
-				output: 1.75,
-				cacheRead: 0.08,
+				input: 0.6,
+				output: 2.2,
+				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 202752,
+			contextWindow: 200000,
 			maxTokens: 120000,
+		} satisfies Model<"anthropic-messages">,
+		"zai/glm-4.7-flash": {
+			id: "zai/glm-4.7-flash",
+			name: "GLM 4.7 Flash",
+			api: "anthropic-messages",
+			provider: "vercel-ai-gateway",
+			baseUrl: "https://ai-gateway.vercel.sh",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text"],
+			cost: {
+				input: 0.07,
+				output: 0.39999999999999997,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 200000,
+			maxTokens: 131000,
 		} satisfies Model<"anthropic-messages">,
 		"zai/glm-4.7-flashx": {
 			id: "zai/glm-4.7-flashx",
@@ -12423,6 +13672,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.06,
@@ -12435,11 +13685,12 @@ export const MODELS = {
 		} satisfies Model<"anthropic-messages">,
 		"zai/glm-5": {
 			id: "zai/glm-5",
-			name: "GLM-5",
+			name: "GLM 5",
 			api: "anthropic-messages",
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -12448,7 +13699,7 @@ export const MODELS = {
 				cacheWrite: 0,
 			},
 			contextWindow: 202800,
-			maxTokens: 131072,
+			maxTokens: 131100,
 		} satisfies Model<"anthropic-messages">,
 	},
 	"xai": {
@@ -12459,6 +13710,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2,
@@ -12476,6 +13728,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2,
@@ -12493,6 +13746,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 2,
@@ -12510,6 +13764,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -12527,6 +13782,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -12544,6 +13800,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -12561,6 +13818,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 3,
@@ -12578,6 +13836,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 5,
@@ -12595,6 +13854,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 5,
@@ -12612,6 +13872,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 3,
@@ -12629,6 +13890,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -12646,6 +13908,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -12663,6 +13926,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -12680,6 +13944,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -12697,6 +13962,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 3,
@@ -12714,6 +13980,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -12731,6 +13998,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -12748,6 +14016,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -12765,11 +14034,66 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
 				output: 0.5,
 				cacheRead: 0.05,
+				cacheWrite: 0,
+			},
+			contextWindow: 2000000,
+			maxTokens: 30000,
+		} satisfies Model<"openai-completions">,
+		"grok-4.20-beta-latest-non-reasoning": {
+			id: "grok-4.20-beta-latest-non-reasoning",
+			name: "Grok 4.20 Beta (Non-Reasoning)",
+			api: "openai-completions",
+			provider: "xai",
+			baseUrl: "https://api.x.ai/v1",
+			reasoning: false,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 2,
+				output: 6,
+				cacheRead: 0.2,
+				cacheWrite: 0,
+			},
+			contextWindow: 2000000,
+			maxTokens: 30000,
+		} satisfies Model<"openai-completions">,
+		"grok-4.20-beta-latest-reasoning": {
+			id: "grok-4.20-beta-latest-reasoning",
+			name: "Grok 4.20 Beta (Reasoning)",
+			api: "openai-completions",
+			provider: "xai",
+			baseUrl: "https://api.x.ai/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 2,
+				output: 6,
+				cacheRead: 0.2,
+				cacheWrite: 0,
+			},
+			contextWindow: 2000000,
+			maxTokens: 30000,
+		} satisfies Model<"openai-completions">,
+		"grok-4.20-multi-agent-beta-latest": {
+			id: "grok-4.20-multi-agent-beta-latest",
+			name: "Grok 4.20 Multi-Agent Beta",
+			api: "openai-completions",
+			provider: "xai",
+			baseUrl: "https://api.x.ai/v1",
+			reasoning: true,
+			supportsXhigh: false,
+			input: ["text", "image"],
+			cost: {
+				input: 2,
+				output: 6,
+				cacheRead: 0.2,
 				cacheWrite: 0,
 			},
 			contextWindow: 2000000,
@@ -12782,6 +14106,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 5,
@@ -12799,6 +14124,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.2,
@@ -12816,6 +14142,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: false,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -12836,6 +14163,7 @@ export const MODELS = {
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -12854,6 +14182,7 @@ export const MODELS = {
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.2,
@@ -12872,6 +14201,7 @@ export const MODELS = {
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -12890,6 +14220,7 @@ export const MODELS = {
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -12908,6 +14239,7 @@ export const MODELS = {
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -12926,6 +14258,7 @@ export const MODELS = {
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -12944,6 +14277,7 @@ export const MODELS = {
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -12962,6 +14296,7 @@ export const MODELS = {
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -12980,6 +14315,7 @@ export const MODELS = {
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai"},
 			reasoning: true,
+			supportsXhigh: false,
 			input: ["text"],
 			cost: {
 				input: 1,

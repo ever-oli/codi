@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed package and example TypeScript checks resolving monorepo sibling packages by giving the local `tsconfig.json` files explicit workspace source-path aliases.
+
 ## [0.55.4] - 2026-03-02
 
 ## [0.55.3] - 2026-02-27

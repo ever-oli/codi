@@ -1,0 +1,20 @@
+[project]
+name = "autoresearch-av"
+version = "0.1.0"
+description = "Vision/audio autoresearch scaffold with shared storage and experiment logging"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "datasets>=3.2.0",
+    "huggingface_hub>=0.30.0",
+    "numpy>=2.2.0",
+    "pillow>=11.0.0",
+    "scipy>=1.15.0",
+    "torch>=2.6.0",
+    "torchaudio>=2.6.0",
+    "torchvision>=0.21.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

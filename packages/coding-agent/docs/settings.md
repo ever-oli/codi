@@ -39,12 +39,15 @@ Edit directly or use `/settings` for common options.
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `theme` | string | `"dark"` | Theme name (`"dark"`, `"light"`, or custom) |
-| `quietStartup` | boolean | `false` | Hide startup header |
+| `quietStartup` | boolean | `false` | Hide the startup header and startup resource summary |
+| `startupDensity` | string | `"auto"` | Startup density policy: `"auto"`, `"compact"`, `"verbose"` |
 | `collapseChangelog` | boolean | `false` | Show condensed changelog after updates |
 | `doubleEscapeAction` | string | `"tree"` | Action for double-escape: `"tree"`, `"fork"`, or `"none"` |
 | `editorPaddingX` | number | `0` | Horizontal padding for input editor (0-3) |
 | `autocompleteMaxVisible` | number | `5` | Max visible items in autocomplete dropdown (3-20) |
 | `showHardwareCursor` | boolean | `false` | Show terminal cursor |
+
+`quietStartup` is retained for backward compatibility. New configs should use `startupDensity`.
 
 ### Compaction
 
@@ -99,6 +102,54 @@ When a provider requests a retry delay longer than `maxDelayMs` (e.g., Google's 
 | `steeringMode` | string | `"one-at-a-time"` | How steering messages are sent: `"all"` or `"one-at-a-time"` |
 | `followUpMode` | string | `"one-at-a-time"` | How follow-up messages are sent: `"all"` or `"one-at-a-time"` |
 | `transport` | string | `"sse"` | Preferred transport for providers that support multiple transports: `"sse"`, `"websocket"`, or `"auto"` |
+
+### Runtime Orchestration
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `runtime.featureFlags` | object | all enabled | Runtime feature toggles for queue/lanes/events/mailbox/heartbeat/model-roles |
+| `runtime.laneConcurrency` | object | lane defaults | Per-lane concurrency limits (`default`, `delegate`, `cron`, `compact`, `notification`) |
+| `runtime.modelRoles` | object | `{}` | Optional role->model mapping (`main`, `task`, `compact`, `quick`) using `provider/model` refs |
+
+#### runtime.featureFlags keys
+
+```json
+{
+  "runtime": {
+    "featureFlags": {
+      "runtime.deliveryQueue": true,
+      "runtime.namedLanes": true,
+      "ui.marketplace": true,
+      "ui.eventStreamViewer": true,
+      "runtime.mailboxProtocolV2": true,
+      "runtime.heartbeatCronCore": true,
+      "model.roleProfiles": true
+    }
+  }
+}
+```
+
+#### runtime.laneConcurrency and runtime.modelRoles
+
+```json
+{
+  "runtime": {
+    "laneConcurrency": {
+      "default": 2,
+      "delegate": 1,
+      "cron": 1,
+      "compact": 1,
+      "notification": 2
+    },
+    "modelRoles": {
+      "main": "anthropic/claude-sonnet-4-5",
+      "task": "anthropic/claude-sonnet-4-5",
+      "compact": "openai/gpt-5-mini",
+      "quick": "openai/gpt-5-mini"
+    }
+  }
+}
+```
 
 ### Terminal & Images
 

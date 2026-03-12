@@ -10,6 +10,8 @@ import {
 	Spacer,
 	Text,
 } from "@mariozechner/pi-tui";
+import type { LaneName, RuntimeFeatureFlagName } from "../../../core/runtime/types.js";
+import type { StartupDensity } from "../../../core/settings-manager.js";
 import { getSelectListTheme, getSettingsListTheme, theme } from "../theme/theme.js";
 import { DynamicBorder } from "./dynamic-border.js";
 
@@ -42,7 +44,10 @@ export interface SettingsConfig {
 	editorPaddingX: number;
 	autocompleteMaxVisible: number;
 	quietStartup: boolean;
+	startupDensity: StartupDensity;
 	clearOnShrink: boolean;
+	runtimeFeatureFlags: Record<RuntimeFeatureFlagName, boolean>;
+	laneConcurrency: Record<LaneName, number>;
 }
 
 export interface SettingsCallbacks {
@@ -63,8 +68,10 @@ export interface SettingsCallbacks {
 	onShowHardwareCursorChange: (enabled: boolean) => void;
 	onEditorPaddingXChange: (padding: number) => void;
 	onAutocompleteMaxVisibleChange: (maxVisible: number) => void;
-	onQuietStartupChange: (enabled: boolean) => void;
+	onStartupDensityChange: (density: StartupDensity) => void;
 	onClearOnShrinkChange: (enabled: boolean) => void;
+	onRuntimeFeatureFlagChange: (flag: RuntimeFeatureFlagName, enabled: boolean) => void;
+	onLaneConcurrencyChange: (lane: LaneName, concurrency: number) => void;
 	onCancel: () => void;
 }
 
@@ -187,11 +194,11 @@ export class SettingsSelectorComponent extends Container {
 				values: ["true", "false"],
 			},
 			{
-				id: "quiet-startup",
-				label: "Quiet startup",
-				description: "Disable verbose printing at startup",
-				currentValue: config.quietStartup ? "true" : "false",
-				values: ["true", "false"],
+				id: "startup-density",
+				label: "Startup density",
+				description: "Controls startup header and resource listing density",
+				currentValue: config.startupDensity,
+				values: ["auto", "compact", "verbose"],
 			},
 			{
 				id: "double-escape-action",
@@ -334,6 +341,77 @@ export class SettingsSelectorComponent extends Container {
 			values: ["true", "false"],
 		});
 
+		const runtimeFlagItems: SettingItem[] = [
+			{
+				id: "runtime-flag-delivery-queue",
+				label: "Runtime: delivery queue",
+				description: "Enable durable outbound queue",
+				currentValue: config.runtimeFeatureFlags["runtime.deliveryQueue"] ? "true" : "false",
+				values: ["true", "false"],
+			},
+			{
+				id: "runtime-flag-named-lanes",
+				label: "Runtime: named lanes",
+				description: "Enable named-lane scheduler",
+				currentValue: config.runtimeFeatureFlags["runtime.namedLanes"] ? "true" : "false",
+				values: ["true", "false"],
+			},
+			{
+				id: "runtime-flag-marketplace",
+				label: "UI: marketplace",
+				description: "Enable package marketplace UX",
+				currentValue: config.runtimeFeatureFlags["ui.marketplace"] ? "true" : "false",
+				values: ["true", "false"],
+			},
+			{
+				id: "runtime-flag-event-stream",
+				label: "UI: event stream viewer",
+				description: "Enable runtime event viewer commands",
+				currentValue: config.runtimeFeatureFlags["ui.eventStreamViewer"] ? "true" : "false",
+				values: ["true", "false"],
+			},
+			{
+				id: "runtime-flag-mailbox",
+				label: "Runtime: mailbox protocol",
+				description: "Enable mailbox delegation protocol",
+				currentValue: config.runtimeFeatureFlags["runtime.mailboxProtocolV2"] ? "true" : "false",
+				values: ["true", "false"],
+			},
+			{
+				id: "runtime-flag-heartbeat-cron",
+				label: "Runtime: heartbeat + cron",
+				description: "Enable core heartbeat + cron orchestration",
+				currentValue: config.runtimeFeatureFlags["runtime.heartbeatCronCore"] ? "true" : "false",
+				values: ["true", "false"],
+			},
+			{
+				id: "runtime-flag-model-roles",
+				label: "Runtime: model roles",
+				description: "Enable role-based model profiles",
+				currentValue: config.runtimeFeatureFlags["model.roleProfiles"] ? "true" : "false",
+				values: ["true", "false"],
+			},
+		];
+		items.push(...runtimeFlagItems);
+
+		const laneConcurrencyValues = ["1", "2", "3", "4", "6", "8"];
+		const laneConcurrencyItems: Array<{ id: string; lane: LaneName; label: string }> = [
+			{ id: "lane-concurrency-default", lane: "default", label: "Lane default concurrency" },
+			{ id: "lane-concurrency-delegate", lane: "delegate", label: "Lane delegate concurrency" },
+			{ id: "lane-concurrency-cron", lane: "cron", label: "Lane cron concurrency" },
+			{ id: "lane-concurrency-compact", lane: "compact", label: "Lane compact concurrency" },
+			{ id: "lane-concurrency-notification", lane: "notification", label: "Lane notification concurrency" },
+		];
+		for (const laneItem of laneConcurrencyItems) {
+			items.push({
+				id: laneItem.id,
+				label: laneItem.label,
+				description: `Concurrent task limit for "${laneItem.lane}" lane`,
+				currentValue: String(config.laneConcurrency[laneItem.lane]),
+				values: laneConcurrencyValues,
+			});
+		}
+
 		// Add borders
 		this.addChild(new DynamicBorder());
 
@@ -373,8 +451,8 @@ export class SettingsSelectorComponent extends Container {
 					case "collapse-changelog":
 						callbacks.onCollapseChangelogChange(newValue === "true");
 						break;
-					case "quiet-startup":
-						callbacks.onQuietStartupChange(newValue === "true");
+					case "startup-density":
+						callbacks.onStartupDensityChange(newValue as StartupDensity);
 						break;
 					case "double-escape-action":
 						callbacks.onDoubleEscapeActionChange(newValue as "fork" | "tree");
@@ -390,6 +468,42 @@ export class SettingsSelectorComponent extends Container {
 						break;
 					case "clear-on-shrink":
 						callbacks.onClearOnShrinkChange(newValue === "true");
+						break;
+					case "runtime-flag-delivery-queue":
+						callbacks.onRuntimeFeatureFlagChange("runtime.deliveryQueue", newValue === "true");
+						break;
+					case "runtime-flag-named-lanes":
+						callbacks.onRuntimeFeatureFlagChange("runtime.namedLanes", newValue === "true");
+						break;
+					case "runtime-flag-marketplace":
+						callbacks.onRuntimeFeatureFlagChange("ui.marketplace", newValue === "true");
+						break;
+					case "runtime-flag-event-stream":
+						callbacks.onRuntimeFeatureFlagChange("ui.eventStreamViewer", newValue === "true");
+						break;
+					case "runtime-flag-mailbox":
+						callbacks.onRuntimeFeatureFlagChange("runtime.mailboxProtocolV2", newValue === "true");
+						break;
+					case "runtime-flag-heartbeat-cron":
+						callbacks.onRuntimeFeatureFlagChange("runtime.heartbeatCronCore", newValue === "true");
+						break;
+					case "runtime-flag-model-roles":
+						callbacks.onRuntimeFeatureFlagChange("model.roleProfiles", newValue === "true");
+						break;
+					case "lane-concurrency-default":
+						callbacks.onLaneConcurrencyChange("default", parseInt(newValue, 10));
+						break;
+					case "lane-concurrency-delegate":
+						callbacks.onLaneConcurrencyChange("delegate", parseInt(newValue, 10));
+						break;
+					case "lane-concurrency-cron":
+						callbacks.onLaneConcurrencyChange("cron", parseInt(newValue, 10));
+						break;
+					case "lane-concurrency-compact":
+						callbacks.onLaneConcurrencyChange("compact", parseInt(newValue, 10));
+						break;
+					case "lane-concurrency-notification":
+						callbacks.onLaneConcurrencyChange("notification", parseInt(newValue, 10));
 						break;
 				}
 			},

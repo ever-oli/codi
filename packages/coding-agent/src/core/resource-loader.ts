@@ -4,6 +4,7 @@ import { join, resolve, sep } from "node:path";
 import chalk from "chalk";
 import { CONFIG_DIR_NAME, getAgentDir } from "../config.js";
 import { loadThemeFromPath, type Theme } from "../modes/interactive/theme/theme.js";
+import { scanContextContent } from "./context-scanner.js";
 import type { ResourceDiagnostic } from "./diagnostics.js";
 
 export type { ResourceCollision, ResourceDiagnostic } from "./diagnostics.js";
@@ -60,9 +61,17 @@ function loadContextFileFromDir(dir: string): { path: string; content: string } 
 		const filePath = join(dir, filename);
 		if (existsSync(filePath)) {
 			try {
+				const rawContent = readFileSync(filePath, "utf-8");
+				// Scan for prompt injection before including in system prompt
+				const scanResult = scanContextContent(rawContent, filePath);
+				if (scanResult.blocked) {
+					console.error(
+						chalk.yellow(`Warning: ${filePath} blocked by injection scanner (${scanResult.threats.join(", ")})`),
+					);
+				}
 				return {
 					path: filePath,
-					content: readFileSync(filePath, "utf-8"),
+					content: scanResult.content,
 				};
 			} catch (error) {
 				console.error(chalk.yellow(`Warning: Could not read ${filePath}: ${error}`));

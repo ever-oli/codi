@@ -153,6 +153,7 @@ export type {
 export { DefaultPackageManager } from "./core/package-manager.js";
 export type { ResourceCollision, ResourceDiagnostic, ResourceLoader } from "./core/resource-loader.js";
 export { DefaultResourceLoader } from "./core/resource-loader.js";
+export * from "./core/runtime/index.js";
 // SDK for programmatic usage
 export {
 	type CreateAgentSessionOptions,
@@ -195,6 +196,8 @@ export {
 	SessionManager,
 	type SessionMessageEntry,
 	type ThinkingLevelChangeEntry,
+	type WorkflowArtifactEntry,
+	type WorkflowVerificationEntry,
 } from "./core/session-manager.js";
 export {
 	type CompactionSettings,
@@ -262,6 +265,84 @@ export {
 	type WriteToolOptions,
 	writeTool,
 } from "./core/tools/index.js";
+export {
+	createWorkflowArtifact,
+	type WorkflowArtifact,
+	type WorkflowArtifactType,
+} from "./core/workflow/artifacts.js";
+export {
+	type BuildContextInput,
+	type BuildContextResult,
+	type ContextEngine,
+	StaticContextEngine,
+} from "./core/workflow/context-engine.js";
+export {
+	type CommandEvidence,
+	createVerificationRecord,
+	type RunEvidence,
+	type TestEvidence,
+	type VerificationRecord,
+	type VerificationStatus,
+} from "./core/workflow/evidence.js";
+export {
+	InMemoryMemoryStore,
+	type MemoryRecord,
+	type MemoryScope,
+	type MemoryStore,
+} from "./core/workflow/memory-store.js";
+export {
+	type CreateWorkflowSessionOptions,
+	canTransition,
+	getActiveTaskCompletionState,
+	getLatestTaskVerification,
+	getTaskCompletionLabel,
+	getTaskVerificationStatus,
+	isTaskCompletionReady,
+	type PhaseTransition,
+	SessionOrchestrator,
+	type TaskCompletionLabel,
+	WORKFLOW_PHASES,
+	type WorkflowPhase,
+	type WorkflowSessionSnapshot,
+	type WorkflowSessionStatus,
+} from "./core/workflow/session-orchestrator.js";
+export type {
+	SubagentInputContract,
+	SubagentResult,
+	SubagentStatus,
+} from "./core/workflow/subagents.js";
+export { buildTaskSubagentContract } from "./core/workflow/subagents.js";
+export {
+	areTaskDependenciesSatisfied,
+	type CreateTaskNodeInput,
+	createTaskGraph,
+	createTaskGraphFromGoal,
+	createTaskNode,
+	getReadyTasks,
+	getSchedulableTasks,
+	isSingleGoalTaskGraph,
+	setActiveTask,
+	setTaskStatus,
+	splitGoalIntoTaskGoals,
+	type TaskGraph,
+	type TaskNode,
+	type TaskStatus,
+	type UpdateTaskNodeInput,
+	updateTask,
+	withTask,
+} from "./core/workflow/task-graph.js";
+export {
+	WorkflowController,
+	type WorkflowControllerHooks,
+} from "./core/workflow/workflow-controller.js";
+export {
+	type CommandResultSummary,
+	type CreateWorkspaceStateInput,
+	createWorkspaceState,
+	type GitSnapshot,
+	type TestResultSummary,
+	type WorkspaceState,
+} from "./core/workflow/workspace-state.js";
 // Main entry point
 export { main } from "./main.js";
 // Run modes for programmatic SDK usage

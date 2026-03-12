@@ -288,4 +288,43 @@ describe("SettingsManager", () => {
 			expect(savedSettings.theme).toBe("light");
 		});
 	});
+
+	describe("startupDensity compatibility", () => {
+		it("defaults to auto when neither startupDensity nor quietStartup are set", () => {
+			const settingsPath = join(agentDir, "settings.json");
+			writeFileSync(settingsPath, JSON.stringify({ theme: "dark" }));
+			const manager = SettingsManager.create(projectDir, agentDir);
+			expect(manager.getStartupDensity()).toBe("auto");
+		});
+
+		it("maps legacy quietStartup=true to compact when startupDensity is absent", () => {
+			const settingsPath = join(agentDir, "settings.json");
+			writeFileSync(settingsPath, JSON.stringify({ quietStartup: true }));
+			const manager = SettingsManager.create(projectDir, agentDir);
+			expect(manager.getStartupDensity()).toBe("compact");
+		});
+
+		it("startupDensity takes precedence over legacy quietStartup", () => {
+			const settingsPath = join(agentDir, "settings.json");
+			writeFileSync(
+				settingsPath,
+				JSON.stringify({
+					quietStartup: true,
+					startupDensity: "verbose",
+				}),
+			);
+			const manager = SettingsManager.create(projectDir, agentDir);
+			expect(manager.getStartupDensity()).toBe("verbose");
+		});
+
+		it("setStartupDensity writes startupDensity and deprecated quietStartup alias", async () => {
+			const manager = SettingsManager.create(projectDir, agentDir);
+			manager.setStartupDensity("compact");
+			await manager.flush();
+			const settingsPath = join(agentDir, "settings.json");
+			const saved = JSON.parse(readFileSync(settingsPath, "utf-8"));
+			expect(saved.startupDensity).toBe("compact");
+			expect(saved.quietStartup).toBe(true);
+		});
+	});
 });

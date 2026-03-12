@@ -1,0 +1,25 @@
+{
+	"name": "@mariozechner/pi-cron-tools",
+	"version": "0.57.1",
+	"description": "Pi package providing durable cron-style interval task scheduling tools",
+	"type": "module",
+	"keywords": ["pi-package"],
+	"files": ["extensions", "README.md", "CHANGELOG.md"],
+	"license": "MIT",
+	"author": "Mario Zechner",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/badlogic/pi-mono.git",
+		"directory": "packages/cron-tools"
+	},
+	"pi": {
+		"extensions": ["./extensions"]
+	},
+	"dependencies": {
+		"@mariozechner/pi-extension-sdk": "^0.57.1"
+	},
+	"peerDependencies": {
+		"@mariozechner/pi-coding-agent": "*",
+		"@sinclair/typebox": "*"
+	}
+}

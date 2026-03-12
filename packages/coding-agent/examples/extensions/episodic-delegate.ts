@@ -24,7 +24,7 @@
  */
 
 import { spawn } from "node:child_process";
-import type { AgentToolResult, ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type { AgentToolResult, ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Container, Spacer, Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 
@@ -182,9 +182,8 @@ function extractFilePaths(output: string, type: "read" | "modified"): string[] {
 			/(?:file|path):\s*([^\s,:'"]+\.\w+)/gi,
 		];
 		for (const regex of writePatterns) {
-			let match: RegExpExecArray | null;
-			while ((match = regex.exec(output)) !== null) {
-				paths.add(match[1]);
+			for (const match of output.matchAll(regex)) {
+				if (match[1]) paths.add(match[1]);
 			}
 		}
 	} else {
@@ -194,18 +193,16 @@ function extractFilePaths(output: string, type: "read" | "modified"): string[] {
 			/(?:file|path):\s*([^\s,:'"]+\.\w+)/gi,
 		];
 		for (const regex of readPatterns) {
-			let match: RegExpExecArray | null;
-			while ((match = regex.exec(output)) !== null) {
-				paths.add(match[1]);
+			for (const match of output.matchAll(regex)) {
+				if (match[1]) paths.add(match[1]);
 			}
 		}
 
 		// Fallback: find absolute/relative file paths if no explicit reads found
 		if (paths.size === 0) {
 			const pathRegex = /(?:^|\s)((?:\/|\.\/|~\/)[^\s:,'"]+\.\w+)/gm;
-			let match: RegExpExecArray | null;
-			while ((match = pathRegex.exec(output)) !== null) {
-				paths.add(match[1]);
+			for (const match of output.matchAll(pathRegex)) {
+				if (match[1]) paths.add(match[1]);
 			}
 		}
 	}
@@ -337,7 +334,7 @@ export default function (pi: ExtensionAPI) {
 			if (priorEpisodeIds.length > 0) {
 				const priorContext = buildPriorEpisodesContext(store, priorEpisodeIds);
 				if (priorContext) {
-					augmentedTask = priorContext + "\n\n---\n\n" + augmentedTask;
+					augmentedTask = `${priorContext}\n\n---\n\n${augmentedTask}`;
 				}
 			}
 

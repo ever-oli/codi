@@ -33,7 +33,7 @@
  */
 
 import { complete } from "@mariozechner/pi-ai";
-import type { ExtensionAPI, ExtensionContext, SessionEntry } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, SessionEntry } from "@mariozechner/pi-coding-agent";
 import { convertToLlm, serializeConversation } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
 
@@ -93,11 +93,12 @@ function detectEpisodeBoundaries(entries: SessionEntry[], startIndex: number, en
 			// Bash execution with git commit
 			if (msg.role === "bashExecution") {
 				const bashMsg = msg as any;
-				if (isGitCommit(bashMsg.command + " " + (bashMsg.output || ""))) {
+				const bashText = `${bashMsg.command} ${bashMsg.output || ""}`;
+				if (isGitCommit(bashText)) {
 					boundaries.push({
 						entryIndex: i,
 						type: "git_commit",
-						label: extractCommitMessage(bashMsg.command + " " + (bashMsg.output || "")),
+						label: extractCommitMessage(bashText),
 					});
 					continue;
 				}
@@ -152,10 +153,7 @@ function detectEpisodeBoundaries(entries: SessionEntry[], startIndex: number, en
 		const secondTool = (nextEntry.message as any).toolName;
 
 		// Write followed by read or bash (verification)
-		if (
-			(firstTool === "write" || firstTool === "edit") &&
-			(secondTool === "read" || secondTool === "bash")
-		) {
+		if ((firstTool === "write" || firstTool === "edit") && (secondTool === "read" || secondTool === "bash")) {
 			const writeContent = extractTextContent(entry.message.content);
 			const fileMatch = writeContent.match(/(?:wrote|created|modified|edited)\s+(.+)/i);
 			const label = fileMatch ? `Write+Verify: ${fileMatch[1].slice(0, 40)}` : "Write+Verify sequence";
@@ -442,7 +440,7 @@ export default function (pi: ExtensionAPI) {
 	let lastToolName: string | undefined;
 	let lastWriteTarget: string | undefined;
 
-	pi.on("tool_result", (event, ctx) => {
+	pi.on("tool_result", (event, _ctx) => {
 		const { toolName, isError } = event;
 
 		// Track delegate completions
@@ -469,7 +467,7 @@ export default function (pi: ExtensionAPI) {
 				.join("\n");
 
 			const input = event.input as { command?: string } | undefined;
-			const fullText = (input?.command || "") + " " + content;
+			const fullText = `${input?.command || ""} ${content}`;
 
 			if (isGitCommit(fullText)) {
 				episodeLog.entries.push({
@@ -567,7 +565,7 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	// Render checkpoint messages
-	pi.registerMessageRenderer("episode-checkpoint", (message, _options, theme) => {
+	pi.registerMessageRenderer("episode-checkpoint", (message, _options, _theme) => {
 		const content =
 			typeof message.content === "string"
 				? message.content
