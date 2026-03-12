@@ -32,6 +32,7 @@ function formatTokens(count: number): string {
  */
 export class FooterComponent implements Component {
 	private autoCompactEnabled = true;
+	private activeToolName: string | undefined;
 
 	constructor(
 		private session: AgentSession,
@@ -40,6 +41,10 @@ export class FooterComponent implements Component {
 
 	setAutoCompactEnabled(enabled: boolean): void {
 		this.autoCompactEnabled = enabled;
+	}
+
+	setActiveTool(toolName: string | undefined): void {
+		this.activeToolName = toolName;
 	}
 
 	/**
@@ -170,6 +175,12 @@ export class FooterComponent implements Component {
 			const thinkingLevel = state.thinkingLevel || "off";
 			rightSideWithoutProvider =
 				thinkingLevel === "off" ? `${modelName} • thinking off` : `${modelName} • ${thinkingLevel}`;
+		}
+
+		// Add active tool indicator
+		if (this.activeToolName) {
+			const toolIcon = theme.fg("accent", `⟳ ${this.activeToolName}`);
+			rightSideWithoutProvider = `${toolIcon} ${rightSideWithoutProvider}`;
 		}
 
 		// Prepend the provider in parentheses if there are multiple providers and there's enough room

@@ -56,6 +56,7 @@ export interface InteractiveEventHandlerContext {
 	showStatus: (message: string) => void;
 	showError: (message: string) => void;
 	updateEditorBorderColor: () => void;
+	setActiveTool: (toolName: string | undefined) => void;
 }
 
 export async function handleInteractiveAgentEvent(
@@ -213,8 +214,10 @@ export async function handleInteractiveAgentEvent(
 				component.setExpanded(context.toolOutputExpanded);
 				context.chatContainer.addChild(component);
 				context.pendingTools.set(event.toolCallId, component);
-				context.ui.requestRender();
 			}
+			context.setActiveTool(event.toolName);
+			context.footerInvalidate();
+			context.ui.requestRender();
 			break;
 		}
 
@@ -233,6 +236,11 @@ export async function handleInteractiveAgentEvent(
 				component.updateResult({ ...event.result, isError: event.isError });
 				context.pendingTools.delete(event.toolCallId);
 			}
+			// Clear active tool if no more pending tools
+			if (context.pendingTools.size === 0) {
+				context.setActiveTool(undefined);
+			}
+			context.footerInvalidate();
 			context.renderWidgets();
 			context.ui.requestRender();
 			break;
@@ -250,10 +258,12 @@ export async function handleInteractiveAgentEvent(
 				state.streamingMessage = undefined;
 			}
 			context.pendingTools.clear();
+			context.setActiveTool(undefined);
 
 			await context.checkShutdownRequested();
 
 			context.updateEditorBorderColor();
+			context.footerInvalidate();
 			context.renderWidgets();
 			context.ui.requestRender();
 			break;

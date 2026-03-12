@@ -2426,6 +2426,9 @@ export class InteractiveMode {
 				updateEditorBorderColor: () => {
 					this.updateEditorBorderColor();
 				},
+				setActiveTool: (toolName) => {
+					this.footer.setActiveTool(toolName);
+				},
 			},
 			event,
 		);
@@ -2942,9 +2945,7 @@ export class InteractiveMode {
 				this.editor.borderColor = theme.getThinkingBorderColor(level);
 			} else {
 				const phase = this.session.workflow?.currentPhase;
-				this.editor.borderColor = phase
-					? theme.getWorkflowPhaseColor(phase)
-					: theme.getThinkingBorderColor("off");
+				this.editor.borderColor = phase ? theme.getWorkflowPhaseColor(phase) : theme.getThinkingBorderColor("off");
 			}
 		}
 		this.ui.requestRender();
