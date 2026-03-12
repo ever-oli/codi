@@ -62,19 +62,19 @@ export interface InteractiveEventHandlerContext {
 	recordAction: (action: string) => void;
 	recordFileAccess: (filePath: string) => void;
 	recordDiscovery: (text: string) => void;
-	setVerificationReport: (report: Array<{ criteria: string; passed: boolean }>, show?: boolean) => void;
-	setHitlPause: (reason: string | undefined) => void;
-	recordCommandUsage: (command: string) => void;
 	recordFileVisit: (filePath: string) => void;
 	recordCostSnapshot: (cost: number) => void;
+	setVerificationReport: (report: string | undefined, show: boolean) => void;
+	setHitlPause: (reason: string | undefined) => void;
+	recordCommandUsage: (command: string) => void;
 	setPersona: (persona: string | undefined) => void;
-	setConstraints: (constraints: string[]) => void;
+	setConstraints: (constraints: readonly string[]) => void;
 	addSummaryCard: (title: string, text: string) => void;
 	setInterviewMode: (active: boolean, question?: string) => void;
 	setMemoryCount: (count: number) => void;
 	setPendingDiffCount: (count: number) => void;
 	setLogStreaming: (active: boolean) => void;
-	setCondensedView: (lines: string[]) => void;
+	setCondensedView: (lines: readonly string[]) => void;
 	setBreadcrumbs: (filePath: string | undefined, lineNumber: number | undefined) => void;
 }
 
@@ -238,14 +238,12 @@ export async function handleInteractiveAgentEvent(
 			context.setActiveTool(event.toolName);
 			context.recordAction(event.toolName);
 
-			// Extract file paths from tool args for breadcrumbs & file tracking (#6 #8 #31)
+			// Extract file paths from tool args for breadcrumbs & file tracking (#8 #31)
 			const toolArgs = event.args;
 			if (toolArgs && typeof toolArgs === "object") {
 				const filePath = toolArgs.path || toolArgs.file_path || toolArgs.filePath;
 				if (typeof filePath === "string" && filePath.length > 0) {
 					context.recordFileAccess(filePath);
-					context.recordFileVisit(filePath);
-					// Set breadcrumbs to current file
 					const lineNum = toolArgs.line ?? toolArgs.line_number ?? toolArgs.lineNumber;
 					context.setBreadcrumbs(filePath, typeof lineNum === "number" ? lineNum : undefined);
 				}
@@ -295,43 +293,6 @@ export async function handleInteractiveAgentEvent(
 			context.pendingTools.clear();
 			context.setActiveTool(undefined);
 			context.markAgentEnd();
-
-			// Record cost snapshot for burn rate (#10)
-			try {
-				const entries = (context as any).session?.sessionManager?.getEntries?.();
-				if (entries) {
-					let totalCost = 0;
-					for (const entry of entries) {
-						if (entry.type === "message" && entry.message?.role === "assistant") {
-							totalCost += entry.message.usage?.cost?.total ?? 0;
-						}
-					}
-					context.recordCostSnapshot(totalCost);
-				}
-			} catch { /* best effort */ }
-
-			// Update memory count from workflow (#19)
-			try {
-				const memCount = (context as any).session?.workflow?.memory?.length ?? 0;
-				context.setMemoryCount(memCount);
-			} catch { /* best effort */ }
-
-			// Check pending workspace diffs (#24)
-			try {
-				const changedFiles = (context as any).session?.workflow?.workspace?.changedFiles?.length ?? 0;
-				context.setPendingDiffCount(changedFiles);
-			} catch { /* best effort */ }
-
-			// Build condensed view from workspace (#47)
-			try {
-				const cwd = process.cwd();
-				const home = process.env.HOME ?? "";
-				const displayPath = cwd.startsWith(home) ? `~${cwd.slice(home.length)}` : cwd;
-				const parts = displayPath.split("/").filter(Boolean);
-				if (parts.length > 0) {
-					context.setCondensedView(parts.slice(-4));
-				}
-			} catch { /* best effort */ }
 
 			await context.checkShutdownRequested();
 

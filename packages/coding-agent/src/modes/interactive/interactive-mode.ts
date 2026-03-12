@@ -82,21 +82,19 @@ import {
 	getLatestTaskVerification,
 	getTaskCompletionLabel,
 	getTaskVerificationStatus,
-	WORKFLOW_PHASES,
-	type WorkflowPhase,
 } from "../../core/workflow/session-orchestrator.js";
 import { buildTaskSubagentContract } from "../../core/workflow/subagents.js";
-import {
-	areTaskDependenciesSatisfied,
-	createTaskGraphFromGoal,
-	getSchedulableTasks,
-	type TaskStatus,
-} from "../../core/workflow/task-graph.js";
+import { areTaskDependenciesSatisfied, getSchedulableTasks, type TaskStatus } from "../../core/workflow/task-graph.js";
 import { getChangelogPath, getNewEntries, parseChangelog } from "../../utils/changelog.js";
 import { copyToClipboard } from "../../utils/clipboard.js";
 import { extensionForImageMimeType, readClipboardImage } from "../../utils/clipboard-image.js";
 import { ensureTool } from "../../utils/tools-manager.js";
 import { handleInteractiveAgentEvent } from "./agent-event-handler.js";
+import {
+	handleWorkflowPhaseCommand as handleWorkflowPhaseCommandFn,
+	handleWorkflowPlanCommand as handleWorkflowPlanCommandFn,
+	type WorkflowCommandContext,
+} from "./command-handlers/workflow-commands.js";
 import { ArminComponent } from "./components/armin.js";
 import { AssistantMessageComponent } from "./components/assistant-message.js";
 import { BashExecutionComponent } from "./components/bash-execution.js";
@@ -325,6 +323,21 @@ export class InteractiveMode {
 		// Register themes from resource loader and initialize
 		setRegisteredThemes(this.session.resourceLoader.getThemes().themes);
 		initTheme(this.settingsManager.getTheme(), true);
+	}
+
+	// =========================================================================
+	// Command handler context builders
+	// =========================================================================
+
+	private getWorkflowCommandContext(): WorkflowCommandContext {
+		return {
+			session: this.session,
+			showStatus: (msg) => this.showStatus(msg),
+			showWarning: (msg) => this.showWarning(msg),
+			showError: (msg) => this.showError(msg),
+			renderWidgets: () => this.renderWidgets(),
+			updateEditorBorderColor: () => this.updateEditorBorderColor(),
+		};
 	}
 
 	private loadStartupLogo(): string[] {
@@ -2335,17 +2348,14 @@ export class InteractiveMode {
 					requestRender: () => {
 						this.ui.requestRender();
 					},
-				flushPendingBashComponents: () => {
-					this.flushPendingBashComponents();
+					flushPendingBashComponents: () => {
+						this.flushPendingBashComponents();
+					},
 				},
-				recordCommandUsage: (command) => {
-					this.footer.recordCommandUsage(command);
-				},
-			},
-			text,
-		);
-	};
-}
+				text,
+			);
+		};
+	}
 
 	private subscribeToAgent(): void {
 		this.unsubscribe = this.session.subscribe(async (event) => {
@@ -2447,43 +2457,43 @@ export class InteractiveMode {
 				recordDiscovery: (text) => {
 					this.footer.recordDiscovery(text);
 				},
-				setVerificationReport: (report, show) => {
-					this.footer.setVerificationReport(report, show);
-				},
-				setHitlPause: (reason) => {
-					this.footer.setHitlPause(reason);
-				},
-				recordCommandUsage: (command) => {
-					this.footer.recordCommandUsage(command);
-				},
-				recordFileVisit: (filePath) => {
+				recordFileVisit: (filePath: string) => {
 					this.footer.recordFileVisit(filePath);
 				},
-				recordCostSnapshot: (cost) => {
+				recordCostSnapshot: (cost: number) => {
 					this.footer.recordCostSnapshot(cost);
 				},
-				setPersona: (persona) => {
+				setVerificationReport: (report: string | undefined, show: boolean) => {
+					this.footer.setVerificationReport(report, show);
+				},
+				setHitlPause: (reason: string | undefined) => {
+					this.footer.setHitlPause(reason);
+				},
+				recordCommandUsage: (command: string) => {
+					this.footer.recordCommandUsage(command);
+				},
+				setPersona: (persona: string | undefined) => {
 					this.footer.setPersona(persona);
 				},
-				setConstraints: (constraints) => {
+				setConstraints: (constraints: readonly string[]) => {
 					this.footer.setConstraints(constraints);
 				},
-				addSummaryCard: (title, text) => {
+				addSummaryCard: (title: string, text: string) => {
 					this.footer.addSummaryCard(title, text);
 				},
-				setInterviewMode: (active, question) => {
+				setInterviewMode: (active: boolean, question?: string) => {
 					this.footer.setInterviewMode(active, question);
 				},
-				setMemoryCount: (count) => {
+				setMemoryCount: (count: number) => {
 					this.footer.setMemoryCount(count);
 				},
-				setPendingDiffCount: (count) => {
+				setPendingDiffCount: (count: number) => {
 					this.footer.setPendingDiffCount(count);
 				},
-				setLogStreaming: (active) => {
+				setLogStreaming: (active: boolean) => {
 					this.footer.setLogStreaming(active);
 				},
-				setCondensedView: (lines) => {
+				setCondensedView: (lines: readonly string[]) => {
 					this.footer.setCondensedView(lines);
 				},
 				setBreadcrumbs: (filePath, lineNumber) => {
@@ -5363,134 +5373,21 @@ export class InteractiveMode {
 	}
 
 	private handleWorkflowPlanCommand(text: string): void {
-		const argText = text.replace(/^\/plan\s*/, "").trim();
-		const workflow = this.session.workflow;
-		const activeTaskId = workflow.taskGraph.activeTaskId;
-		const activeTask = activeTaskId ? workflow.taskGraph.tasks[activeTaskId] : undefined;
-		const activeTaskCompletion = getActiveTaskCompletionState(workflow);
-
-		if (!argText || argText === "show") {
-			const taskSummary = activeTask ? `${activeTask.id}: ${activeTask.goal} [${activeTask.status}]` : "none";
-			this.showStatus(
-				`Plan goal: ${workflow.goal}\nPhase: ${this.formatWorkflowLabel(workflow.currentPhase)}\nActive task: ${taskSummary}\nCompletion ready: ${activeTaskCompletion.completionReady ? "yes" : "no"}\nTasks: ${workflow.taskGraph.taskOrder.length}`,
-			);
-			return;
-		}
-
-		if (argText === "start") {
-			if (workflow.currentPhase === "plan") {
-				this.showStatus("Workflow is already in Plan");
-				return;
-			}
-			try {
-				this.session.transitionWorkflow("plan", "Manual planning start from /plan");
-				this.renderWidgets();
-				this.showStatus("Workflow phase: Plan");
-			} catch (error) {
-				this.showError(error instanceof Error ? error.message : String(error));
-			}
-			return;
-		}
-
-		if (argText.startsWith("goal ")) {
-			const nextGoal = argText.slice(5).trim();
-			if (!nextGoal) {
-				this.showWarning("Usage: /plan goal <goal>");
-				return;
-			}
-
-			const activeTaskGoalShouldTrackGoal =
-				activeTask && workflow.taskGraph.taskOrder.length === 1 && activeTask.goal.trim() === workflow.goal.trim();
-
-			const nextSnapshot = {
-				...workflow,
-				goal: nextGoal,
-				taskGraph:
-					activeTaskGoalShouldTrackGoal && activeTaskId
-						? {
-								...workflow.taskGraph,
-								tasks: {
-									...workflow.taskGraph.tasks,
-									[activeTaskId]: {
-										...activeTask,
-										goal: nextGoal,
-									},
-								},
-							}
-						: workflow.taskGraph,
-			};
-
-			this.session.replaceWorkflowSnapshot(nextSnapshot);
-			this.renderWidgets();
-			this.showStatus(`Plan goal updated: ${nextGoal}`);
-			return;
-		}
-
-		if (argText === "split") {
-			const nextGraph = createTaskGraphFromGoal(workflow.goal, {
-				existingGraph: workflow.taskGraph,
-			});
-			this.session.replaceWorkflowTaskGraph(nextGraph);
-			this.session.recordWorkflowArtifact({
-				id: `plan-split-${Date.now()}`,
-				type: "plan",
-				label: "Workflow task graph generated from goal",
-				producer: "interactive:/plan split",
-				metadata: {
-					goal: workflow.goal,
-					taskCount: nextGraph.taskOrder.length,
-				},
-			});
-			this.renderWidgets();
-			const activeTaskAfterSplit = nextGraph.activeTaskId ? nextGraph.tasks[nextGraph.activeTaskId] : undefined;
-			this.showStatus(
-				`Plan graph updated from goal\nTasks: ${nextGraph.taskOrder.length}\nActive task: ${activeTaskAfterSplit ? `${activeTaskAfterSplit.id} (${activeTaskAfterSplit.status})` : "none"}`,
-			);
-			return;
-		}
-
-		this.showWarning("Usage: /plan [show] | /plan start | /plan goal <goal> | /plan split");
+		handleWorkflowPlanCommandFn(this.getWorkflowCommandContext(), text);
 	}
 
 	private handleWorkflowPhaseCommand(text: string): void {
-		const argText = text.replace(/^\/phase\s*/, "").trim();
-		const currentPhase = this.session.workflow.currentPhase;
-
-		if (!argText) {
-			const phases = WORKFLOW_PHASES.join(" -> ");
-			this.showStatus(`Workflow phase: ${this.formatWorkflowLabel(currentPhase)}\nFlow: ${phases}`);
-			return;
-		}
-
-		const [phaseToken, ...reasonParts] = argText.split(/\s+/);
-		const nextPhase = phaseToken as WorkflowPhase;
-		if (!WORKFLOW_PHASES.includes(nextPhase)) {
-			this.showWarning(`Unknown workflow phase "${phaseToken}"`);
-			return;
-		}
-
-		const reason = reasonParts.join(" ").trim() || `Manual phase update from /phase`;
-		try {
-			this.session.transitionWorkflow(nextPhase, reason);
-			const nextSnapshot = this.session.workflow;
-			const completionState = getActiveTaskCompletionState(nextSnapshot);
-			this.renderWidgets();
-			this.updateEditorBorderColor();
-			let message = `Workflow phase: ${this.formatWorkflowLabel(currentPhase)} -> ${this.formatWorkflowLabel(nextPhase)}`;
-			if (nextPhase === "summarize" && !completionState.completionReady) {
-				message += `\nWarning: active task is ${this.formatTaskCompletionLabel(completionState.completionLabel)} and is not completion-ready.`;
-			}
-			this.showStatus(message);
-		} catch (error) {
-			this.showError(error instanceof Error ? error.message : String(error));
-		}
+		handleWorkflowPhaseCommandFn(this.getWorkflowCommandContext(), text);
 	}
 
 	private handleWorkflowTaskCommand(text: string): void {
+		handleWorkflowTaskCommandFn(this.getWorkflowCommandContext(), text);
+		return;
+		/* Original implementation preserved below for reference
 		const argText = text.replace(/^\/task\s*/, "").trim();
 		const workflow = this.session.workflow;
 
-		if (!argText || argText === "list") {
+		if (!argText || argText === "list") {*/
 			const lines = workflow.taskGraph.taskOrder.map((taskId) => {
 				const task = workflow.taskGraph.tasks[taskId];
 				if (!task) return undefined;

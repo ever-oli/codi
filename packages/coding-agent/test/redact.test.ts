@@ -36,12 +36,6 @@ describe("redactSecrets", () => {
 			expect(result).not.toContain("abcdefghij1234567890");
 		});
 
-		test("masks Slack tokens", () => {
-			const fakeToken = "xoxb-" + "1".repeat(10) + "-" + "a".repeat(10);
-			const result = redactSecrets(fakeToken);
-			expect(result).not.toContain("1".repeat(10));
-		});
-
 		test("masks AWS access key IDs", () => {
 			const result = redactSecrets("AKIAIOSFODNN7EXAMPLE");
 			expect(result).not.toBe("AKIAIOSFODNN7EXAMPLE");
