@@ -2335,14 +2335,17 @@ export class InteractiveMode {
 					requestRender: () => {
 						this.ui.requestRender();
 					},
-					flushPendingBashComponents: () => {
-						this.flushPendingBashComponents();
-					},
+				flushPendingBashComponents: () => {
+					this.flushPendingBashComponents();
 				},
-				text,
-			);
-		};
-	}
+				recordCommandUsage: (command) => {
+					this.footer.recordCommandUsage(command);
+				},
+			},
+			text,
+		);
+	};
+}
 
 	private subscribeToAgent(): void {
 		this.unsubscribe = this.session.subscribe(async (event) => {
@@ -2482,6 +2485,9 @@ export class InteractiveMode {
 				},
 				setCondensedView: (lines) => {
 					this.footer.setCondensedView(lines);
+				},
+				setBreadcrumbs: (filePath, lineNumber) => {
+					this.footer.setBreadcrumbs(filePath, lineNumber);
 				},
 			},
 			event,

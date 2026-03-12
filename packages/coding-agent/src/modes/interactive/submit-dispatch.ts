@@ -63,6 +63,7 @@ export interface InteractiveSubmitDispatchContext {
 	updatePendingMessagesDisplay: () => void;
 	requestRender: () => void;
 	flushPendingBashComponents: () => void;
+	recordCommandUsage: (command: string) => void;
 }
 
 const exactMatch = (command: string, run: SubmitCommandHandler): SubmitCommand => ({
@@ -238,6 +239,9 @@ export async function handleInteractiveSubmit(
 
 	for (const command of submitCommands) {
 		if (command.matches(text)) {
+			// Track command usage (#3)
+			const cmdName = text.split(/\s+/)[0];
+			if (cmdName) context.recordCommandUsage(cmdName);
 			await command.run(text, context);
 			return;
 		}
