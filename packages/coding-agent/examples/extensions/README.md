@@ -1,6 +1,26 @@
-# Extension Examples
+# pi Extensions
 
-Example extensions for pi-coding-agent.
+<p align="center">
+  <a href="../../docs/extensions.md"><img src="https://img.shields.io/badge/Docs-Extensions-blue?style=for-the-badge" alt="Documentation"></a>
+  <a href="https://github.com/nicoring/codi"><img src="https://img.shields.io/badge/GitHub-Codi-blueviolet?style=for-the-badge&logo=github" alt="GitHub"></a>
+  <a href="../../LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
+</p>
+
+**A comprehensive collection of extensions for [pi](https://github.com/nicoring/codi) — the coding agent that adapts to your workflow.**
+
+Extensions let you customize every aspect of the agent: custom tools, UI components, lifecycle hooks, compaction strategies, and more. The SDK provides a clean API with full TypeScript support, reactive state, and composable primitives.
+
+| Category | Count | Highlights |
+|----------|-------|------------|
+| **Episodic Memory** | 2 | Thread weaving, episode-bounded compaction (Slate-inspired) |
+| **Custom Tools** | 12 | Todo lists, image gen, SSH delegation, subagents |
+| **Lifecycle & Safety** | 5 | Permission gates, protected paths, sandboxing |
+| **Commands & UI** | 28 | Plan mode, presets, games, overlays, custom renderers |
+| **Git Integration** | 2 | Checkpoints, auto-commit |
+| **System & Compaction** | 4 | Custom compaction, dynamic prompts |
+| **Custom Providers** | 3 | Anthropic OAuth, GitLab Duo, Qwen CLI |
+
+
 
 ## Usage
 
@@ -79,6 +99,15 @@ cp permission-gate.ts ~/.pi/agent/extensions/
 | `git-checkpoint.ts` | Creates git stash checkpoints at each turn for code restoration on fork |
 | `auto-commit-on-exit.ts` | Auto-commits on exit using last assistant message for commit message |
 
+### Episodic Memory & Thread Weaving
+
+Inspired by [Slate's thread-weaving architecture](https://randomlabs.ai/blog/slate), these extensions implement episodic memory — compressing completed work into structured episodes and composing them across delegate boundaries.
+
+| Extension | Description |
+|-----------|-------------|
+| `episodic-delegate.ts` | Replaces the built-in delegate tool with episode-aware delegation. Returns structured episodes containing summary, discoveries, decisions, and file operations. Supports thread weaving via `priorEpisodes` parameter — pass episode IDs to seed context from prior delegates without full context transfer. Includes `/episodes` command to list stored episodes. |
+| `episode-bounded-compaction.ts` | Replaces token-threshold compaction with semantic, episode-aware compaction at natural completion boundaries. Detects 6 boundary types: delegate completions, git commits, todo completions, write-verify sequences, user turns, and manual checkpoints. Maintains a persistent episode log that survives compaction cycles. Adds `/checkpoint [label]` and `/episode-log` commands. |
+
 ### System Prompt & Compaction
 
 | Extension | Description |
@@ -133,11 +162,14 @@ cp permission-gate.ts ~/.pi/agent/extensions/
 
 See [docs/extensions.md](../../docs/extensions.md) for full documentation.
 
-```typescript
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+Recommended starting points:
+- `hello.ts` for the smallest SDK-based custom tool example
+- `question.ts` for an interactive SDK-based tool with custom UI and result rendering
 
-export default function (pi: ExtensionAPI) {
+```typescript
+import { Type, defineExtension, defineTool } from "@mariozechner/pi-extension-sdk";
+
+export default defineExtension((pi) => {
   // Subscribe to lifecycle events
   pi.on("tool_call", async (event, ctx) => {
     if (event.toolName === "bash" && event.input.command?.includes("rm -rf")) {
@@ -147,20 +179,22 @@ export default function (pi: ExtensionAPI) {
   });
 
   // Register custom tools
-  pi.registerTool({
-    name: "greet",
-    label: "Greeting",
-    description: "Generate a greeting",
-    parameters: Type.Object({
-      name: Type.String({ description: "Name to greet" }),
+  pi.registerTool(
+    defineTool({
+      name: "greet",
+      label: "Greeting",
+      description: "Generate a greeting",
+      parameters: Type.Object({
+        name: Type.String({ description: "Name to greet" }),
+      }),
+      async execute(_toolCallId, params) {
+        return {
+          content: [{ type: "text", text: `Hello, ${params.name}!` }],
+          details: {},
+        };
+      },
     }),
-    async execute(toolCallId, params, onUpdate, ctx, signal) {
-      return {
-        content: [{ type: "text", text: `Hello, ${params.name}!` }],
-        details: {},
-      };
-    },
-  });
+  );
 
   // Register commands
   pi.registerCommand("hello", {
@@ -169,7 +203,7 @@ export default function (pi: ExtensionAPI) {
       ctx.ui.notify("Hello!", "info");
     },
   });
-}
+});
 ```
 
 ## Key Patterns
