@@ -4,12 +4,14 @@
  */
 
 import type { AgentSession } from "../../../core/agent-session.js";
-import type {
-	DelegatedTaskRecord,
-	DelegatedTaskStatus,
-	LaneName,
-	RuntimeFeatureFlagName,
-	RuntimeServices,
+import {
+	type DelegatedTaskRecord,
+	type DelegatedTaskStatus,
+	LANE_NAMES,
+	type LaneName,
+	RUNTIME_FEATURE_FLAG_NAMES,
+	type RuntimeFeatureFlagName,
+	type RuntimeServices,
 } from "../../../core/runtime/index.js";
 import type { SettingsManager } from "../../../core/settings-manager.js";
 import { theme } from "../theme/theme.js";

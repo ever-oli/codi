@@ -77,14 +77,9 @@ import { type SessionContext, SessionManager } from "../../core/session-manager.
 import type { StartupDensity } from "../../core/settings-manager.js";
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.js";
 import type { TruncationResult } from "../../core/tools/truncate.js";
-import {
-	getActiveTaskCompletionState,
-	getLatestTaskVerification,
-	getTaskCompletionLabel,
-	getTaskVerificationStatus,
-} from "../../core/workflow/session-orchestrator.js";
+import { getActiveTaskCompletionState, getLatestTaskVerification } from "../../core/workflow/session-orchestrator.js";
 import { buildTaskSubagentContract } from "../../core/workflow/subagents.js";
-import { areTaskDependenciesSatisfied, getSchedulableTasks, type TaskStatus } from "../../core/workflow/task-graph.js";
+import { getSchedulableTasks } from "../../core/workflow/task-graph.js";
 import { getChangelogPath, getNewEntries, parseChangelog } from "../../utils/changelog.js";
 import { copyToClipboard } from "../../utils/clipboard.js";
 import { extensionForImageMimeType, readClipboardImage } from "../../utils/clipboard-image.js";
@@ -93,6 +88,9 @@ import { handleInteractiveAgentEvent } from "./agent-event-handler.js";
 import {
 	handleWorkflowPhaseCommand as handleWorkflowPhaseCommandFn,
 	handleWorkflowPlanCommand as handleWorkflowPlanCommandFn,
+	handleWorkflowSummaryCommand as handleWorkflowSummaryCommandFn,
+	handleWorkflowTaskCommand as handleWorkflowTaskCommandFn,
+	handleWorkflowVerifyCommand as handleWorkflowVerifyCommandFn,
 	type WorkflowCommandContext,
 } from "./command-handlers/workflow-commands.js";
 import { ArminComponent } from "./components/armin.js";
@@ -143,8 +141,6 @@ import {
 interface Expandable {
 	setExpanded(expanded: boolean): void;
 }
-
-const WORKFLOW_TASK_STATUSES: TaskStatus[] = ["pending", "ready", "in_progress", "blocked", "done", "waived"];
 
 function isExpandable(obj: unknown): obj is Expandable {
 	return typeof obj === "object" && obj !== null && "setExpanded" in obj && typeof obj.setExpanded === "function";
@@ -5382,241 +5378,14 @@ export class InteractiveMode {
 
 	private handleWorkflowTaskCommand(text: string): void {
 		handleWorkflowTaskCommandFn(this.getWorkflowCommandContext(), text);
-		return;
-		/* Original implementation preserved below for reference
-		const argText = text.replace(/^\/task\s*/, "").trim();
-		const workflow = this.session.workflow;
-
-		if (!argText || argText === "list") {*/
-			const lines = workflow.taskGraph.taskOrder.map((taskId) => {
-				const task = workflow.taskGraph.tasks[taskId];
-				if (!task) return undefined;
-				const isActive = workflow.taskGraph.activeTaskId === taskId ? " *" : "";
-				const verificationStatus = getTaskVerificationStatus(workflow, taskId);
-				const completionLabel = getTaskCompletionLabel(workflow, taskId);
-				const dependenciesReady = areTaskDependenciesSatisfied(workflow.taskGraph, taskId);
-				return `${task.id}: ${task.goal} [${task.status}]${isActive} | deps=${dependenciesReady ? "ready" : "waiting"} | verification=${verificationStatus} | completion=${this.formatTaskCompletionLabel(completionLabel)} (${task.acceptanceCriteria.length} criteria, ${task.notes.length} notes)`;
-			});
-			const visibleLines = lines.filter((line): line is string => line !== undefined);
-			this.showStatus(
-				visibleLines.length > 0 ? `Workflow tasks:\n${visibleLines.join("\n")}` : "Workflow tasks: none yet",
-			);
-			return;
-		}
-
-		const [subcommand, ...rest] = argText.split(/\s+/);
-		if (subcommand === "add") {
-			const taskId = rest[0];
-			const goal = rest.slice(1).join(" ").trim();
-			if (!taskId || !goal) {
-				this.showWarning("Usage: /task add <id> <goal>");
-				return;
-			}
-			try {
-				this.session.upsertWorkflowTask({ id: taskId, goal, status: "ready" });
-				this.renderWidgets();
-				this.showStatus(`Workflow task added: ${taskId}`);
-			} catch (error) {
-				this.showError(error instanceof Error ? error.message : String(error));
-			}
-			return;
-		}
-
-		if (subcommand === "show") {
-			const taskId = rest[0];
-			if (!taskId) {
-				this.showWarning("Usage: /task show <id>");
-				return;
-			}
-			const task = workflow.taskGraph.tasks[taskId];
-			if (!task) {
-				this.showWarning(`Unknown workflow task "${taskId}"`);
-				return;
-			}
-			const verificationStatus = getTaskVerificationStatus(workflow, taskId);
-			const completionLabel = getTaskCompletionLabel(workflow, taskId);
-			const latestVerification = getLatestTaskVerification(workflow, taskId);
-			const dependenciesReady = areTaskDependenciesSatisfied(workflow.taskGraph, taskId);
-			const contractText = this.buildTaskExecutionContractText(taskId) ?? "none";
-			const criteria =
-				task.acceptanceCriteria.length > 0
-					? task.acceptanceCriteria.map((criterion) => `- ${criterion}`).join("\n")
-					: "- none";
-			const notes = task.notes.length > 0 ? task.notes.map((note) => `- ${note}`).join("\n") : "- none";
-			this.showStatus(
-				`Task ${task.id}: ${task.goal}\nStatus: ${this.formatWorkflowLabel(task.status)}\nDependencies: ${dependenciesReady ? "Satisfied" : "Waiting"}\nVerification: ${this.formatWorkflowLabel(verificationStatus)}\nCompletion: ${this.formatTaskCompletionLabel(completionLabel)}\nAcceptance criteria:\n${criteria}\nNotes:\n${notes}\nLatest verification details: ${latestVerification?.evidence.diffSummary ?? latestVerification?.evidence.userWaiver ?? latestVerification?.evidence.commands[0]?.details ?? "none"}\nExecution contract:\n${contractText}`,
-			);
-			return;
-		}
-
-		if (subcommand === "active") {
-			const taskId = rest[0];
-			if (!taskId) {
-				this.showWarning("Usage: /task active <id>");
-				return;
-			}
-			try {
-				this.session.setWorkflowActiveTask(taskId);
-				this.renderWidgets();
-				this.showStatus(`Workflow active task: ${taskId}`);
-			} catch (error) {
-				this.showError(error instanceof Error ? error.message : String(error));
-			}
-			return;
-		}
-
-		if (subcommand === "status") {
-			const taskId = rest[0];
-			const statusToken = rest[1] as TaskStatus | undefined;
-			if (!taskId || !statusToken) {
-				this.showWarning("Usage: /task status <id> <pending|ready|in_progress|blocked|done|waived>");
-				return;
-			}
-			if (!WORKFLOW_TASK_STATUSES.includes(statusToken)) {
-				this.showWarning(`Unknown task status "${statusToken}"`);
-				return;
-			}
-			try {
-				this.session.updateWorkflowTaskStatus(taskId, statusToken);
-				const nextWorkflow = this.session.workflow;
-				const completionLabel = getTaskCompletionLabel(nextWorkflow, taskId);
-				this.renderWidgets();
-				this.showStatus(
-					`Workflow task ${taskId}: ${this.formatWorkflowLabel(statusToken)}\nCompletion: ${this.formatTaskCompletionLabel(completionLabel)}`,
-				);
-			} catch (error) {
-				this.showError(error instanceof Error ? error.message : String(error));
-			}
-			return;
-		}
-
-		if (subcommand === "criteria") {
-			const taskId = rest[0];
-			const criterion = rest.slice(1).join(" ").trim();
-			if (!taskId || !criterion) {
-				this.showWarning("Usage: /task criteria <id> <criterion>");
-				return;
-			}
-			const task = workflow.taskGraph.tasks[taskId];
-			if (!task) {
-				this.showWarning(`Unknown workflow task "${taskId}"`);
-				return;
-			}
-			try {
-				this.session.updateWorkflowTask(taskId, {
-					acceptanceCriteria: [...task.acceptanceCriteria, criterion],
-				});
-				this.renderWidgets();
-				this.showStatus(`Workflow task ${taskId}: added acceptance criterion`);
-			} catch (error) {
-				this.showError(error instanceof Error ? error.message : String(error));
-			}
-			return;
-		}
-
-		if (subcommand === "note") {
-			const taskId = rest[0];
-			const note = rest.slice(1).join(" ").trim();
-			if (!taskId || !note) {
-				this.showWarning("Usage: /task note <id> <note>");
-				return;
-			}
-			const task = workflow.taskGraph.tasks[taskId];
-			if (!task) {
-				this.showWarning(`Unknown workflow task "${taskId}"`);
-				return;
-			}
-			try {
-				this.session.updateWorkflowTask(taskId, {
-					notes: [...task.notes, note],
-				});
-				this.renderWidgets();
-				this.showStatus(`Workflow task ${taskId}: added note`);
-			} catch (error) {
-				this.showError(error instanceof Error ? error.message : String(error));
-			}
-			return;
-		}
-
-		this.showWarning(
-			"Usage: /task [list] | /task show <id> | /task add <id> <goal> | /task active <id> | /task status <id> <status> | /task criteria <id> <criterion> | /task note <id> <note>",
-		);
 	}
 
 	private handleWorkflowVerifyCommand(text: string): void {
-		const argText = text.replace(/^\/verify\s*/, "").trim();
-		const workflow = this.session.workflow;
-		const activeTaskId = workflow.taskGraph.activeTaskId;
-		if (!activeTaskId) {
-			this.showWarning("No active workflow task. Use /task active <id> first.");
-			return;
-		}
-
-		const [statusTokenRaw, ...detailParts] = argText ? argText.split(/\s+/) : [];
-		const statusToken = statusTokenRaw?.toLowerCase();
-		const detailText = detailParts.join(" ").trim();
-		const verificationStatus =
-			statusToken === "pass" || statusToken === "passed"
-				? "passed"
-				: statusToken === "fail" || statusToken === "failed"
-					? "failed"
-					: statusToken === "waive" || statusToken === "waived"
-						? "waived"
-						: undefined;
-
-		if (!verificationStatus) {
-			this.showWarning("Usage: /verify <passed|failed|waived> <details>");
-			return;
-		}
-
-		this.session.recordWorkflowVerification(activeTaskId, verificationStatus, {
-			tests: [],
-			commands: [
-				{
-					command: "manual:/verify",
-					validated: verificationStatus === "passed",
-					details: detailText || undefined,
-				},
-			],
-			userWaiver: verificationStatus === "waived" ? detailText || "Manual waiver recorded." : undefined,
-			diffSummary: detailText || undefined,
-		});
-		this.session.recordWorkflowArtifact({
-			id: `manual-verify-${Date.now()}`,
-			type: "verification",
-			label: `Manual verification for ${activeTaskId}`,
-			producer: "interactive:/verify",
-			metadata: {
-				status: verificationStatus,
-				details: detailText || null,
-			},
-		});
-		const nextWorkflow = this.session.workflow;
-		const completionLabel = getTaskCompletionLabel(nextWorkflow, activeTaskId);
-		this.renderWidgets();
-		this.showStatus(
-			`Workflow verification for ${activeTaskId}: ${this.formatWorkflowLabel(verificationStatus)}\nCompletion: ${this.formatTaskCompletionLabel(completionLabel)}`,
-		);
+		handleWorkflowVerifyCommandFn(this.getWorkflowCommandContext(), text);
 	}
 
 	private handleWorkflowSummaryCommand(): void {
-		const workflow = this.session.workflow;
-		const activeTaskId = workflow.taskGraph.activeTaskId;
-		const activeTask = activeTaskId ? workflow.taskGraph.tasks[activeTaskId] : undefined;
-		const completion = getActiveTaskCompletionState(workflow);
-
-		const lines: string[] = [
-			`Phase: ${this.formatWorkflowLabel(workflow.currentPhase)}`,
-			`Status: ${this.formatWorkflowLabel(workflow.status)}`,
-			`Goal: ${workflow.goal}`,
-			`Active task: ${activeTask ? `${activeTask.id} - ${activeTask.goal} [${this.formatWorkflowLabel(activeTask.status)}]` : "none"}`,
-			`Verification: ${this.formatWorkflowLabel(completion.verificationStatus)}`,
-			`Completion: ${this.formatTaskCompletionLabel(completion.completionLabel)}`,
-			`Completion ready: ${completion.completionReady ? "yes" : "no"}`,
-			`Tasks: ${workflow.taskGraph.taskOrder.length}`,
-		];
-
-		this.showStatus(lines.join("\n"));
+		handleWorkflowSummaryCommandFn(this.getWorkflowCommandContext());
 	}
 
 	private handleChangelogCommand(): void {

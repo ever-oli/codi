@@ -91,7 +91,18 @@ describe("InteractiveMode workflow commands", () => {
 			showStatus: vi.fn(),
 			showWarning: vi.fn(),
 			showError: vi.fn(),
-			formatWorkflowLabel: (InteractiveMode as any).prototype.formatWorkflowLabel,
+			renderWidgets: vi.fn(),
+			updateEditorBorderColor: vi.fn(),
+			getWorkflowCommandContext() {
+				return {
+					session: this.session,
+					showStatus: this.showStatus,
+					showWarning: this.showWarning,
+					showError: this.showError,
+					renderWidgets: this.renderWidgets,
+					updateEditorBorderColor: this.updateEditorBorderColor,
+				};
+			},
 		};
 
 		(InteractiveMode as any).prototype.handleWorkflowPlanCommand.call(fakeThis, "/plan start");
@@ -128,7 +139,18 @@ describe("InteractiveMode workflow commands", () => {
 			showStatus: vi.fn(),
 			showWarning: vi.fn(),
 			showError: vi.fn(),
-			formatWorkflowLabel: (InteractiveMode as any).prototype.formatWorkflowLabel,
+			renderWidgets: vi.fn(),
+			updateEditorBorderColor: vi.fn(),
+			getWorkflowCommandContext() {
+				return {
+					session: this.session,
+					showStatus: this.showStatus,
+					showWarning: this.showWarning,
+					showError: this.showError,
+					renderWidgets: this.renderWidgets,
+					updateEditorBorderColor: this.updateEditorBorderColor,
+				};
+			},
 		};
 
 		(InteractiveMode as any).prototype.handleWorkflowPlanCommand.call(fakeThis, "/plan split");
@@ -145,8 +167,18 @@ describe("InteractiveMode workflow commands", () => {
 			showStatus: vi.fn(),
 			showWarning: vi.fn(),
 			showError: vi.fn(),
-			formatWorkflowLabel: (InteractiveMode as any).prototype.formatWorkflowLabel,
-			formatTaskCompletionLabel: (InteractiveMode as any).prototype.formatTaskCompletionLabel,
+			renderWidgets: vi.fn(),
+			updateEditorBorderColor: vi.fn(),
+			getWorkflowCommandContext() {
+				return {
+					session: this.session,
+					showStatus: this.showStatus,
+					showWarning: this.showWarning,
+					showError: this.showError,
+					renderWidgets: this.renderWidgets,
+					updateEditorBorderColor: this.updateEditorBorderColor,
+				};
+			},
 		};
 
 		(InteractiveMode as any).prototype.handleWorkflowTaskCommand.call(fakeThis, "/task show task-1");

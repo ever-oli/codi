@@ -6,12 +6,13 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { MarkdownTheme } from "@mariozechner/pi-tui";
-import { type Component, DynamicBorder, Markdown, Spacer, Text, visibleWidth } from "@mariozechner/pi-tui";
+import { type Component, Markdown, Spacer, Text, visibleWidth } from "@mariozechner/pi-tui";
 import { getDebugLogPath } from "../../../config.js";
 import type { AgentSession } from "../../../core/agent-session.js";
 import type { AppAction, KeybindingsManager } from "../../../core/keybindings.js";
 import type { SettingsManager } from "../../../core/settings-manager.js";
 import { getChangelogPath, parseChangelog } from "../../../utils/changelog.js";
+import { DynamicBorder } from "../components/dynamic-border.js";
 import { theme } from "../theme/theme.js";
 
 export interface MiscCommandContext {
