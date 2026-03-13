@@ -93,6 +93,22 @@ import {
 	handleWorkflowVerifyCommand as handleWorkflowVerifyCommandFn,
 	type WorkflowCommandContext,
 } from "./command-handlers/workflow-commands.js";
+import {
+	handleModelCommand as handleModelCommandFn,
+	handleModelsCommand as handleModelsCommandFn,
+	handleModelRolesCommand as handleModelRolesCommandFn,
+	type ModelCommandContext,
+} from "./command-handlers/model-commands.js";
+import {
+	handleEventsCommand as handleEventsCommandFn,
+	handleQueueCommand as handleQueueCommandFn,
+	handleLanesCommand as handleLanesCommandFn,
+	handleMailboxCommand as handleMailboxCommandFn,
+	handleDelegatedCommand as handleDelegatedCommandFn,
+	handleHeartbeatCommand as handleHeartbeatCommandFn,
+	handleOpsCommand as handleOpsCommandFn,
+	type RuntimeCommandContext,
+} from "./command-handlers/runtime-commands.js";
 import { ArminComponent } from "./components/armin.js";
 import { AssistantMessageComponent } from "./components/assistant-message.js";
 import { BashExecutionComponent } from "./components/bash-execution.js";
@@ -333,6 +349,54 @@ export class InteractiveMode {
 			showError: (msg) => this.showError(msg),
 			renderWidgets: () => this.renderWidgets(),
 			updateEditorBorderColor: () => this.updateEditorBorderColor(),
+		};
+	}
+
+	private getModelCommandContext(): ModelCommandContext {
+		return {
+			session: this.session,
+			settingsManager: this.settingsManager,
+			runtimeServices: this.runtimeServices,
+			showStatus: (msg) => this.showStatus(msg),
+			showWarning: (msg) => this.showWarning(msg),
+			showError: (msg) => this.showError(msg),
+			renderRuntimePanel: (title, lines) => this.renderRuntimePanel(title, lines),
+			getRuntimeOrWarn: (flag?: string) => this.getRuntimeOrWarn(flag as Parameters<RuntimeServices["isFeatureEnabled"]>[0]),
+			updateEditorBorderColor: () => this.updateEditorBorderColor(),
+			updateFooter: () => this.footer.invalidate(),
+			checkDaxnutsEasterEgg: (model) => this.checkDaxnutsEasterEgg(model),
+			ensureRoleModel: (role) => this.ensureRoleModel(role),
+			showModelSelector: (search) => this.showModelSelector(search),
+		};
+	}
+
+	private getRuntimeCommandContext(): RuntimeCommandContext {
+		return {
+			session: this.session,
+			settingsManager: this.settingsManager,
+			runtimeServices: this.runtimeServices,
+			ui: this.ui,
+			showStatus: (msg) => this.showStatus(msg),
+			showWarning: (msg) => this.showWarning(msg),
+			showError: (msg) => this.showError(msg),
+			renderRuntimePanel: (title, lines) => this.renderRuntimePanel(title, lines),
+			getRuntimeOrWarn: (flag?: string) => this.getRuntimeOrWarn(flag as Parameters<RuntimeServices["isFeatureEnabled"]>[0]),
+			addTextToChat: (text) => this.chatContainer.addChild(new Text(text, 1, 0)),
+			stopEventTail: (silent) => this.stopEventTail(silent),
+			startEventTail: (limit) => this.startEventTail(limit),
+			dispatchSubCommand: async (command, args) => {
+				const fullCommand = `/${command} ${args}`.trim();
+				switch (command) {
+					case "events": await this.handleEventsCommand(fullCommand); break;
+					case "queue": await this.handleQueueCommand(fullCommand); break;
+					case "lanes": await this.handleLanesCommand(fullCommand); break;
+					case "packages": await this.handlePackagesCommand(fullCommand); break;
+					case "mailbox": await this.handleMailboxCommand(fullCommand); break;
+					case "delegated": await this.handleDelegatedCommand(fullCommand); break;
+					case "heartbeat": await this.handleHeartbeatCommand(fullCommand); break;
+					case "models": await this.handleModelsCommand(fullCommand); break;
+				}
+			},
 		};
 	}
 
@@ -3527,26 +3591,7 @@ export class InteractiveMode {
 	}
 
 	private async handleModelCommand(searchTerm?: string): Promise<void> {
-		if (!searchTerm) {
-			this.showModelSelector();
-			return;
-		}
-
-		const model = await this.findExactModelMatch(searchTerm);
-		if (model) {
-			try {
-				await this.session.setModel(model);
-				this.footer.invalidate();
-				this.updateEditorBorderColor();
-				this.showStatus(`Model: ${model.id}`);
-				this.checkDaxnutsEasterEgg(model);
-			} catch (error) {
-				this.showError(error instanceof Error ? error.message : String(error));
-			}
-			return;
-		}
-
-		this.showModelSelector(searchTerm);
+		await handleModelCommandFn(this.getModelCommandContext(), searchTerm);
 	}
 
 	private async findExactModelMatch(searchTerm: string): Promise<Model<any> | undefined> {
@@ -4547,69 +4592,7 @@ export class InteractiveMode {
 	}
 
 	private async handleEventsCommand(text: string): Promise<void> {
-		const runtime = this.getRuntimeOrWarn("ui.eventStreamViewer");
-		if (!runtime) return;
-		const argText = text.replace(/^\/events\s*/, "").trim();
-		if (!argText) {
-			const events = runtime.events.list({ limit: 40 });
-			const lines =
-				events.length > 0
-					? events.map((event) => this.formatRuntimeEventLine(event))
-					: [theme.fg("dim", "No events yet.")];
-			this.renderRuntimePanel("Runtime Events", lines);
-			return;
-		}
-
-		const [subcommand, ...rest] = argText.split(/\s+/);
-		if (subcommand === "tail") {
-			const mode = rest[0];
-			if (mode === "off") {
-				this.stopEventTail();
-				return;
-			}
-			const limit = Number.parseInt(rest[1] ?? rest[0] ?? "20", 10);
-			this.startEventTail(Number.isFinite(limit) ? limit : 20);
-			return;
-		}
-
-		if (subcommand === "prune") {
-			const days = Number.parseInt(rest[0] ?? "7", 10);
-			if (!Number.isFinite(days) || days <= 0) {
-				this.showWarning("Usage: /events prune <days>");
-				return;
-			}
-			const removed = runtime.events.pruneByAge(days * 24 * 60 * 60 * 1000);
-			this.showStatus(`Pruned ${removed} runtime events older than ${days} day(s).`);
-			return;
-		}
-
-		const filters: {
-			type?: string;
-			lane?: LaneName;
-			severity?: "debug" | "info" | "warn" | "error";
-			limit: number;
-		} = { limit: 50 };
-		for (const token of argText.split(/\s+/)) {
-			if (!token.includes("=")) continue;
-			const [key, value] = token.split("=", 2);
-			if (key === "type" && value) filters.type = value;
-			if (key === "lane" && (LANE_NAMES as readonly string[]).includes(value)) filters.lane = value as LaneName;
-			if (key === "severity" && ["debug", "info", "warn", "error"].includes(value)) {
-				filters.severity = value as "debug" | "info" | "warn" | "error";
-			}
-			if (key === "limit" && value) {
-				const parsed = Number.parseInt(value, 10);
-				if (Number.isFinite(parsed)) {
-					filters.limit = Math.max(1, Math.min(parsed, 200));
-				}
-			}
-		}
-		const events = runtime.events.list(filters);
-		const lines =
-			events.length > 0
-				? events.map((event) => this.formatRuntimeEventLine(event))
-				: [theme.fg("dim", "No matching events.")];
-		this.renderRuntimePanel("Runtime Events", lines);
+		await handleEventsCommandFn(this.getRuntimeCommandContext(), text);
 	}
 
 	private formatQueueLine(message: {
@@ -4628,95 +4611,11 @@ export class InteractiveMode {
 	}
 
 	private async handleQueueCommand(text: string): Promise<void> {
-		const runtime = this.getRuntimeOrWarn("runtime.deliveryQueue");
-		if (!runtime) return;
-		const argText = text.replace(/^\/queue\s*/, "").trim();
-		if (!argText || argText === "list") {
-			const messages = runtime.queue.list(undefined, 50);
-			const lines =
-				messages.length > 0
-					? messages.map((message) => this.formatQueueLine(message))
-					: [theme.fg("dim", "Queue is empty.")];
-			this.renderRuntimePanel("Delivery Queue", lines);
-			return;
-		}
-
-		const [subcommand, ...rest] = argText.split(/\s+/);
-		if (subcommand === "dead-letter") {
-			const messages = runtime.queue.list("dead_letter", 50);
-			const lines =
-				messages.length > 0
-					? messages.map((message) => this.formatQueueLine(message))
-					: [theme.fg("dim", "No dead-letter messages.")];
-			this.renderRuntimePanel("Queue Dead Letter", lines);
-			return;
-		}
-		if (subcommand === "retry") {
-			const id = rest[0];
-			if (!id) {
-				this.showWarning("Usage: /queue retry <messageId>");
-				return;
-			}
-			const retried = runtime.queue.retryDeadLetter(id);
-			if (!retried) {
-				this.showWarning(`No dead-letter message found for ${id}`);
-				return;
-			}
-			this.showStatus(`Queue message retried: ${id}`);
-			return;
-		}
-		if (subcommand === "process") {
-			await runtime.queue.processDue();
-			this.showStatus("Queue processing tick complete.");
-			return;
-		}
-
-		this.showWarning("Usage: /queue [list] | /queue dead-letter | /queue retry <id> | /queue process");
+		await handleQueueCommandFn(this.getRuntimeCommandContext(), text);
 	}
 
 	private async handleLanesCommand(text: string): Promise<void> {
-		const runtime = this.getRuntimeOrWarn("runtime.namedLanes");
-		if (!runtime) return;
-		const argText = text.replace(/^\/lanes\s*/, "").trim();
-		if (!argText || argText === "list") {
-			const lines = runtime.lanes
-				.getSnapshots()
-				.map(
-					(snapshot) =>
-						`${theme.fg("accent", snapshot.lane)} concurrency=${snapshot.concurrency} active=${snapshot.active} queued=${snapshot.queued}`,
-				);
-			this.renderRuntimePanel("Lane Scheduler", lines.length > 0 ? lines : [theme.fg("dim", "No lane data.")]);
-			return;
-		}
-
-		const [subcommand, ...rest] = argText.split(/\s+/);
-		if (subcommand === "set") {
-			const lane = rest[0];
-			const concurrency = Number.parseInt(rest[1] ?? "", 10);
-			if (!(LANE_NAMES as readonly string[]).includes(lane ?? "") || !Number.isFinite(concurrency)) {
-				this.showWarning("Usage: /lanes set <default|delegate|cron|compact|notification> <concurrency>");
-				return;
-			}
-			this.settingsManager.setLaneConcurrency(lane as LaneName, concurrency);
-			runtime.syncLanePoliciesFromSettings();
-			this.showStatus(`Lane ${lane} concurrency set to ${Math.max(1, Math.floor(concurrency))}`);
-			return;
-		}
-		if (subcommand === "run") {
-			const lane = rest[0];
-			const label = rest.slice(1).join(" ").trim() || "manual-task";
-			if (!(LANE_NAMES as readonly string[]).includes(lane ?? "")) {
-				this.showWarning("Usage: /lanes run <default|delegate|cron|compact|notification> [label]");
-				return;
-			}
-			void runtime.lanes.schedule(lane as LaneName, label, async () => {
-				await new Promise<void>((resolve) => setTimeout(resolve, 500));
-			});
-			this.showStatus(`Scheduled synthetic lane task on ${lane}: ${label}`);
-			return;
-		}
-
-		this.showWarning("Usage: /lanes [list] | /lanes set <lane> <concurrency> | /lanes run <lane> [label]");
+		await handleLanesCommandFn(this.getRuntimeCommandContext(), text);
 	}
 
 	private async handlePackagesCommand(text: string): Promise<void> {
@@ -4871,105 +4770,7 @@ export class InteractiveMode {
 	}
 
 	private async handleMailboxCommand(text: string): Promise<void> {
-		const runtime = this.getRuntimeOrWarn("runtime.mailboxProtocolV2");
-		if (!runtime) return;
-		const argText = text.replace(/^\/mailbox\s*/, "").trim();
-		const actor = this.session.sessionId;
-
-		if (!argText || argText === "inbox") {
-			const inbox = runtime.mailbox.listInbox(actor, 50);
-			const lines =
-				inbox.length > 0 ? inbox.map((msg) => this.formatMailboxLine(msg)) : [theme.fg("dim", "Inbox empty.")];
-			this.renderRuntimePanel(`Mailbox Inbox (${actor.slice(0, 8)})`, lines);
-			return;
-		}
-
-		const [subcommand, ...rest] = argText.split(/\s+/);
-		if (subcommand === "outbox") {
-			const outbox = runtime.mailbox.listOutbox(actor, 50);
-			const lines =
-				outbox.length > 0 ? outbox.map((msg) => this.formatMailboxLine(msg)) : [theme.fg("dim", "Outbox empty.")];
-			this.renderRuntimePanel(`Mailbox Outbox (${actor.slice(0, 8)})`, lines);
-			return;
-		}
-		if (subcommand === "thread") {
-			const threadId = rest[0];
-			if (!threadId) {
-				this.showWarning("Usage: /mailbox thread <threadId>");
-				return;
-			}
-			const messages = runtime.mailbox.listThread(threadId, 100);
-			const lines =
-				messages.length > 0
-					? messages.map((msg) => this.formatMailboxLine(msg))
-					: [theme.fg("dim", "Thread empty.")];
-			this.renderRuntimePanel(`Mailbox Thread ${threadId}`, lines);
-			return;
-		}
-		if (subcommand === "send") {
-			const to = rest[0];
-			const intent = rest[1];
-			const payloadText = rest.slice(2).join(" ").trim();
-			if (!to || !intent) {
-				this.showWarning("Usage: /mailbox send <to> <intent> [payload]");
-				return;
-			}
-			const envelope = runtime.mailbox.send({
-				from: actor,
-				to,
-				intent,
-				payload: payloadText ? { text: payloadText } : {},
-				completionCriteria: "Acknowledge and include outcome summary.",
-				retryPolicy: "exponential_backoff:max_5",
-				delegatedTask:
-					intent === "delegate"
-						? {
-								goal: payloadText || "Delegated task",
-								summary: "Queued from interactive mailbox send.",
-							}
-						: undefined,
-			});
-			const delegatedTaskId =
-				typeof envelope.payload.delegatedTaskId === "string"
-					? `\ndelegated=${envelope.payload.delegatedTaskId}`
-					: "";
-			this.showStatus(
-				`Mailbox message queued: ${envelope.messageId}\nthread=${envelope.threadId}\nfrom=${envelope.from} to=${envelope.to}${delegatedTaskId}`,
-			);
-			return;
-		}
-		if (subcommand === "ack") {
-			const messageId = rest[0];
-			if (!messageId) {
-				this.showWarning("Usage: /mailbox ack <messageId>");
-				return;
-			}
-			const acked = runtime.mailbox.ack(messageId, actor);
-			if (!acked) {
-				this.showWarning(`Unable to ack ${messageId}.`);
-				return;
-			}
-			this.showStatus(`Mailbox acked: ${messageId}`);
-			return;
-		}
-		if (subcommand === "retry") {
-			const messageId = rest[0];
-			if (!messageId) {
-				this.showWarning("Usage: /mailbox retry <messageId>");
-				return;
-			}
-			const retried = runtime.mailbox.retry(messageId);
-			if (!retried) {
-				this.showWarning(`Unable to retry ${messageId}.`);
-				return;
-			}
-			this.showStatus(`Mailbox retried: ${messageId}`);
-			return;
-		}
-
-		this.showWarning(
-			"Usage: /mailbox [inbox] | /mailbox outbox | /mailbox thread <threadId> | /mailbox send <to> <intent> [payload] | /mailbox ack <messageId> | /mailbox retry <messageId>",
-		);
+		await handleMailboxCommandFn(this.getRuntimeCommandContext(), text);
 	}
 
 	private formatDelegatedTaskLine(task: DelegatedTaskRecord): string {
@@ -4980,392 +4781,23 @@ export class InteractiveMode {
 	}
 
 	private async handleDelegatedCommand(text: string): Promise<void> {
-		const runtime = this.getRuntimeOrWarn("runtime.mailboxProtocolV2");
-		if (!runtime) return;
-		const argText = text.replace(/^\/delegated\s*/, "").trim();
-		const actor = this.session.sessionId;
-
-		if (!argText || argText === "list") {
-			const tasks = runtime.delegatedTasks.list({ parentSessionId: actor, limit: 50 });
-			const lines =
-				tasks.length > 0
-					? tasks.map((task) => this.formatDelegatedTaskLine(task))
-					: [theme.fg("dim", "No delegated tasks.")];
-			this.renderRuntimePanel(`Delegated Tasks (${actor.slice(0, 8)})`, lines);
-			return;
-		}
-
-		const [subcommand, ...rest] = argText.split(/\s+/);
-		if (subcommand === "thread") {
-			const threadId = rest[0];
-			if (!threadId) {
-				this.showWarning("Usage: /delegated thread <threadId>");
-				return;
-			}
-			const tasks = runtime.delegatedTasks.list({ threadId, limit: 50 });
-			const lines =
-				tasks.length > 0
-					? tasks.map((task) => this.formatDelegatedTaskLine(task))
-					: [theme.fg("dim", "No delegated tasks for thread.")];
-			this.renderRuntimePanel(`Delegated Thread ${threadId}`, lines);
-			return;
-		}
-		if (subcommand === "start" || subcommand === "block" || subcommand === "complete" || subcommand === "fail") {
-			const delegatedTaskId = rest[0];
-			const detail = rest.slice(1).join(" ").trim();
-			if (!delegatedTaskId) {
-				this.showWarning(
-					`Usage: /delegated ${subcommand} <delegatedTaskId> ${subcommand === "fail" || subcommand === "block" ? "<details>" : "[details]"}`,
-				);
-				return;
-			}
-			let updated: DelegatedTaskRecord | undefined;
-			if (subcommand === "start") {
-				updated = runtime.delegatedTasks.markRunning(
-					delegatedTaskId,
-					detail || "Started from interactive command.",
-				);
-			}
-			if (subcommand === "block") {
-				if (!detail) {
-					this.showWarning("Usage: /delegated block <delegatedTaskId> <details>");
-					return;
-				}
-				updated = runtime.delegatedTasks.markBlocked(delegatedTaskId, detail);
-			}
-			if (subcommand === "complete") {
-				updated = runtime.delegatedTasks.markCompleted(
-					delegatedTaskId,
-					detail || "Completed from interactive command.",
-				);
-			}
-			if (subcommand === "fail") {
-				if (!detail) {
-					this.showWarning("Usage: /delegated fail <delegatedTaskId> <details>");
-					return;
-				}
-				updated = runtime.delegatedTasks.markFailed(delegatedTaskId, detail);
-			}
-			if (!updated) {
-				this.showWarning(`Unable to update delegated task ${delegatedTaskId}.`);
-				return;
-			}
-			this.showStatus(`Delegated task ${updated.delegatedTaskId}: ${updated.status}`);
-			return;
-		}
-
-		const filters: { status?: DelegatedTaskStatus; limit: number } = { limit: 50 };
-		for (const token of argText.split(/\s+/)) {
-			if (!token.includes("=")) continue;
-			const [key, value] = token.split("=", 2);
-			if (
-				key === "status" &&
-				(value === "queued" ||
-					value === "running" ||
-					value === "blocked" ||
-					value === "completed" ||
-					value === "failed")
-			) {
-				filters.status = value;
-			}
-			if (key === "limit" && value) {
-				const parsed = Number.parseInt(value, 10);
-				if (Number.isFinite(parsed)) {
-					filters.limit = Math.max(1, Math.min(parsed, 200));
-				}
-			}
-		}
-		const tasks = runtime.delegatedTasks.list({
-			parentSessionId: actor,
-			status: filters.status,
-			limit: filters.limit,
-		});
-		const lines =
-			tasks.length > 0
-				? tasks.map((task) => this.formatDelegatedTaskLine(task))
-				: [theme.fg("dim", "No matching delegated tasks.")];
-		this.renderRuntimePanel(`Delegated Tasks (${actor.slice(0, 8)})`, lines);
+		await handleDelegatedCommandFn(this.getRuntimeCommandContext(), text);
 	}
 
 	private async handleHeartbeatCommand(text: string): Promise<void> {
-		const runtime = this.getRuntimeOrWarn("runtime.heartbeatCronCore");
-		if (!runtime) return;
-		const argText = text.replace(/^\/heartbeat\s*/, "").trim();
-		if (!argText || argText === "status") {
-			const status = runtime.heartbeat.getStatus();
-			const jobs = runtime.heartbeat.listJobs(10);
-			const lines = [
-				`running=${status.running ? "yes" : "no"} intervalMs=${status.intervalMs} ticks=${status.tickCount} jobsEnabled=${status.jobsEnabled}`,
-				`lastTick=${status.lastTickAt ? new Date(status.lastTickAt).toISOString() : "never"}`,
-				"",
-				theme.bold("Cron jobs:"),
-			];
-			if (jobs.length === 0) {
-				lines.push(theme.fg("dim", "  none"));
-			} else {
-				for (const job of jobs) {
-					lines.push(
-						`  ${theme.fg("accent", job.id.slice(0, 8))} ${job.name} every ${job.intervalSeconds}s ${job.enabled ? "enabled" : "paused"} next=${new Date(job.nextRunAt).toLocaleTimeString()}`,
-					);
-				}
-			}
-			this.renderRuntimePanel("Heartbeat + Cron", lines);
-			return;
-		}
-
-		const [subcommand, ...rest] = argText.split(/\s+/);
-		if (subcommand === "tick") {
-			await runtime.heartbeat.tick();
-			this.showStatus("Heartbeat tick executed.");
-			return;
-		}
-		if (subcommand === "add") {
-			const name = rest[0];
-			const intervalSeconds = Number.parseInt(rest[1] ?? "", 10);
-			const intent = rest[2];
-			const payloadText = rest.slice(3).join(" ").trim();
-			if (!name || !Number.isFinite(intervalSeconds) || !intent) {
-				this.showWarning("Usage: /heartbeat add <name> <intervalSeconds> <intent> [payload]");
-				return;
-			}
-			const job = runtime.heartbeat.addJob({
-				name,
-				intervalSeconds,
-				intent,
-				payload: payloadText ? { text: payloadText } : {},
-			});
-			this.showStatus(`Cron job added: ${job.id} (${job.name})`);
-			return;
-		}
-		if (subcommand === "pause" || subcommand === "resume") {
-			const jobId = rest[0];
-			if (!jobId) {
-				this.showWarning(`Usage: /heartbeat ${subcommand} <jobId>`);
-				return;
-			}
-			const ok = runtime.heartbeat.setJobEnabled(jobId, subcommand === "resume");
-			if (!ok) {
-				this.showWarning(`Unknown cron job: ${jobId}`);
-				return;
-			}
-			this.showStatus(`Cron job ${subcommand}d: ${jobId}`);
-			return;
-		}
-		if (subcommand === "remove") {
-			const jobId = rest[0];
-			if (!jobId) {
-				this.showWarning("Usage: /heartbeat remove <jobId>");
-				return;
-			}
-			const ok = runtime.heartbeat.removeJob(jobId);
-			if (!ok) {
-				this.showWarning(`Unknown cron job: ${jobId}`);
-				return;
-			}
-			this.showStatus(`Cron job removed: ${jobId}`);
-			return;
-		}
-		if (subcommand === "list") {
-			const jobs = runtime.heartbeat.listJobs(100);
-			const lines =
-				jobs.length > 0
-					? jobs.map(
-							(job) =>
-								`${theme.fg("accent", job.id.slice(0, 8))} ${job.name} every ${job.intervalSeconds}s ${job.enabled ? "enabled" : "paused"} next=${new Date(job.nextRunAt).toISOString()}`,
-						)
-					: [theme.fg("dim", "No cron jobs.")];
-			this.renderRuntimePanel("Heartbeat Jobs", lines);
-			return;
-		}
-
-		this.showWarning(
-			"Usage: /heartbeat [status] | /heartbeat tick | /heartbeat list | /heartbeat add <name> <intervalSeconds> <intent> [payload] | /heartbeat pause <jobId> | /heartbeat resume <jobId> | /heartbeat remove <jobId>",
-		);
+		await handleHeartbeatCommandFn(this.getRuntimeCommandContext(), text);
 	}
 
 	private async handleModelsCommand(text: string): Promise<void> {
-		if (text === "/models" || text.trim() === "/models") {
-			this.showStatus("Usage: /models roles [show|set|clear]");
-			return;
-		}
-		if (text.startsWith("/models roles")) {
-			await this.handleModelRolesCommand(text);
-			return;
-		}
-		this.showWarning("Unknown /models command. Use /models roles.");
+		await handleModelsCommandFn(this.getModelCommandContext(), text);
 	}
 
 	private async handleModelRolesCommand(text: string): Promise<void> {
-		const runtime = this.getRuntimeOrWarn("model.roleProfiles");
-		if (!runtime) return;
-		const argText = text.replace(/^\/models\s+roles\s*/, "").trim();
-		if (!argText || argText === "show") {
-			const profile = this.settingsManager.getRoleModelProfile();
-			const lines = MODEL_ROLE_NAMES.map((role) => {
-				const value = profile[role];
-				const resolved = runtime.modelRoles.resolveRoleModel(role);
-				const resolvedText = resolved ? `${resolved.provider}/${resolved.id}` : "unresolved";
-				return `${theme.fg("accent", role)}: ${value ?? theme.fg("dim", "not set")} ${theme.fg("muted", `(${resolvedText})`)}`;
-			});
-			lines.push("");
-			lines.push("Usage: /models roles set <main|task|compact|quick> <provider>/<model>");
-			lines.push("       /models roles clear <main|task|compact|quick>");
-			this.renderRuntimePanel("Model Roles", lines);
-			return;
-		}
-
-		const [subcommand, ...rest] = argText.split(/\s+/);
-		if (subcommand === "set") {
-			const role = rest[0] as ModelRoleName | undefined;
-			const modelRef = rest.slice(1).join(" ").trim();
-			if (!role || !(MODEL_ROLE_NAMES as readonly string[]).includes(role) || !modelRef) {
-				this.showWarning("Usage: /models roles set <main|task|compact|quick> <provider>/<model>");
-				return;
-			}
-			if (!modelRef.includes("/")) {
-				this.showWarning("Model reference must be provider/model.");
-				return;
-			}
-			this.settingsManager.setRoleModel(role, modelRef);
-			runtime.events.record({
-				type: "model.roles.updated",
-				source: "interactive:/models roles set",
-				payload: {
-					role,
-					modelRef,
-				},
-			});
-			if (role === "main") {
-				try {
-					await this.ensureRoleModel("main");
-				} catch {
-					// Preserve setting even when model cannot be switched immediately.
-				}
-			}
-			this.showStatus(`Model role ${role} set to ${modelRef}`);
-			return;
-		}
-		if (subcommand === "clear") {
-			const role = rest[0] as ModelRoleName | undefined;
-			if (!role || !(MODEL_ROLE_NAMES as readonly string[]).includes(role)) {
-				this.showWarning("Usage: /models roles clear <main|task|compact|quick>");
-				return;
-			}
-			this.settingsManager.setRoleModel(role, undefined);
-			runtime.events.record({
-				type: "model.roles.updated",
-				source: "interactive:/models roles clear",
-				payload: { role, modelRef: null },
-			});
-			this.showStatus(`Model role ${role} cleared`);
-			return;
-		}
-
-		this.showWarning(
-			"Usage: /models roles [show] | /models roles set <role> <provider/model> | /models roles clear <role>",
-		);
+		await handleModelRolesCommandFn(this.getModelCommandContext(), text);
 	}
 
 	private async handleOpsCommand(text: string): Promise<void> {
-		const runtime = this.getRuntimeOrWarn();
-		if (!runtime) return;
-
-		const argText = text.replace(/^\/ops\s*/, "").trim();
-		if (!argText) {
-			const flags = this.settingsManager.getRuntimeFeatureFlags();
-			const queueQueued = runtime.queue.list("queued", 200).length;
-			const queueLeased = runtime.queue.list("leased", 200).length;
-			const queueDead = runtime.queue.list("dead_letter", 200).length;
-			const actor = this.session.sessionId;
-			const heartbeat = runtime.heartbeat.getStatus();
-			const laneSnapshots = runtime.lanes
-				.getSnapshots()
-				.map((snapshot) => `${snapshot.lane}:${snapshot.active}/${snapshot.queued} c=${snapshot.concurrency}`)
-				.join(" | ");
-
-			const lines = [
-				theme.bold("Runtime"),
-				`queue queued=${queueQueued} leased=${queueLeased} dead=${queueDead}`,
-				`lanes ${laneSnapshots || "none"}`,
-				`mailbox inbox=${runtime.mailbox.listInbox(actor, 200).length} outbox=${runtime.mailbox.listOutbox(actor, 200).length}`,
-				`delegated tasks=${runtime.delegatedTasks.list({ parentSessionId: actor, limit: 200 }).length}`,
-				`heartbeat running=${heartbeat.running ? "yes" : "no"} jobs=${heartbeat.jobsEnabled} ticks=${heartbeat.tickCount}`,
-				"",
-				theme.bold("Flags"),
-				...RUNTIME_FEATURE_FLAG_NAMES.map((flag) => `${flag}=${flags[flag] ? "on" : "off"}`),
-				"",
-				"Use /ops <events|queue|lanes|packages|mailbox|delegated|heartbeat|models roles|flags>",
-			];
-			this.renderRuntimePanel("Ops", lines);
-			return;
-		}
-
-		const [subcommand, ...rest] = argText.split(/\s+/);
-		if (subcommand === "events") {
-			await this.handleEventsCommand(`/events ${rest.join(" ").trim()}`.trim());
-			return;
-		}
-		if (subcommand === "queue") {
-			await this.handleQueueCommand(`/queue ${rest.join(" ").trim()}`.trim());
-			return;
-		}
-		if (subcommand === "lanes") {
-			await this.handleLanesCommand(`/lanes ${rest.join(" ").trim()}`.trim());
-			return;
-		}
-		if (subcommand === "packages") {
-			await this.handlePackagesCommand(`/packages ${rest.join(" ").trim()}`.trim());
-			return;
-		}
-		if (subcommand === "mailbox") {
-			await this.handleMailboxCommand(`/mailbox ${rest.join(" ").trim()}`.trim());
-			return;
-		}
-		if (subcommand === "delegated") {
-			await this.handleDelegatedCommand(`/delegated ${rest.join(" ").trim()}`.trim());
-			return;
-		}
-		if (subcommand === "heartbeat") {
-			await this.handleHeartbeatCommand(`/heartbeat ${rest.join(" ").trim()}`.trim());
-			return;
-		}
-		if (subcommand === "models") {
-			await this.handleModelsCommand(`/models ${rest.join(" ").trim()}`.trim());
-			return;
-		}
-		if (subcommand === "flags") {
-			const action = rest[0];
-			const flagName = rest[1] as RuntimeFeatureFlagName | undefined;
-			if (!action || action === "list") {
-				const flags = this.settingsManager.getRuntimeFeatureFlags();
-				const lines = RUNTIME_FEATURE_FLAG_NAMES.map((flag) => `${flag}=${flags[flag] ? "on" : "off"}`);
-				lines.push("");
-				lines.push("Usage: /ops flags [list] | /ops flags enable <flag> | /ops flags disable <flag>");
-				this.renderRuntimePanel("Runtime Flags", lines);
-				return;
-			}
-			if ((action === "enable" || action === "disable") && flagName) {
-				if (!(RUNTIME_FEATURE_FLAG_NAMES as readonly string[]).includes(flagName)) {
-					this.showWarning(`Unknown flag "${flagName}"`);
-					return;
-				}
-				const enabled = action === "enable";
-				this.settingsManager.setRuntimeFeatureFlag(flagName, enabled);
-				if (flagName === "runtime.heartbeatCronCore") {
-					if (enabled) runtime.heartbeat.start();
-					else runtime.heartbeat.stop();
-				}
-				if (flagName === "ui.eventStreamViewer" && !enabled) {
-					this.stopEventTail(true);
-				}
-				this.showStatus(`${flagName} ${enabled ? "enabled" : "disabled"}`);
-				return;
-			}
-			this.showWarning("Usage: /ops flags [list] | /ops flags enable <flag> | /ops flags disable <flag>");
-			return;
-		}
-
-		this.showWarning("Usage: /ops [events|queue|lanes|packages|mailbox|delegated|heartbeat|models roles|flags]");
+		await handleOpsCommandFn(this.getRuntimeCommandContext(), text);
 	}
 
 	private handleWorkflowPlanCommand(text: string): void {

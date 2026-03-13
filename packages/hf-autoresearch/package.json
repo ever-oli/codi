@@ -1,0 +1,12 @@
+{
+  "name": "@mariozechner/pi-hf-autoresearch",
+  "version": "0.1.0",
+  "description": "HuggingFace-native autoresearch: fine-tune any HF model on any HF dataset with autonomous hyperparameter loops",
+  "type": "module",
+  "main": "extensions/index.ts",
+  "files": [
+    "extensions/",
+    "templates/",
+    "skills/"
+  ]
+}

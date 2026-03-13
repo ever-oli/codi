@@ -39,15 +39,8 @@ export interface RuntimeCommandContext {
 	stopEventTail(silent?: boolean): void;
 	startEventTail(limit: number): void;
 
-	// Sub-commands that delegate back to other handlers
-	handleEventsCommand(text: string): Promise<void>;
-	handleQueueCommand(text: string): Promise<void>;
-	handleLanesCommand(text: string): Promise<void>;
-	handlePackagesCommand(text: string): Promise<void>;
-	handleMailboxCommand(text: string): Promise<void>;
-	handleDelegatedCommand(text: string): Promise<void>;
-	handleHeartbeatCommand(text: string): Promise<void>;
-	handleModelsCommand(text: string): Promise<void>;
+	// Sub-command dispatch for /ops meta-command
+	dispatchSubCommand(command: string, args: string): Promise<void>;
 }
 
 export async function handleEventsCommand(ctx: RuntimeCommandContext, text: string): Promise<void> {
@@ -539,36 +532,11 @@ export async function handleOpsCommand(ctx: RuntimeCommandContext, text: string)
 	}
 
 	const [subcommand, ...rest] = argText.split(/\s+/);
-	if (subcommand === "events") {
-		await ctx.handleEventsCommand(`/events ${rest.join(" ").trim()}`.trim());
-		return;
-	}
-	if (subcommand === "queue") {
-		await ctx.handleQueueCommand(`/queue ${rest.join(" ").trim()}`.trim());
-		return;
-	}
-	if (subcommand === "lanes") {
-		await ctx.handleLanesCommand(`/lanes ${rest.join(" ").trim()}`.trim());
-		return;
-	}
-	if (subcommand === "packages") {
-		await ctx.handlePackagesCommand(`/packages ${rest.join(" ").trim()}`.trim());
-		return;
-	}
-	if (subcommand === "mailbox") {
-		await ctx.handleMailboxCommand(`/mailbox ${rest.join(" ").trim()}`.trim());
-		return;
-	}
-	if (subcommand === "delegated") {
-		await ctx.handleDelegatedCommand(`/delegated ${rest.join(" ").trim()}`.trim());
-		return;
-	}
-	if (subcommand === "heartbeat") {
-		await ctx.handleHeartbeatCommand(`/heartbeat ${rest.join(" ").trim()}`.trim());
-		return;
-	}
-	if (subcommand === "models") {
-		await ctx.handleModelsCommand(`/models ${rest.join(" ").trim()}`.trim());
+	const subArgs = rest.join(" ").trim();
+
+	// Delegate sub-commands through the dispatch callback
+	if (["events", "queue", "lanes", "packages", "mailbox", "delegated", "heartbeat", "models"].includes(subcommand)) {
+		await ctx.dispatchSubCommand(subcommand, subArgs);
 		return;
 	}
 	if (subcommand === "flags") {
