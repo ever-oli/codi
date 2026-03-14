@@ -5,6 +5,7 @@ import {
 	getCapabilities,
 	type SelectItem,
 	SelectList,
+	type SelectListLayoutOptions,
 	type SettingItem,
 	SettingsList,
 	Spacer,
@@ -14,6 +15,11 @@ import type { LaneName, RuntimeFeatureFlagName } from "../../../core/runtime/typ
 import type { StartupDensity } from "../../../core/settings-manager.js";
 import { getSelectListTheme, getSettingsListTheme, theme } from "../theme/theme.js";
 import { DynamicBorder } from "./dynamic-border.js";
+
+const SETTINGS_SUBMENU_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {
+	minPrimaryColumnWidth: 12,
+	maxPrimaryColumnWidth: 32,
+};
 
 const THINKING_DESCRIPTIONS: Record<ThinkingLevel, string> = {
 	off: "No reasoning",
@@ -40,6 +46,7 @@ export interface SettingsConfig {
 	hideThinkingBlock: boolean;
 	collapseChangelog: boolean;
 	doubleEscapeAction: "fork" | "tree" | "none";
+	treeFilterMode: "default" | "no-tools" | "user-only" | "labeled-only" | "all";
 	showHardwareCursor: boolean;
 	editorPaddingX: number;
 	autocompleteMaxVisible: number;
@@ -65,6 +72,7 @@ export interface SettingsCallbacks {
 	onHideThinkingBlockChange: (hidden: boolean) => void;
 	onCollapseChangelogChange: (collapsed: boolean) => void;
 	onDoubleEscapeActionChange: (action: "fork" | "tree" | "none") => void;
+	onTreeFilterModeChange: (mode: "default" | "no-tools" | "user-only" | "labeled-only" | "all") => void;
 	onShowHardwareCursorChange: (enabled: boolean) => void;
 	onEditorPaddingXChange: (padding: number) => void;
 	onAutocompleteMaxVisibleChange: (maxVisible: number) => void;
@@ -105,7 +113,12 @@ class SelectSubmenu extends Container {
 		this.addChild(new Spacer(1));
 
 		// Select list
-		this.selectList = new SelectList(options, Math.min(options.length, 10), getSelectListTheme());
+		this.selectList = new SelectList(
+			options,
+			Math.min(options.length, 10),
+			getSelectListTheme(),
+			SETTINGS_SUBMENU_SELECT_LIST_LAYOUT,
+		);
 
 		// Pre-select current value
 		const currentIndex = options.findIndex((o) => o.value === currentValue);
@@ -206,6 +219,13 @@ export class SettingsSelectorComponent extends Container {
 				description: "Action when pressing Escape twice with empty editor",
 				currentValue: config.doubleEscapeAction,
 				values: ["tree", "fork", "none"],
+			},
+			{
+				id: "tree-filter-mode",
+				label: "Tree filter mode",
+				description: "Default filter when opening /tree",
+				currentValue: config.treeFilterMode,
+				values: ["default", "no-tools", "user-only", "labeled-only", "all"],
 			},
 			{
 				id: "thinking",
@@ -456,6 +476,11 @@ export class SettingsSelectorComponent extends Container {
 						break;
 					case "double-escape-action":
 						callbacks.onDoubleEscapeActionChange(newValue as "fork" | "tree");
+						break;
+					case "tree-filter-mode":
+						callbacks.onTreeFilterModeChange(
+							newValue as "default" | "no-tools" | "user-only" | "labeled-only" | "all",
+						);
 						break;
 					case "show-hardware-cursor":
 						callbacks.onShowHardwareCursorChange(newValue === "true");

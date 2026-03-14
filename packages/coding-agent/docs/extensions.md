@@ -226,8 +226,9 @@ Run `npm install` in the extension directory, then imports from `node_modules/` 
 ### Lifecycle Overview
 
 ```
-pi starts
+pi starts (CLI only)
   │
+  ├─► session_directory (CLI startup only, no ctx)
   └─► session_start
       │
       ▼
@@ -244,13 +245,14 @@ user sends prompt ────────────────────�
   │   │                                            │       │
   │   ├─► turn_start                               │       │
   │   ├─► context (can modify messages)            │       │
+  │   ├─► before_provider_request (can inspect or replace payload)
   │   │                                            │       │
   │   │   LLM responds, may call tools:            │       │
-  │   │     ├─► tool_call (can block)              │       │
   │   │     ├─► tool_execution_start               │       │
+  │   │     ├─► tool_call (can block)              │       │
   │   │     ├─► tool_execution_update              │       │
-  │   │     ├─► tool_execution_end                 │       │
-  │   │     └─► tool_result (can modify)           │       │
+  │   │     ├─► tool_result (can modify)           │       │
+  │   │     └─► tool_execution_end                 │       │
   │   │                                            │       │
   │   └─► turn_end                                 │       │
   │                                                        │
@@ -284,6 +286,26 @@ exit (Ctrl+C, Ctrl+D)
 ### Session Events
 
 See [session.md](session.md) for session storage internals and the SessionManager API.
+
+#### session_directory
+
+Fired by the `pi` CLI during startup session resolution, before the initial session manager is created.
+
+This event is:
+- CLI-only. It is not emitted in SDK mode.
+- Startup-only. It is not emitted for later interactive `/new` or `/resume` actions.
+- Bypassed when `--session-dir` is provided.
+- Special-cased to receive no `ctx` argument.
+
+If multiple extensions return `sessionDir`, the last one wins.
+
+```typescript
+pi.on("session_directory", async (event) => {
+  return {
+    sessionDir: `/tmp/pi-sessions/${encodeURIComponent(event.cwd)}`,
+  };
+});
+```
 
 #### session_start
 
@@ -464,6 +486,11 @@ pi.on("message_end", async (event, ctx) => {
 
 Fired for tool execution lifecycle updates.
 
+In parallel tool mode:
+- `tool_execution_start` is emitted in assistant source order during the preflight phase
+- `tool_execution_update` events may interleave across tools
+- `tool_execution_end` is emitted in assistant source order, matching final tool result message order
+
 ```typescript
 pi.on("tool_execution_start", async (event, ctx) => {
   // event.toolCallId, event.toolName, event.args
@@ -489,6 +516,21 @@ pi.on("context", async (event, ctx) => {
   return { messages: filtered };
 });
 ```
+
+#### before_provider_request
+
+Fired after the provider-specific payload is built, right before the request is sent. Handlers run in extension load order. Returning `undefined` keeps the payload unchanged. Returning any other value replaces the payload for later handlers and for the actual request.
+
+```typescript
+pi.on("before_provider_request", (event, ctx) => {
+  console.log(JSON.stringify(event.payload, null, 2));
+
+  // Optional: replace payload
+  // return { ...event.payload, temperature: 0 };
+});
+```
+
+This is mainly useful for debugging provider serialization and cache behavior.
 
 ### Model Events
 
@@ -517,7 +559,11 @@ Use this to update UI elements (status bars, footers) or perform model-specific 
 
 #### tool_call
 
-Fired before tool executes. **Can block.** Use `isToolCallEventType` to narrow and get typed inputs.
+Fired after `tool_execution_start`, before the tool executes. **Can block.** Use `isToolCallEventType` to narrow and get typed inputs.
+
+Before `tool_call` runs, pi waits for previously emitted Agent events to finish draining through `AgentSession`. This means `ctx.sessionManager` is up to date through the current assistant tool-calling message.
+
+In the default parallel tool execution mode, sibling tool calls from the same assistant message are preflighted sequentially, then executed concurrently. `tool_call` is not guaranteed to see sibling tool results from that same assistant message in `ctx.sessionManager`.
 
 ```typescript
 import { isToolCallEventType } from "@mariozechner/pi-coding-agent";
@@ -566,7 +612,7 @@ pi.on("tool_call", (event) => {
 
 #### tool_result
 
-Fired after tool executes. **Can modify result.**
+Fired after tool execution finishes and before `tool_execution_end` plus the final tool result message events are emitted. **Can modify result.**
 
 `tool_result` handlers chain like middleware:
 - Handlers run in extension load order
@@ -659,7 +705,9 @@ Transforms chain across handlers. See [input-transform.ts](../examples/extension
 
 ## ExtensionContext
 
-Every handler receives `ctx: ExtensionContext`:
+All handlers except `session_directory` receive `ctx: ExtensionContext`.
+
+`session_directory` is a CLI startup hook and receives only the event.
 
 ### ctx.ui
 
@@ -676,6 +724,8 @@ Current working directory.
 ### ctx.sessionManager
 
 Read-only access to session state. See [session.md](session.md) for the full SessionManager API and entry types.
+
+For `tool_call`, this state is synchronized through the current assistant message before handlers run. In parallel tool execution mode it is still not guaranteed to include sibling tool results from the same assistant message.
 
 ```typescript
 ctx.sessionManager.getEntries()       // All entries
@@ -1341,6 +1391,18 @@ pi.registerTool({
 });
 ```
 
+**Signaling errors:** To mark a tool execution as failed (sets `isError: true` on the result and reports it to the LLM), throw an error from `execute`. Returning a value never sets the error flag regardless of what properties you include in the return object.
+
+```typescript
+// Correct: throw to signal an error
+async execute(toolCallId, params) {
+  if (!isValid(params.input)) {
+    throw new Error(`Invalid input: ${params.input}`);
+  }
+  return { content: [{ type: "text", text: "OK" }], details: {} };
+}
+```
+
 **Important:** Use `StringEnum` from `@mariozechner/pi-ai` for string enums. `Type.Union`/`Type.Literal` doesn't work with Google's API.
 
 ### Overriding Built-in Tools
@@ -1881,7 +1943,7 @@ const highlighted = highlightCode(code, lang, theme);
 
 - Extension errors are logged, agent continues
 - `tool_call` errors block the tool (fail-safe)
-- Tool `execute` errors are reported to the LLM with `isError: true`
+- Tool `execute` errors must be signaled by throwing; the thrown error is caught, reported to the LLM with `isError: true`, and execution continues
 
 ## Mode Behavior
 
@@ -1923,6 +1985,7 @@ All examples in [examples/extensions/](../examples/extensions/).
 | `dirty-repo-guard.ts` | Warn on dirty git repo | `on("session_before_*")`, `exec` |
 | `input-transform.ts` | Transform user input | `on("input")` |
 | `model-status.ts` | React to model changes | `on("model_select")`, `setStatus` |
+| `provider-payload.ts` | Inspect or patch provider payloads | `on("before_provider_request")` |
 | `system-prompt-header.ts` | Display system prompt info | `on("agent_start")`, `getSystemPrompt` |
 | `claude-rules.ts` | Load rules from files | `on("session_start")`, `on("before_agent_start")` |
 | `file-trigger.ts` | File watcher triggers messages | `sendMessage` |

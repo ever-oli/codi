@@ -94,6 +94,7 @@ export interface Settings {
 	quietStartup?: boolean;
 	startupDensity?: StartupDensity;
 	shellCommandPrefix?: string; // Prefix prepended to every bash command (e.g., "shopt -s expand_aliases" for alias support)
+	npmCommand?: string[]; // Command used for npm package lookup/install operations, argv-style (e.g., ["mise", "exec", "node@20", "--", "npm"])
 	collapseChangelog?: boolean; // Show condensed changelog after update (use /changelog for full)
 	packages?: PackageSource[]; // Array of npm/git package sources (string or object with filtering)
 	extensions?: string[]; // Array of local extension file paths or directories
@@ -105,6 +106,7 @@ export interface Settings {
 	images?: ImageSettings;
 	enabledModels?: string[]; // Model patterns for cycling (same format as --models CLI flag)
 	doubleEscapeAction?: "fork" | "tree" | "none"; // Action for double-escape with empty editor (default: "tree")
+	treeFilterMode?: "default" | "no-tools" | "user-only" | "labeled-only" | "all"; // Default filter when opening /tree
 	thinkingBudgets?: ThinkingBudgetsSettings; // Custom token budgets for thinking levels
 	editorPaddingX?: number; // Horizontal padding for input editor (default: 0)
 	autocompleteMaxVisible?: number; // Max visible items in autocomplete dropdown (default: 5)
@@ -164,6 +166,33 @@ export class FileSettingsStorage implements SettingsStorage {
 		this.projectSettingsPath = join(cwd, CONFIG_DIR_NAME, "settings.json");
 	}
 
+	private acquireLockSyncWithRetry(path: string): () => void {
+		const maxAttempts = 10;
+		const delayMs = 20;
+		let lastError: unknown;
+
+		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+			try {
+				return lockfile.lockSync(path, { realpath: false });
+			} catch (error) {
+				const code =
+					typeof error === "object" && error !== null && "code" in error
+						? String((error as { code?: unknown }).code)
+						: undefined;
+				if (code !== "ELOCKED" || attempt === maxAttempts) {
+					throw error;
+				}
+				lastError = error;
+				const start = Date.now();
+				while (Date.now() - start < delayMs) {
+					// Sleep synchronously to avoid changing callers to async.
+				}
+			}
+		}
+
+		throw (lastError as Error) ?? new Error("Failed to acquire settings lock");
+	}
+
 	withLock(scope: SettingsScope, fn: (current: string | undefined) => string | undefined): void {
 		const path = scope === "global" ? this.globalSettingsPath : this.projectSettingsPath;
 		const dir = dirname(path);
@@ -173,7 +202,7 @@ export class FileSettingsStorage implements SettingsStorage {
 			// Only create directory and lock if file exists or we need to write
 			const fileExists = existsSync(path);
 			if (fileExists) {
-				release = lockfile.lockSync(path, { realpath: false });
+				release = this.acquireLockSyncWithRetry(path);
 			}
 			const current = fileExists ? readFileSync(path, "utf-8") : undefined;
 			const next = fn(current);
@@ -183,7 +212,7 @@ export class FileSettingsStorage implements SettingsStorage {
 					mkdirSync(dir, { recursive: true });
 				}
 				if (!release) {
-					release = lockfile.lockSync(path, { realpath: false });
+					release = this.acquireLockSyncWithRetry(path);
 				}
 				writeFileSync(path, next, "utf-8");
 			}
@@ -721,6 +750,16 @@ export class SettingsManager {
 		this.save();
 	}
 
+	getNpmCommand(): string[] | undefined {
+		return this.settings.npmCommand ? [...this.settings.npmCommand] : undefined;
+	}
+
+	setNpmCommand(command: string[] | undefined): void {
+		this.globalSettings.npmCommand = command ? [...command] : undefined;
+		this.markModified("npmCommand");
+		this.save();
+	}
+
 	getCollapseChangelog(): boolean {
 		return this.settings.collapseChangelog ?? false;
 	}
@@ -903,6 +942,18 @@ export class SettingsManager {
 	setDoubleEscapeAction(action: "fork" | "tree" | "none"): void {
 		this.globalSettings.doubleEscapeAction = action;
 		this.markModified("doubleEscapeAction");
+		this.save();
+	}
+
+	getTreeFilterMode(): "default" | "no-tools" | "user-only" | "labeled-only" | "all" {
+		const mode = this.settings.treeFilterMode;
+		const valid = ["default", "no-tools", "user-only", "labeled-only", "all"];
+		return mode && valid.includes(mode) ? mode : "default";
+	}
+
+	setTreeFilterMode(mode: "default" | "no-tools" | "user-only" | "labeled-only" | "all"): void {
+		this.globalSettings.treeFilterMode = mode;
+		this.markModified("treeFilterMode");
 		this.save();
 	}
 

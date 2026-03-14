@@ -120,11 +120,549 @@ type ResourceType = "extensions" | "skills" | "prompts" | "themes";
 
 const RESOURCE_TYPES: ResourceType[] = ["extensions", "skills", "prompts", "themes"];
 
+const FILE_PATTERNS: Record<ResourceType, RegExp> = {
+	extensions: /\.(ts|js)$/,
+	skills: /\.md$/,
+	prompts: /\.md$/,
+	themes: /\.json$/,
+};
+
+const IGNORE_FILE_NAMES = [".gitignore", ".ignore", ".fdignore"];
+
+type IgnoreMatcher = ReturnType<typeof ignore>;
+
+function toPosixPath(p: string): string {
+	return p.split(sep).join("/");
+}
+
+function getHomeDir(): string {
+	return process.env.HOME || homedir();
+}
+
+function prefixIgnorePattern(line: string, prefix: string): string | null {
+	const trimmed = line.trim();
+	if (!trimmed) return null;
+	if (trimmed.startsWith("#") && !trimmed.startsWith("\\#")) return null;
+
+	let pattern = line;
+	let negated = false;
+
+	if (pattern.startsWith("!")) {
+		negated = true;
+		pattern = pattern.slice(1);
+	} else if (pattern.startsWith("\\!")) {
+		pattern = pattern.slice(1);
+	}
+
+	if (pattern.startsWith("/")) {
+		pattern = pattern.slice(1);
+	}
+
+	const prefixed = prefix ? `${prefix}${pattern}` : pattern;
+	return negated ? `!${prefixed}` : prefixed;
+}
+
+function addIgnoreRules(ig: IgnoreMatcher, dir: string, rootDir: string): void {
+	const relativeDir = relative(rootDir, dir);
+	const prefix = relativeDir ? `${toPosixPath(relativeDir)}/` : "";
+
+	for (const filename of IGNORE_FILE_NAMES) {
+		const ignorePath = join(dir, filename);
+		if (!existsSync(ignorePath)) continue;
+		try {
+			const content = readFileSync(ignorePath, "utf-8");
+			const patterns = content
+				.split(/\r?\n/)
+				.map((line) => prefixIgnorePattern(line, prefix))
+				.filter((line): line is string => Boolean(line));
+			if (patterns.length > 0) {
+				ig.add(patterns);
+			}
+		} catch {}
+	}
+}
+
+function isPattern(s: string): boolean {
+	return s.startsWith("!") || s.startsWith("+") || s.startsWith("-") || s.includes("*") || s.includes("?");
+}
+
+function splitPatterns(entries: string[]): { plain: string[]; patterns: string[] } {
+	const plain: string[] = [];
+	const patterns: string[] = [];
+	for (const entry of entries) {
+		if (isPattern(entry)) {
+			patterns.push(entry);
+		} else {
+			plain.push(entry);
+		}
+	}
+	return { plain, patterns };
+}
+
+function collectFiles(
+	dir: string,
+	filePattern: RegExp,
+	skipNodeModules = true,
+	ignoreMatcher?: IgnoreMatcher,
+	rootDir?: string,
+): string[] {
+	const files: string[] = [];
+	if (!existsSync(dir)) return files;
+
+	const root = rootDir ?? dir;
+	const ig = ignoreMatcher ?? ignore();
+	addIgnoreRules(ig, dir, root);
+
+	try {
+		const entries = readdirSync(dir, { withFileTypes: true });
+		for (const entry of entries) {
+			if (entry.name.startsWith(".")) continue;
+			if (skipNodeModules && entry.name === "node_modules") continue;
+
+			const fullPath = join(dir, entry.name);
+			let isDir = entry.isDirectory();
+			let isFile = entry.isFile();
+
+			if (entry.isSymbolicLink()) {
+				try {
+					const stats = statSync(fullPath);
+					isDir = stats.isDirectory();
+					isFile = stats.isFile();
+				} catch {
+					continue;
+				}
+			}
+
+			const relPath = toPosixPath(relative(root, fullPath));
+			const ignorePath = isDir ? `${relPath}/` : relPath;
+			if (ig.ignores(ignorePath)) continue;
+
+			if (isDir) {
+				files.push(...collectFiles(fullPath, filePattern, skipNodeModules, ig, root));
+			} else if (isFile && filePattern.test(entry.name)) {
+				files.push(fullPath);
+			}
+		}
+	} catch {
+		// Ignore errors
+	}
+
+	return files;
+}
+
+function collectSkillEntries(
+	dir: string,
+	includeRootFiles = true,
+	ignoreMatcher?: IgnoreMatcher,
+	rootDir?: string,
+): string[] {
+	const entries: string[] = [];
+	if (!existsSync(dir)) return entries;
+
+	const root = rootDir ?? dir;
+	const ig = ignoreMatcher ?? ignore();
+	addIgnoreRules(ig, dir, root);
+
+	try {
+		const dirEntries = readdirSync(dir, { withFileTypes: true });
+		for (const entry of dirEntries) {
+			if (entry.name.startsWith(".")) continue;
+			if (entry.name === "node_modules") continue;
+
+			const fullPath = join(dir, entry.name);
+			let isDir = entry.isDirectory();
+			let isFile = entry.isFile();
+
+			if (entry.isSymbolicLink()) {
+				try {
+					const stats = statSync(fullPath);
+					isDir = stats.isDirectory();
+					isFile = stats.isFile();
+				} catch {
+					continue;
+				}
+			}
+
+			const relPath = toPosixPath(relative(root, fullPath));
+			const ignorePath = isDir ? `${relPath}/` : relPath;
+			if (ig.ignores(ignorePath)) continue;
+
+			if (isDir) {
+				entries.push(...collectSkillEntries(fullPath, false, ig, root));
+			} else if (isFile) {
+				const isRootMd = includeRootFiles && entry.name.endsWith(".md");
+				const isSkillMd = !includeRootFiles && entry.name === "SKILL.md";
+				if (isRootMd || isSkillMd) {
+					entries.push(fullPath);
+				}
+			}
+		}
+	} catch {
+		// Ignore errors
+	}
+
+	return entries;
+}
+
+function collectAutoSkillEntries(dir: string, includeRootFiles = true): string[] {
+	return collectSkillEntries(dir, includeRootFiles);
+}
+
+function findGitRepoRoot(startDir: string): string | null {
+	let dir = resolve(startDir);
+	while (true) {
+		if (existsSync(join(dir, ".git"))) {
+			return dir;
+		}
+		const parent = dirname(dir);
+		if (parent === dir) {
+			return null;
+		}
+		dir = parent;
+	}
+}
+
+function collectAncestorAgentsSkillDirs(startDir: string): string[] {
+	const skillDirs: string[] = [];
+	const resolvedStartDir = resolve(startDir);
+	const gitRepoRoot = findGitRepoRoot(resolvedStartDir);
+
+	let dir = resolvedStartDir;
+	while (true) {
+		skillDirs.push(join(dir, ".agents", "skills"));
+		if (gitRepoRoot && dir === gitRepoRoot) {
+			break;
+		}
+		const parent = dirname(dir);
+		if (parent === dir) {
+			break;
+		}
+		dir = parent;
+	}
+
+	return skillDirs;
+}
+
+function collectAutoPromptEntries(dir: string): string[] {
+	const entries: string[] = [];
+	if (!existsSync(dir)) return entries;
+
+	const ig = ignore();
+	addIgnoreRules(ig, dir, dir);
+
+	try {
+		const dirEntries = readdirSync(dir, { withFileTypes: true });
+		for (const entry of dirEntries) {
+			if (entry.name.startsWith(".")) continue;
+			if (entry.name === "node_modules") continue;
+
+			const fullPath = join(dir, entry.name);
+			let isFile = entry.isFile();
+			if (entry.isSymbolicLink()) {
+				try {
+					isFile = statSync(fullPath).isFile();
+				} catch {
+					continue;
+				}
+			}
+
+			const relPath = toPosixPath(relative(dir, fullPath));
+			if (ig.ignores(relPath)) continue;
+
+			if (isFile && entry.name.endsWith(".md")) {
+				entries.push(fullPath);
+			}
+		}
+	} catch {
+		// Ignore errors
+	}
+
+	return entries;
+}
+
+function collectAutoThemeEntries(dir: string): string[] {
+	const entries: string[] = [];
+	if (!existsSync(dir)) return entries;
+
+	const ig = ignore();
+	addIgnoreRules(ig, dir, dir);
+
+	try {
+		const dirEntries = readdirSync(dir, { withFileTypes: true });
+		for (const entry of dirEntries) {
+			if (entry.name.startsWith(".")) continue;
+			if (entry.name === "node_modules") continue;
+
+			const fullPath = join(dir, entry.name);
+			let isFile = entry.isFile();
+			if (entry.isSymbolicLink()) {
+				try {
+					isFile = statSync(fullPath).isFile();
+				} catch {
+					continue;
+				}
+			}
+
+			const relPath = toPosixPath(relative(dir, fullPath));
+			if (ig.ignores(relPath)) continue;
+
+			if (isFile && entry.name.endsWith(".json")) {
+				entries.push(fullPath);
+			}
+		}
+	} catch {
+		// Ignore errors
+	}
+
+	return entries;
+}
+
+function readPiManifestFile(packageJsonPath: string): PiManifest | null {
+	try {
+		const content = readFileSync(packageJsonPath, "utf-8");
+		const pkg = JSON.parse(content) as { pi?: PiManifest };
+		return pkg.pi ?? null;
+	} catch {
+		return null;
+	}
+}
+
+function resolveExtensionEntries(dir: string): string[] | null {
+	const packageJsonPath = join(dir, "package.json");
+	if (existsSync(packageJsonPath)) {
+		const manifest = readPiManifestFile(packageJsonPath);
+		if (manifest?.extensions?.length) {
+			const entries: string[] = [];
+			for (const extPath of manifest.extensions) {
+				const resolvedExtPath = resolve(dir, extPath);
+				if (existsSync(resolvedExtPath)) {
+					entries.push(resolvedExtPath);
+				}
+			}
+			if (entries.length > 0) {
+				return entries;
+			}
+		}
+	}
+
+	const indexTs = join(dir, "index.ts");
+	const indexJs = join(dir, "index.js");
+	if (existsSync(indexTs)) {
+		return [indexTs];
+	}
+	if (existsSync(indexJs)) {
+		return [indexJs];
+	}
+
+	return null;
+}
+
+function collectAutoExtensionEntries(dir: string): string[] {
+	const entries: string[] = [];
+	if (!existsSync(dir)) return entries;
+
+	// First check if this directory itself has explicit extension entries (package.json or index)
+	const rootEntries = resolveExtensionEntries(dir);
+	if (rootEntries) {
+		return rootEntries;
+	}
+
+	// Otherwise, discover extensions from directory contents
+	const ig = ignore();
+	addIgnoreRules(ig, dir, dir);
+
+	try {
+		const dirEntries = readdirSync(dir, { withFileTypes: true });
+		for (const entry of dirEntries) {
+			if (entry.name.startsWith(".")) continue;
+			if (entry.name === "node_modules") continue;
+
+			const fullPath = join(dir, entry.name);
+			let isDir = entry.isDirectory();
+			let isFile = entry.isFile();
+
+			if (entry.isSymbolicLink()) {
+				try {
+					const stats = statSync(fullPath);
+					isDir = stats.isDirectory();
+					isFile = stats.isFile();
+				} catch {
+					continue;
+				}
+			}
+
+			const relPath = toPosixPath(relative(dir, fullPath));
+			const ignorePath = isDir ? `${relPath}/` : relPath;
+			if (ig.ignores(ignorePath)) continue;
+
+			if (isFile && (entry.name.endsWith(".ts") || entry.name.endsWith(".js"))) {
+				entries.push(fullPath);
+			} else if (isDir) {
+				const resolvedEntries = resolveExtensionEntries(fullPath);
+				if (resolvedEntries) {
+					entries.push(...resolvedEntries);
+				}
+			}
+		}
+	} catch {
+		// Ignore errors
+	}
+
+	return entries;
+}
+
+/**
+ * Collect resource files from a directory based on resource type.
+ * Extensions use smart discovery (index.ts in subdirs), others use recursive collection.
+ */
+function collectResourceFiles(dir: string, resourceType: ResourceType): string[] {
+	if (resourceType === "skills") {
+		return collectSkillEntries(dir);
+	}
+	if (resourceType === "extensions") {
+		return collectAutoExtensionEntries(dir);
+	}
+	return collectFiles(dir, FILE_PATTERNS[resourceType]);
+}
+
+function matchesAnyPattern(filePath: string, patterns: string[], baseDir: string): boolean {
+	const rel = toPosixPath(relative(baseDir, filePath));
+	const name = basename(filePath);
+	const filePathPosix = toPosixPath(filePath);
+	const isSkillFile = name === "SKILL.md";
+	const parentDir = isSkillFile ? dirname(filePath) : undefined;
+	const parentRel = isSkillFile ? toPosixPath(relative(baseDir, parentDir!)) : undefined;
+	const parentName = isSkillFile ? basename(parentDir!) : undefined;
+	const parentDirPosix = isSkillFile ? toPosixPath(parentDir!) : undefined;
+
+	return patterns.some((pattern) => {
+		const normalizedPattern = toPosixPath(pattern);
+		if (
+			minimatch(rel, normalizedPattern) ||
+			minimatch(name, normalizedPattern) ||
+			minimatch(filePathPosix, normalizedPattern)
+		) {
+			return true;
+		}
+		if (!isSkillFile) return false;
+		return (
+			minimatch(parentRel!, normalizedPattern) ||
+			minimatch(parentName!, normalizedPattern) ||
+			minimatch(parentDirPosix!, normalizedPattern)
+		);
+	});
+}
+
+function normalizeExactPattern(pattern: string): string {
+	const normalized = pattern.startsWith("./") || pattern.startsWith(".\\") ? pattern.slice(2) : pattern;
+	return toPosixPath(normalized);
+}
+
+function matchesAnyExactPattern(filePath: string, patterns: string[], baseDir: string): boolean {
+	if (patterns.length === 0) return false;
+	const rel = toPosixPath(relative(baseDir, filePath));
+	const name = basename(filePath);
+	const filePathPosix = toPosixPath(filePath);
+	const isSkillFile = name === "SKILL.md";
+	const parentDir = isSkillFile ? dirname(filePath) : undefined;
+	const parentRel = isSkillFile ? toPosixPath(relative(baseDir, parentDir!)) : undefined;
+	const parentDirPosix = isSkillFile ? toPosixPath(parentDir!) : undefined;
+
+	return patterns.some((pattern) => {
+		const normalized = normalizeExactPattern(pattern);
+		if (normalized === rel || normalized === filePathPosix) {
+			return true;
+		}
+		if (!isSkillFile) return false;
+		return normalized === parentRel || normalized === parentDirPosix;
+	});
+}
+
+function getOverridePatterns(entries: string[]): string[] {
+	return entries.filter((pattern) => pattern.startsWith("!") || pattern.startsWith("+") || pattern.startsWith("-"));
+}
+
+function isEnabledByOverrides(filePath: string, patterns: string[], baseDir: string): boolean {
+	const overrides = getOverridePatterns(patterns);
+	const excludes = overrides.filter((pattern) => pattern.startsWith("!")).map((pattern) => pattern.slice(1));
+	const forceIncludes = overrides.filter((pattern) => pattern.startsWith("+")).map((pattern) => pattern.slice(1));
+	const forceExcludes = overrides.filter((pattern) => pattern.startsWith("-")).map((pattern) => pattern.slice(1));
+
+	let enabled = true;
+	if (excludes.length > 0 && matchesAnyPattern(filePath, excludes, baseDir)) {
+		enabled = false;
+	}
+	if (forceIncludes.length > 0 && matchesAnyExactPattern(filePath, forceIncludes, baseDir)) {
+		enabled = true;
+	}
+	if (forceExcludes.length > 0 && matchesAnyExactPattern(filePath, forceExcludes, baseDir)) {
+		enabled = false;
+	}
+	return enabled;
+}
+
+/**
+ * Apply patterns to paths and return a Set of enabled paths.
+ * Pattern types:
+ * - Plain patterns: include matching paths
+ * - `!pattern`: exclude matching paths
+ * - `+path`: force-include exact path (overrides exclusions)
+ * - `-path`: force-exclude exact path (overrides force-includes)
+ */
+function applyPatterns(allPaths: string[], patterns: string[], baseDir: string): Set<string> {
+	const includes: string[] = [];
+	const excludes: string[] = [];
+	const forceIncludes: string[] = [];
+	const forceExcludes: string[] = [];
+
+	for (const p of patterns) {
+		if (p.startsWith("+")) {
+			forceIncludes.push(p.slice(1));
+		} else if (p.startsWith("-")) {
+			forceExcludes.push(p.slice(1));
+		} else if (p.startsWith("!")) {
+			excludes.push(p.slice(1));
+		} else {
+			includes.push(p);
+		}
+	}
+
+	// Step 1: Apply includes (or all if no includes)
+	let result: string[];
+	if (includes.length === 0) {
+		result = [...allPaths];
+	} else {
+		result = allPaths.filter((filePath) => matchesAnyPattern(filePath, includes, baseDir));
+	}
+
+	// Step 2: Apply excludes
+	if (excludes.length > 0) {
+		result = result.filter((filePath) => !matchesAnyPattern(filePath, excludes, baseDir));
+	}
+
+	// Step 3: Force-include (add back from allPaths, overriding exclusions)
+	if (forceIncludes.length > 0) {
+		for (const filePath of allPaths) {
+			if (!result.includes(filePath) && matchesAnyExactPattern(filePath, forceIncludes, baseDir)) {
+				result.push(filePath);
+			}
+		}
+	}
+
+	// Step 4: Force-exclude (remove even if included or force-included)
+	if (forceExcludes.length > 0) {
+		result = result.filter((filePath) => !matchesAnyExactPattern(filePath, forceExcludes, baseDir));
+	}
+
+	return new Set(result);
+}
+
 export class DefaultPackageManager implements PackageManager {
 	private cwd: string;
 	private agentDir: string;
 	private settingsManager: SettingsManager;
 	private globalNpmRoot: string | undefined;
+	private globalNpmRootCommandKey: string | undefined;
 	private progressCallback: ProgressCallback | undefined;
 
 	constructor(options: PackageManagerOptions) {
@@ -644,26 +1182,48 @@ export class DefaultPackageManager implements PackageManager {
 		return { name, version };
 	}
 
+	private getNpmCommand(): { command: string; args: string[] } {
+		const configuredCommand = this.settingsManager.getNpmCommand();
+		if (!configuredCommand || configuredCommand.length === 0) {
+			return { command: "npm", args: [] };
+		}
+		const [command, ...args] = configuredCommand;
+		if (!command) {
+			throw new Error("Invalid npmCommand: first array entry must be a non-empty command");
+		}
+		return { command, args };
+	}
+
+	private async runNpmCommand(args: string[], options?: { cwd?: string }): Promise<void> {
+		const npmCommand = this.getNpmCommand();
+		await this.runCommand(npmCommand.command, [...npmCommand.args, ...args], options);
+	}
+
+	private runNpmCommandSync(args: string[]): string {
+		const npmCommand = this.getNpmCommand();
+		return this.runCommandSync(npmCommand.command, [...npmCommand.args, ...args]);
+	}
+
 	private async installNpm(source: NpmSource, scope: SourceScope, temporary: boolean): Promise<void> {
 		if (scope === "user" && !temporary) {
-			await this.runCommand("npm", ["install", "-g", source.spec]);
+			await this.runNpmCommand(["install", "-g", source.spec]);
 			return;
 		}
 		const installRoot = this.getNpmInstallRoot(scope, temporary);
 		this.ensureNpmProject(installRoot);
-		await this.runCommand("npm", ["install", source.spec, "--prefix", installRoot]);
+		await this.runNpmCommand(["install", source.spec, "--prefix", installRoot]);
 	}
 
 	private async uninstallNpm(source: NpmSource, scope: SourceScope): Promise<void> {
 		if (scope === "user") {
-			await this.runCommand("npm", ["uninstall", "-g", source.name]);
+			await this.runNpmCommand(["uninstall", "-g", source.name]);
 			return;
 		}
 		const installRoot = this.getNpmInstallRoot(scope, false);
 		if (!existsSync(installRoot)) {
 			return;
 		}
-		await this.runCommand("npm", ["uninstall", source.name, "--prefix", installRoot]);
+		await this.runNpmCommand(["uninstall", source.name, "--prefix", installRoot]);
 	}
 
 	private async installGit(source: GitSource, scope: SourceScope): Promise<void> {
@@ -683,7 +1243,7 @@ export class DefaultPackageManager implements PackageManager {
 		}
 		const packageJsonPath = join(targetDir, "package.json");
 		if (existsSync(packageJsonPath)) {
-			await this.runCommand("npm", ["install"], { cwd: targetDir });
+			await this.runNpmCommand(["install"], { cwd: targetDir });
 		}
 	}
 
@@ -710,7 +1270,7 @@ export class DefaultPackageManager implements PackageManager {
 
 		const packageJsonPath = join(targetDir, "package.json");
 		if (existsSync(packageJsonPath)) {
-			await this.runCommand("npm", ["install"], { cwd: targetDir });
+			await this.runNpmCommand(["install"], { cwd: targetDir });
 		}
 	}
 
@@ -789,11 +1349,14 @@ export class DefaultPackageManager implements PackageManager {
 	}
 
 	private getGlobalNpmRoot(): string {
-		if (this.globalNpmRoot) {
+		const npmCommand = this.getNpmCommand();
+		const commandKey = [npmCommand.command, ...npmCommand.args].join("\0");
+		if (this.globalNpmRoot && this.globalNpmRootCommandKey === commandKey) {
 			return this.globalNpmRoot;
 		}
-		const result = this.runCommandSync("npm", ["root", "-g"]);
+		const result = this.runNpmCommandSync(["root", "-g"]);
 		this.globalNpmRoot = result.trim();
+		this.globalNpmRootCommandKey = commandKey;
 		return this.globalNpmRoot;
 	}
 
@@ -847,17 +1410,17 @@ export class DefaultPackageManager implements PackageManager {
 
 	private resolvePath(input: string): string {
 		const trimmed = input.trim();
-		if (trimmed === "~") return homedir();
-		if (trimmed.startsWith("~/")) return join(homedir(), trimmed.slice(2));
-		if (trimmed.startsWith("~")) return join(homedir(), trimmed.slice(1));
+		if (trimmed === "~") return getHomeDir();
+		if (trimmed.startsWith("~/")) return join(getHomeDir(), trimmed.slice(2));
+		if (trimmed.startsWith("~")) return join(getHomeDir(), trimmed.slice(1));
 		return resolve(this.cwd, trimmed);
 	}
 
 	private resolvePathFromBase(input: string, baseDir: string): string {
 		const trimmed = input.trim();
-		if (trimmed === "~") return homedir();
-		if (trimmed.startsWith("~/")) return join(homedir(), trimmed.slice(2));
-		if (trimmed.startsWith("~")) return join(homedir(), trimmed.slice(1));
+		if (trimmed === "~") return getHomeDir();
+		if (trimmed.startsWith("~/")) return join(getHomeDir(), trimmed.slice(2));
+		if (trimmed.startsWith("~")) return join(getHomeDir(), trimmed.slice(1));
 		return resolve(baseDir, trimmed);
 	}
 
@@ -1094,8 +1657,10 @@ export class DefaultPackageManager implements PackageManager {
 			prompts: join(projectBaseDir, "prompts"),
 			themes: join(projectBaseDir, "themes"),
 		};
-		const userAgentsSkillsDir = join(homedir(), ".agents", "skills");
-		const projectAgentsSkillDirs = collectAncestorAgentsSkillDirs(this.cwd);
+		const userAgentsSkillsDir = join(getHomeDir(), ".agents", "skills");
+		const projectAgentsSkillDirs = collectAncestorAgentsSkillDirs(this.cwd).filter(
+			(dir) => resolve(dir) !== resolve(userAgentsSkillsDir),
+		);
 
 		const addResources = (
 			resourceType: ResourceType,

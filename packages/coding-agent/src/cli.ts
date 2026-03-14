@@ -5,20 +5,14 @@
  *
  * Test with: npx tsx src/cli-new.ts [args...]
  */
-import { APP_NAME } from "./config.js";
+process.title = "pi";
+
+import { setBedrockProviderModule } from "@mariozechner/pi-ai";
+import { bedrockProviderModule } from "@mariozechner/pi-ai/bedrock-provider";
+import { EnvHttpProxyAgent, setGlobalDispatcher } from "undici";
 import { main } from "./main.js";
 
-process.title = APP_NAME;
-
-const launchCwd = process.env.PI_LAUNCH_CWD;
-if (launchCwd) {
-	try {
-		process.chdir(launchCwd);
-	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
-		console.error(`Failed to switch to launch cwd "${launchCwd}": ${message}`);
-		process.exit(1);
-	}
-}
+setGlobalDispatcher(new EnvHttpProxyAgent());
+setBedrockProviderModule(bedrockProviderModule);
 
 main(process.argv.slice(2));
